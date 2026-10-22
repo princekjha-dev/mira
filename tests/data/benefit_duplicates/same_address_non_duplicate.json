@@ -1,0 +1,27 @@
+{
+  "scenario": "same_address_non_duplicate",
+  "description": "Distinct independent households residing at the same multi-household plot or building applying for household support",
+  "application": {
+    "scheme_id": "00000000-0000-0000-0000-000000000002",
+    "scheme_code": "SC-002",
+    "scheme_name": "Rural Sanitation & Clean Water Asset Support",
+    "scope": "HOUSEHOLD",
+    "applicant_person_id": "00000000-0000-0000-0000-000000000030",
+    "target_person_id": null,
+    "target_household_id": "00000000-0000-0000-0000-000000000300",
+    "target_property_id": "00000000-0000-0000-0000-000000000200",
+    "application_date": "2025-08-01"
+  },
+  "existing_benefit": {
+    "scheme_id": "00000000-0000-0000-0000-000000000002",
+    "benefit_unit_type": "HOUSEHOLD",
+    "person_id": null,
+    "household_id": "00000000-0000-0000-0000-000000000100",
+    "property_id": "00000000-0000-0000-0000-000000000200",
+    "valid_from": "2024-01-01",
+    "valid_to": null,
+    "status": "DISBURSED"
+  },
+  "expected_assessment": "POTENTIAL_DUPLICATE",
+  "expected_duplicate": false
+}

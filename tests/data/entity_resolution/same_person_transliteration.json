@@ -1,0 +1,22 @@
+{
+  "scenario": "same_person_transliteration",
+  "description": "Devanagari Hindi script representation vs Latin phonetic spelling (सुनीता देवी vs Sunita Devi)",
+  "source": {
+    "first_name": "सुनीता",
+    "last_name": "देवी",
+    "date_of_birth": "1985-05-15",
+    "gender": "FEMALE",
+    "phone": "+919876543201",
+    "address": "Sector 4, Dadri, Greater Noida"
+  },
+  "candidate": {
+    "first_name": "Sunita",
+    "last_name": "Devi",
+    "date_of_birth": "1985-05-15",
+    "gender": "FEMALE",
+    "phone": "+919876543201",
+    "address": "Sector 4, Dadri, Greater Noida"
+  },
+  "ground_truth": "STRONG_MATCH",
+  "expected_is_match": true
+}

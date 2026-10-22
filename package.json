@@ -1,0 +1,13 @@
+{
+  "name": "mira",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Mira — Unified Digital Platform for Accessible Public Documentation (PS 7)",
+  "scripts": {
+    "dev": "./scripts/dev.sh",
+    "test": "./scripts/test.sh",
+    "seed": "./scripts/seed.sh",
+    "build:web": "cd apps/web && npm run build",
+    "build:api": "cd apps/api && cargo build --release"
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "scenario": "same_person_missing_fields",
+  "description": "Candidate record has null/missing date_of_birth and phone, which must count as NEUTRAL without contradiction penalty",
+  "source": {
+    "first_name": "Pooja",
+    "last_name": "Sharma",
+    "date_of_birth": "1992-11-04",
+    "gender": "FEMALE",
+    "phone": "+919876543233",
+    "address": "Gali No 3, Rampur Village"
+  },
+  "candidate": {
+    "first_name": "Pooja",
+    "last_name": "Sharma",
+    "date_of_birth": null,
+    "gender": "FEMALE",
+    "phone": null,
+    "address": "Gali 3, Rampur Village"
+  },
+  "ground_truth": "POSSIBLE_MATCH",
+  "expected_is_match": true
+}

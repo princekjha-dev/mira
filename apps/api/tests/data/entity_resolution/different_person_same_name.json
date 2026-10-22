@@ -1,0 +1,22 @@
+{
+  "scenario": "different_person_same_name",
+  "description": "Common name collision (Amit Kumar vs Amit Kumar) with different birth year, different locality and different phone",
+  "source": {
+    "first_name": "Amit",
+    "last_name": "Kumar",
+    "date_of_birth": "1995-02-14",
+    "gender": "MALE",
+    "phone": "+919876543244",
+    "address": "Dadri Main Road, Dadri"
+  },
+  "candidate": {
+    "first_name": "Amit",
+    "last_name": "Kumar",
+    "date_of_birth": "1968-07-22",
+    "gender": "MALE",
+    "phone": "+919123456789",
+    "address": "Civil Lines, Meerut, UP"
+  },
+  "ground_truth": "LIKELY_NON_MATCH",
+  "expected_is_match": false
+}

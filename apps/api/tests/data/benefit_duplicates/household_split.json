@@ -1,0 +1,27 @@
+{
+  "scenario": "household_split",
+  "description": "HOUSEHOLD SPLIT CASE: Rahul leaves H001 (which received sanitation benefit in 2024) to form H002. In 2026, H002 applies for sanitation. Engine respects historical temporal boundary.",
+  "application": {
+    "scheme_id": "00000000-0000-0000-0000-000000000002",
+    "scheme_code": "SC-002",
+    "scheme_name": "Rural Sanitation & Clean Water Asset Support",
+    "scope": "HOUSEHOLD",
+    "applicant_person_id": "00000000-0000-0000-0000-000000000010",
+    "target_person_id": null,
+    "target_household_id": "00000000-0000-0000-0000-000000000102",
+    "target_property_id": "00000000-0000-0000-0000-000000000202",
+    "application_date": "2026-03-01"
+  },
+  "existing_benefit": {
+    "scheme_id": "00000000-0000-0000-0000-000000000002",
+    "benefit_unit_type": "HOUSEHOLD",
+    "person_id": null,
+    "household_id": "00000000-0000-0000-0000-000000000100",
+    "property_id": "00000000-0000-0000-0000-000000000200",
+    "valid_from": "2024-01-01",
+    "valid_to": null,
+    "status": "DISBURSED"
+  },
+  "expected_assessment": "NOT_DUPLICATE",
+  "expected_duplicate": false
+}

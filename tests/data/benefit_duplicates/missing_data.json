@@ -1,0 +1,18 @@
+{
+  "scenario": "missing_data",
+  "description": "Application submitted without target property or household references under composite scheme scope",
+  "application": {
+    "scheme_id": "00000000-0000-0000-0000-000000000005",
+    "scheme_code": "SC-005",
+    "scheme_name": "Composite Disaster Relief Entitlement",
+    "scope": "COMPOSITE",
+    "applicant_person_id": "00000000-0000-0000-0000-000000000050",
+    "target_person_id": null,
+    "target_household_id": null,
+    "target_property_id": null,
+    "application_date": "2025-09-01"
+  },
+  "existing_benefit": null,
+  "expected_assessment": "INSUFFICIENT_INFORMATION",
+  "expected_duplicate": false
+}

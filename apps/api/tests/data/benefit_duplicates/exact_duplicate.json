@@ -1,0 +1,27 @@
+{
+  "scenario": "exact_duplicate",
+  "description": "Same person applying for the same individual scholarship scheme during an active, overlapping benefit period",
+  "application": {
+    "scheme_id": "00000000-0000-0000-0000-000000000001",
+    "scheme_code": "SC-001",
+    "scheme_name": "Higher Secondary Merit Scholarship",
+    "scope": "INDIVIDUAL",
+    "applicant_person_id": "00000000-0000-0000-0000-000000000010",
+    "target_person_id": "00000000-0000-0000-0000-000000000010",
+    "target_household_id": "00000000-0000-0000-0000-000000000100",
+    "target_property_id": null,
+    "application_date": "2025-04-01"
+  },
+  "existing_benefit": {
+    "scheme_id": "00000000-0000-0000-0000-000000000001",
+    "benefit_unit_type": "PERSON",
+    "person_id": "00000000-0000-0000-0000-000000000010",
+    "household_id": null,
+    "property_id": null,
+    "valid_from": "2025-01-01",
+    "valid_to": "2025-12-31",
+    "status": "ACTIVE"
+  },
+  "expected_assessment": "EXACT_DUPLICATE",
+  "expected_duplicate": true
+}

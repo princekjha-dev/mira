@@ -1,0 +1,22 @@
+{
+  "scenario": "different_person_same_address",
+  "description": "Unrelated tenants or neighbors registered at the same multi-unit property address",
+  "source": {
+    "first_name": "Suresh",
+    "last_name": "Chandra",
+    "date_of_birth": "1960-01-10",
+    "gender": "MALE",
+    "phone": "+919876543255",
+    "address": "Plot 45, Sector 12, Dadri"
+  },
+  "candidate": {
+    "first_name": "Vikram",
+    "last_name": "Singh",
+    "date_of_birth": "1988-06-30",
+    "gender": "MALE",
+    "phone": "+919876543266",
+    "address": "Plot 45, Sector 12, Dadri"
+  },
+  "ground_truth": "LIKELY_NON_MATCH",
+  "expected_is_match": false
+}

@@ -1,0 +1,22 @@
+{
+  "scenario": "same_person_exact",
+  "description": "Exact match across authoritative civic identity attributes",
+  "source": {
+    "first_name": "Rahul",
+    "last_name": "Kumar",
+    "date_of_birth": "1998-04-12",
+    "gender": "MALE",
+    "phone": "+919876543210",
+    "address": "Village Rampur, Dadri, Gautam Buddha Nagar, UP 203207"
+  },
+  "candidate": {
+    "first_name": "Rahul",
+    "last_name": "Kumar",
+    "date_of_birth": "1998-04-12",
+    "gender": "MALE",
+    "phone": "+919876543210",
+    "address": "Village Rampur, Dadri, Gautam Buddha Nagar, UP 203207"
+  },
+  "ground_truth": "STRONG_MATCH",
+  "expected_is_match": true
+}
