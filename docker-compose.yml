@@ -1,0 +1,54 @@
+version: '3.8'
+
+services:
+  postgres:
+    image: postgres:18-alpine
+    container_name: mira-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgrespassword
+      POSTGRES_DB: mira_dev
+    ports:
+      - "5433:5432"
+    volumes:
+      - mira-pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.api
+    container_name: mira-api
+    restart: unless-stopped
+    depends_on:
+      postgres:
+        condition: service_healthy
+    environment:
+      APP_ENV: development
+      PORT: 4000
+      DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/mira_dev
+      JWT_SECRET: mira-v1-foundation-secure-jwt-secret-key-minimum-32-chars
+      JWT_EXPIRATION_HOURS: 24
+      CORS_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost:80
+      RUST_LOG: mira_api=info,tower_http=info
+    ports:
+      - "4000:4000"
+
+  web:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile.web
+    container_name: mira-web
+    restart: unless-stopped
+    depends_on:
+      - api
+    ports:
+      - "3000:80"
+
+volumes:
+  mira-pgdata:
