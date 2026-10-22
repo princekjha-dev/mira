@@ -847,6 +847,255 @@ pub async fn get_matching_config_handler(
 }
 
 // ============================================================================
+// V5 DOCUMENT INTELLIGENCE & EVIDENCE HANDLERS
+// ============================================================================
+
+fn decode_base64_payload(input: &str) -> Result<Vec<u8>, AppError> {
+    let clean = input.trim();
+    let b64 = if let Some(idx) = clean.find(";base64,") {
+        &clean[idx + 8..]
+    } else {
+        clean
+    };
+
+    const CHARS: &[u8] = b"ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/";
+    let mut table = [255u8; 256];
+    for (i, &c) in CHARS.iter().enumerate() {
+        table[c as usize] = i as u8;
+    }
+
+    let mut out = Vec::new();
+    let mut buf = 0u32;
+    let mut bits = 0;
+
+    for &byte in b64.as_bytes() {
+        if byte == b'=' || byte.is_ascii_whitespace() {
+            continue;
+        }
+        let val = table[byte as usize];
+        if val == 255 {
+            return Err(AppError::Validation("Invalid character in base64 file data".into()));
+        }
+        buf = (buf << 6) | (val as u32);
+        bits += 6;
+        if bits >= 8 {
+            bits -= 8;
+            out.push((buf >> bits) as u8);
+        }
+    }
+    Ok(out)
+}
+
+#[derive(Deserialize)]
+pub struct UploadDocumentJsonRequest {
+    pub filename: String,
+    pub owner_type: String,
+    pub owner_id: Uuid,
+    pub specified_doc_type: Option<String>,
+    pub access_purpose: Option<String>,
+    pub file_content_base64: Option<String>,
+    pub text_content: Option<String>,
+    pub document_demo_type: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct DocumentListQuery {
+    pub owner_type: Option<String>,
+    pub owner_id: Option<Uuid>,
+}
+
+#[derive(Deserialize)]
+pub struct DocumentAccessQuery {
+    pub purpose: Option<String>,
+}
+
+pub async fn upload_document_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    headers: HeaderMap,
+    Json(payload): Json<UploadDocumentJsonRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let ip = get_client_ip(&headers).map(|s| s.to_string());
+    let ua = headers.get("user-agent").and_then(|h| h.to_str().ok()).map(|s| s.to_string());
+
+    let bytes = if let Some(ref b64) = payload.file_content_base64 {
+        decode_base64_payload(b64)?
+    } else if let Some(ref txt) = payload.text_content {
+        txt.as_bytes().to_vec()
+    } else if let Some(ref demo_type) = payload.document_demo_type {
+        crate::domain::document::ocr::generate_fallback_ocr_text_from_filename(demo_type).into_bytes()
+    } else {
+        crate::domain::document::ocr::generate_fallback_ocr_text_from_filename(&payload.filename).into_bytes()
+    };
+
+    let upload_payload = crate::application::UploadDocumentPayload {
+        raw_filename: payload.filename,
+        owner_type: payload.owner_type,
+        owner_id: payload.owner_id,
+        specified_doc_type: payload.specified_doc_type,
+        access_purpose: payload.access_purpose.unwrap_or_else(|| "APPLICATION_VERIFICATION".to_string()),
+    };
+
+    let doc = doc_service.upload_and_process_document(upload_payload, &bytes, &user, ip, ua).await?;
+    Ok((StatusCode::CREATED, Json(ApiResponse { data: doc })))
+}
+
+pub async fn list_documents_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Query(query): Query<DocumentListQuery>,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let docs = doc_service.list_documents(&user, query.owner_type.as_deref(), query.owner_id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: docs })))
+}
+
+pub async fn get_document_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Path(id): Path<Uuid>,
+    Query(query): Query<DocumentAccessQuery>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let ip = get_client_ip(&headers).map(|s| s.to_string());
+    let ua = headers.get("user-agent").and_then(|h| h.to_str().ok()).map(|s| s.to_string());
+    let purpose = query.purpose.unwrap_or_else(|| "APPLICATION_VERIFICATION".to_string());
+
+    let doc = doc_service.get_document(id, &user, &purpose, ip, ua).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: doc })))
+}
+
+pub async fn download_document_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Path(id): Path<Uuid>,
+    Query(query): Query<DocumentAccessQuery>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let ip = get_client_ip(&headers).map(|s| s.to_string());
+    let ua = headers.get("user-agent").and_then(|h| h.to_str().ok()).map(|s| s.to_string());
+    let purpose = query.purpose.unwrap_or_else(|| "APPLICATION_VERIFICATION".to_string());
+
+    let (doc, bytes) = doc_service.download_document_binary(id, &user, &purpose, ip, ua).await?;
+
+    let mut response_headers = HeaderMap::new();
+    response_headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        doc.detected_mime_type.parse().unwrap_or(axum::http::HeaderValue::from_static("application/octet-stream")),
+    );
+    response_headers.insert(
+        axum::http::header::CONTENT_DISPOSITION,
+        format!("attachment; filename=\"{}\"", doc.original_filename).parse().unwrap(),
+    );
+    response_headers.insert(
+        axum::http::header::CONTENT_LENGTH,
+        bytes.len().to_string().parse().unwrap(),
+    );
+
+    Ok((StatusCode::OK, response_headers, bytes))
+}
+
+pub async fn preview_document_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Path(id): Path<Uuid>,
+    Query(query): Query<DocumentAccessQuery>,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let ip = get_client_ip(&headers).map(|s| s.to_string());
+    let ua = headers.get("user-agent").and_then(|h| h.to_str().ok()).map(|s| s.to_string());
+    let purpose = query.purpose.unwrap_or_else(|| "CITIZEN_SELF_SERVICE".to_string());
+
+    let (doc, bytes) = doc_service.download_document_binary(id, &user, &purpose, ip, ua).await?;
+
+    let mut response_headers = HeaderMap::new();
+    response_headers.insert(
+        axum::http::header::CONTENT_TYPE,
+        doc.detected_mime_type.parse().unwrap_or(axum::http::HeaderValue::from_static("application/octet-stream")),
+    );
+
+    Ok((StatusCode::OK, response_headers, bytes))
+}
+
+pub async fn get_document_extractions_handler(
+    State(state): State<AppState>,
+    _user: AuthenticatedUser,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let extractions = doc_service.get_extractions(id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: extractions })))
+}
+
+pub async fn verify_extraction_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Path(id): Path<Uuid>,
+    Json(payload): Json<crate::application::ExtractionVerificationPayload>,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let verification = doc_service.verify_extraction(id, payload, &user).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: verification })))
+}
+
+pub async fn get_case_evidence_pack_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let pack = doc_service.get_case_evidence_pack(id, &user).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: pack })))
+}
+
+pub async fn get_case_consistency_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let pack = doc_service.get_case_evidence_pack(id, &user).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: pack.consistency_report })))
+}
+
+pub async fn get_case_evidence_report_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Path(id): Path<Uuid>,
+) -> Result<impl IntoResponse, AppError> {
+    let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let pack = doc_service.get_case_evidence_pack(id, &user).await?;
+
+    let report = serde_json::json!({
+        "case_id": pack.case_id,
+        "public_id": pack.case_public_id,
+        "scheme": pack.scheme_name,
+        "applicant": pack.applicant_name,
+        "why_flagged": pack.why_flagged,
+        "recommended_action": pack.recommended_action,
+        "ai_grounded_summary": pack.ai_summary,
+        "documents_count": pack.documents.len(),
+        "extractions": pack.extractions.iter().map(|e| {
+            serde_json::json!({
+                "field": e.field,
+                "value": e.value,
+                "confidence": e.confidence,
+                "status": e.status
+            })
+        }).collect::<Vec<_>>(),
+        "conflicts": pack.consistency_report.checks.iter().filter(|c| c.result == "CONFLICT").collect::<Vec<_>>(),
+        "timeline": pack.timeline,
+        "generated_at": pack.generated_at
+    });
+
+    Ok((StatusCode::OK, Json(ApiResponse { data: report })))
+}
+
+// ============================================================================
 // Router Builder
 // ============================================================================
 
@@ -929,6 +1178,17 @@ pub fn create_router(state: AppState) -> Router {
 
         // V4 Matching Configuration
         .route("/api/v1/matching-config", get(get_matching_config_handler))
+
+        // V5 Document Intelligence & Evidence
+        .route("/api/v1/documents", get(list_documents_handler).post(upload_document_handler))
+        .route("/api/v1/documents/:id", get(get_document_handler))
+        .route("/api/v1/documents/:id/download", get(download_document_handler))
+        .route("/api/v1/documents/:id/preview", get(preview_document_handler))
+        .route("/api/v1/documents/:id/extractions", get(get_document_extractions_handler))
+        .route("/api/v1/documents/:id/verify-extraction", post(verify_extraction_handler))
+        .route("/api/v1/cases/:id/evidence-pack", get(get_case_evidence_pack_handler))
+        .route("/api/v1/cases/:id/document-consistency", get(get_case_consistency_handler))
+        .route("/api/v1/cases/:id/evidence-report", get(get_case_evidence_report_handler))
 
         .layer(axum::Extension(state.config.clone()))
         .with_state(state)

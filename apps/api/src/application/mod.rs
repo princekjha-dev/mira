@@ -3849,6 +3849,8 @@ impl BenefitService {
 
 pub mod benefit_duplicate_service;
 pub mod entity_resolution_service;
+pub mod document_service;
 
 pub use benefit_duplicate_service::*;
 pub use entity_resolution_service::*;
+pub use document_service::*;

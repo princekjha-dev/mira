@@ -727,3 +727,4 @@ pub struct DashboardStats {
 
 pub mod entity_resolution;
 pub mod benefit_duplicate;
+pub mod document;

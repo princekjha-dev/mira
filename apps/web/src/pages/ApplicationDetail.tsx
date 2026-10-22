@@ -15,6 +15,7 @@ import {
   MapPin,
   ShieldCheck,
   Award,
+  Sparkles,
 } from 'lucide-react';
 
 export const ApplicationDetailPage: React.FC = () => {
@@ -235,6 +236,14 @@ export const ApplicationDetailPage: React.FC = () => {
           {/* Administrative Action Buttons */}
           {canReview && (
             <div className="flex flex-col gap-2 shrink-0">
+              <Link
+                to={`/cases/${app.id}/evidence`}
+                className="inline-flex items-center justify-center space-x-1.5 px-4 py-2 bg-indigo-50 hover:bg-indigo-100 text-indigo-700 border border-indigo-200 rounded-xl text-xs font-semibold shadow-xs transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-indigo-600" />
+                <span>Evidence Workspace (V5)</span>
+              </Link>
+
               {app.status === 'SUBMITTED' && (
                 <>
                   <button

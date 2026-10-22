@@ -229,4 +229,41 @@ describe('Mira Frontend Foundation Unit Tests', () => {
     expect(screen.getByTestId('confirmed-dup')).toHaveTextContent('पुष्ट प्रतिरूप');
     expect(screen.getByTestId('not-dup')).toHaveTextContent('प्रतिरूप नहीं है');
   });
+
+  it('verifies V5 document intelligence & evidence translations in English and Hindi', () => {
+    const TestV5I18n = () => {
+      const { t, setLanguage } = useTranslation();
+      return (
+        <div>
+          <span data-testid="doc-title">{t('v5.title')}</span>
+          <span data-testid="doc-evidence">{t('v5.extractedEvidence')}</span>
+          <span data-testid="doc-consistency">{t('v5.consistencyCheck')}</span>
+          <span data-testid="doc-why">{t('v5.whyFlagged')}</span>
+          <span data-testid="doc-notice">{t('v5.humanOversightNotice')}</span>
+          <button onClick={() => setLanguage('hi')}>Switch to Hindi</button>
+        </div>
+      );
+    };
+
+    render(
+      <LanguageProvider>
+        <TestV5I18n />
+      </LanguageProvider>
+    );
+
+    // English assertions
+    expect(screen.getByTestId('doc-title')).toHaveTextContent('Evidence Intelligence & Document Verification');
+    expect(screen.getByTestId('doc-evidence')).toHaveTextContent('Extracted Structured Evidence');
+    expect(screen.getByTestId('doc-consistency')).toHaveTextContent('Cross-Document Consistency & Entity Resolution');
+    expect(screen.getByTestId('doc-why')).toHaveTextContent('Why is this case being reviewed?');
+    expect(screen.getByTestId('doc-notice')).toHaveTextContent('AI assists evidence extraction');
+
+    // Switch to Hindi
+    fireEvent.click(screen.getByText('Switch to Hindi'));
+    expect(screen.getByTestId('doc-title')).toHaveTextContent('साक्ष्य बुद्धिमत्ता एवं दस्तावेज़ सत्यापन');
+    expect(screen.getByTestId('doc-evidence')).toHaveTextContent('निष्कर्षित संरचित साक्ष्य');
+    expect(screen.getByTestId('doc-consistency')).toHaveTextContent('क्रॉस-दस्तावेज़ निरंतरता एवं इकाई समाधान');
+    expect(screen.getByTestId('doc-why')).toHaveTextContent('इस प्रकरण की समीक्षा क्यों की जा रही है?');
+    expect(screen.getByTestId('doc-notice')).toHaveTextContent('अंतिम निर्णय हमेशा मानव अधिकारी द्वारा');
+  });
 });

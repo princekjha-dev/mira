@@ -44,7 +44,13 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), AppError> {
         .await
         .map_err(|e| AppError::Internal(format!("V4 database migration failed: {}", e)))?;
 
-    tracing::info!("Database schema migrations (V1, V2, V3 & V4) verified successfully");
+    let schema_v5 = include_str!("../../../../migrations/0005_v5_evidence_and_document_intelligence.sql");
+    sqlx::raw_sql(schema_v5)
+        .execute(pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("V5 database migration failed: {}", e)))?;
+
+    tracing::info!("Database schema migrations (V1, V2, V3, V4 & V5) verified successfully");
     Ok(())
 }
 

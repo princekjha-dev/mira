@@ -472,5 +472,164 @@ export interface MatchingModelConfig {
   created_at: string;
 }
 
+// ============================================================================
+// MIRA V5: EVIDENCE & DOCUMENT INTELLIGENCE TYPES
+// ============================================================================
+
+export type DocumentType =
+  | 'BIRTH_CERTIFICATE'
+  | 'INCOME_CERTIFICATE'
+  | 'RESIDENCE_CERTIFICATE'
+  | 'PROPERTY_DOCUMENT'
+  | 'BENEFIT_DOCUMENT'
+  | 'IDENTITY_SUPPORTING_DOCUMENT'
+  | 'HOUSEHOLD_DOCUMENT'
+  | 'OTHER';
+
+export type DocumentStatus =
+  | 'UPLOADED'
+  | 'PROCESSING'
+  | 'READY'
+  | 'FAILED'
+  | 'QUARANTINED'
+  | 'REVOKED';
+
+export interface BoundingBox {
+  page: number;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  text?: string;
+  confidence?: number;
+}
+
+export interface DocumentItem {
+  id: string;
+  public_id: string;
+  owner_type: string;
+  owner_id: string;
+  document_type: DocumentType;
+  original_filename: string;
+  detected_mime_type: string;
+  size_bytes: number;
+  sha256: string;
+  storage_reference: string;
+  status: DocumentStatus;
+  created_at: string;
+  created_by: string;
+}
+
+export interface DocumentExtraction {
+  id: string;
+  document_id: string;
+  field: string;
+  value: string;
+  normalized_value: string;
+  confidence: number;
+  source_region: BoundingBox;
+  extraction_method: string;
+  status: string;
+  created_at: string;
+}
+
+export interface DocumentVerification {
+  id: string;
+  document_id: string;
+  extraction_id?: string | null;
+  decision: 'VERIFIED' | 'REJECTED' | 'EDITED';
+  corrected_value?: string | null;
+  verification_method: string;
+  reason?: string | null;
+  verified_by: string;
+  verified_at: string;
+}
+
+export interface ConsistencyCheckItem {
+  check_type: string;
+  field: string;
+  result: 'PASS' | 'CONFLICT' | 'INSUFFICIENT_DATA' | 'NOT_APPLICABLE';
+  source_a_label: string;
+  source_a_value?: string | null;
+  source_b_label: string;
+  source_b_value?: string | null;
+  action_recommended: string;
+  explanation: string;
+}
+
+export interface CrossDocumentTimelineEntry {
+  event_date: string;
+  year: number;
+  document_label: string;
+  event_description: string;
+  is_chronological: boolean;
+}
+
+export interface CaseConsistencyReport {
+  case_id?: string | null;
+  total_checks: number;
+  pass_count: number;
+  conflict_count: number;
+  review_required: boolean;
+  checks: ConsistencyCheckItem[];
+  timeline: CrossDocumentTimelineEntry[];
+}
+
+export interface DocumentPersonMatch {
+  person_id: string;
+  public_id: string;
+  full_name: string;
+  similarity_score: number;
+  match_confidence: string;
+  explanation: string;
+}
+
+export interface DocumentHouseholdMatch {
+  household_id: string;
+  public_id: string;
+  household_name: string;
+  association_type: string;
+  confidence: string;
+}
+
+export interface DocumentPropertyMatch {
+  property_id: string;
+  public_id: string;
+  address: string;
+  has_previous_benefits: boolean;
+  previous_benefit_details?: string | null;
+}
+
+export interface DocumentEntityMatchResult {
+  person_matches: DocumentPersonMatch[];
+  household_matches: DocumentHouseholdMatch[];
+  property_matches: DocumentPropertyMatch[];
+}
+
+export interface CaseTimelineEvent {
+  timestamp: string;
+  stage: string;
+  title: string;
+  description: string;
+  actor: string;
+}
+
+export interface EvidencePack {
+  case_id: string;
+  case_public_id: string;
+  scheme_name: string;
+  applicant_name: string;
+  documents: DocumentItem[];
+  extractions: DocumentExtraction[];
+  verifications: DocumentVerification[];
+  entity_matches: DocumentEntityMatchResult;
+  consistency_report: CaseConsistencyReport;
+  why_flagged: string;
+  recommended_action: string;
+  ai_summary?: string | null;
+  timeline: CaseTimelineEvent[];
+  generated_at: string;
+}
+
 
 

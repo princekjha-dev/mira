@@ -25,6 +25,8 @@ import { EntityResolutionQueuePage } from './pages/review/EntityResolutionQueue'
 import { EntityResolutionDetailPage } from './pages/review/EntityResolutionDetail';
 import { BenefitDuplicateQueuePage } from './pages/review/BenefitDuplicateQueue';
 import { BenefitDuplicateDetailPage } from './pages/review/BenefitDuplicateDetail';
+import { DocumentsPortal } from './pages/DocumentsPortal';
+import { CaseEvidenceWorkspace } from './pages/CaseEvidenceWorkspace';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -151,6 +153,30 @@ export const App: React.FC = () => {
                     element={
                       <ProtectedRoute>
                         <ApplicationDetailPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/applications/:id/evidence"
+                    element={
+                      <ProtectedRoute>
+                        <CaseEvidenceWorkspace />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/cases/:id/evidence"
+                    element={
+                      <ProtectedRoute>
+                        <CaseEvidenceWorkspace />
+                      </ProtectedRoute>
+                    }
+                  />
+                  <Route
+                    path="/documents"
+                    element={
+                      <ProtectedRoute>
+                        <DocumentsPortal />
                       </ProtectedRoute>
                     }
                   />
