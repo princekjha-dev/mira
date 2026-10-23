@@ -2,13 +2,17 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 import enTranslations from './en.json';
 import hiTranslations from './hi.json';
 
-export type Language = 'en' | 'hi';
+import { Language, SUPPORTED_LANGUAGES, regionalTranslations } from './languages';
+
+export type { Language };
+export { SUPPORTED_LANGUAGES };
 
 type Translations = Record<string, string>;
 
-const dictionaries: Record<Language, Translations> = {
+const dictionaries: Record<string, Translations> = {
   en: enTranslations,
   hi: hiTranslations,
+  ...regionalTranslations,
 };
 
 interface LanguageContextType {
@@ -24,8 +28,8 @@ export const LanguageProvider: React.FC<{ children: React.ReactNode; initialLang
   initialLanguage = 'en',
 }) => {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('mira_lang');
-    return (saved === 'hi' || saved === 'en') ? saved : initialLanguage;
+    const saved = localStorage.getItem('mira_lang') as Language | null;
+    return (saved && SUPPORTED_LANGUAGES.some((l) => l.code === saved)) ? saved : initialLanguage;
   });
 
   const setLanguage = (lang: Language) => {

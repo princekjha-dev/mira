@@ -200,6 +200,8 @@ export interface Scheme {
   department: string;
   status: SchemeStatus;
   scope: SchemeScope;
+  benefit_unit?: string;
+  category?: string;
   effective_during?: string | null;
   created_at: string;
   updated_at: string;
@@ -242,6 +244,8 @@ export interface Application {
   target_household_id?: string | null;
   target_property_id?: string | null;
   target_label?: string | null;
+  target_unit?: string | null;
+  household_id?: string | null;
   submitted_at?: string | null;
   status: ApplicationStatus;
   current_stage: string;
@@ -251,6 +255,8 @@ export interface Application {
   updated_at: string;
   created_by?: string | null;
 }
+
+export type ApplicationSummary = Application;
 
 export type BenefitUnitType = 'PERSON' | 'HOUSEHOLD' | 'PROPERTY';
 
