@@ -1,0 +1,27 @@
+{
+  "scenario": "different_scheme",
+  "description": "Same person or household applying for an entirely different public scheme (e.g. scholarship vs disability aid). Independent entitlements must NOT be flagged as duplicates.",
+  "application": {
+    "scheme_id": "00000000-0000-0000-0000-000000000004",
+    "scheme_code": "SC-004",
+    "scheme_name": "Disability Welfare & Livelihood Stipend",
+    "scope": "INDIVIDUAL",
+    "applicant_person_id": "00000000-0000-0000-0000-000000000010",
+    "target_person_id": "00000000-0000-0000-0000-000000000010",
+    "target_household_id": "00000000-0000-0000-0000-000000000100",
+    "target_property_id": null,
+    "application_date": "2025-06-01"
+  },
+  "existing_benefit": {
+    "scheme_id": "00000000-0000-0000-0000-000000000001",
+    "benefit_unit_type": "PERSON",
+    "person_id": "00000000-0000-0000-0000-000000000010",
+    "household_id": null,
+    "property_id": null,
+    "valid_from": "2025-01-01",
+    "valid_to": "2025-12-31",
+    "status": "ACTIVE"
+  },
+  "expected_assessment": "NOT_DUPLICATE",
+  "expected_duplicate": false
+}

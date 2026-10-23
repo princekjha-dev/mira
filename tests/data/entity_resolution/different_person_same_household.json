@@ -1,0 +1,22 @@
+{
+  "scenario": "different_person_same_household",
+  "description": "Two brothers in same household sharing surname and address (Ramesh Kumar vs Amit Kumar)",
+  "source": {
+    "first_name": "Ramesh",
+    "last_name": "Kumar",
+    "date_of_birth": "1975-08-20",
+    "gender": "MALE",
+    "phone": "+919876543211",
+    "address": "House 12, Main Street, Rampur"
+  },
+  "candidate": {
+    "first_name": "Amit",
+    "last_name": "Kumar",
+    "date_of_birth": "1978-10-15",
+    "gender": "MALE",
+    "phone": "+919876543212",
+    "address": "House 12, Main Street, Rampur"
+  },
+  "ground_truth": "LIKELY_NON_MATCH",
+  "expected_is_match": false
+}

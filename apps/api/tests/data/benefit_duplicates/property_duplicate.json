@@ -1,0 +1,27 @@
+{
+  "scenario": "property_duplicate",
+  "description": "Property P001 water connection assistance duplicate application when asset was already installed in 2025",
+  "application": {
+    "scheme_id": "00000000-0000-0000-0000-000000000003",
+    "scheme_code": "SC-003",
+    "scheme_name": "Residential Potable Water Infrastructure Connection",
+    "scope": "PROPERTY",
+    "applicant_person_id": "00000000-0000-0000-0000-000000000010",
+    "target_person_id": null,
+    "target_household_id": "00000000-0000-0000-0000-000000000100",
+    "target_property_id": "00000000-0000-0000-0000-000000000200",
+    "application_date": "2026-02-15"
+  },
+  "existing_benefit": {
+    "scheme_id": "00000000-0000-0000-0000-000000000003",
+    "benefit_unit_type": "PROPERTY",
+    "person_id": null,
+    "household_id": null,
+    "property_id": "00000000-0000-0000-0000-000000000200",
+    "valid_from": "2025-03-01",
+    "valid_to": null,
+    "status": "DISBURSED"
+  },
+  "expected_assessment": "LIKELY_DUPLICATE",
+  "expected_duplicate": true
+}

@@ -1,0 +1,22 @@
+{
+  "scenario": "conflicting_dob",
+  "description": "Identical name and surname but authoritative date_of_birth discrepancy (1998-04-12 vs 1988-04-12, difference of 10 years)",
+  "source": {
+    "first_name": "Rahul",
+    "last_name": "Kumar",
+    "date_of_birth": "1998-04-12",
+    "gender": "MALE",
+    "phone": "+919876543210",
+    "address": "Village Rampur, Dadri"
+  },
+  "candidate": {
+    "first_name": "Rahul",
+    "last_name": "Kumar",
+    "date_of_birth": "1988-04-12",
+    "gender": "MALE",
+    "phone": "+919876543299",
+    "address": "Village Rampur, Dadri"
+  },
+  "ground_truth": "UNCERTAIN",
+  "expected_is_match": false
+}

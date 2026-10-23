@@ -1,0 +1,22 @@
+{
+  "scenario": "same_person_typo",
+  "description": "Minor spelling variation (Ramesh Kumar vs Ramesh Kumaar) with identical DOB and phone",
+  "source": {
+    "first_name": "Ramesh",
+    "last_name": "Kumar",
+    "date_of_birth": "1975-08-20",
+    "gender": "MALE",
+    "phone": "+919876543211",
+    "address": "House 12, Main Street, Rampur"
+  },
+  "candidate": {
+    "first_name": "Ramesh",
+    "last_name": "Kumaar",
+    "date_of_birth": "1975-08-20",
+    "gender": "MALE",
+    "phone": "+919876543211",
+    "address": "House 12, Main St, Rampur"
+  },
+  "ground_truth": "STRONG_MATCH",
+  "expected_is_match": true
+}

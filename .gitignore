@@ -1,0 +1,21 @@
+# Rust build artifacts
+target/
+Cargo.lock
+
+# Node dependencies and build
+node_modules/
+dist/
+.vite/
+
+# Local database cluster
+.pgdata/
+
+# Environment files
+.env
+!.env.example
+
+# OS and IDE files
+.DS_Store
+*.log
+.vscode/
+.idea/

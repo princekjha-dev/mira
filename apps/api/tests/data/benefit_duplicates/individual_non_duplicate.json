@@ -1,0 +1,29 @@
+{
+  "scenario": "individual_non_duplicate",
+  "description": "CRITICAL FALSE-POSITIVE TEST: Two brothers in same household applying for INDIVIDUAL scholarship. Brother A previously received scholarship, Brother B applies now. Must be NOT_DUPLICATE.",
+  "application": {
+    "scheme_id": "00000000-0000-0000-0000-000000000001",
+    "scheme_code": "SC-001",
+    "scheme_name": "Higher Secondary Merit Scholarship",
+    "scope": "INDIVIDUAL",
+    "applicant_person_id": "00000000-0000-0000-0000-000000000012",
+    "applicant_name": "Amit Kumar",
+    "target_person_id": "00000000-0000-0000-0000-000000000012",
+    "target_household_id": "00000000-0000-0000-0000-000000000100",
+    "target_property_id": null,
+    "application_date": "2025-07-01"
+  },
+  "existing_benefit": {
+    "scheme_id": "00000000-0000-0000-0000-000000000001",
+    "benefit_unit_type": "PERSON",
+    "person_id": "00000000-0000-0000-0000-000000000010",
+    "person_name": "Ramesh Kumar (Brother)",
+    "household_id": "00000000-0000-0000-0000-000000000100",
+    "property_id": null,
+    "valid_from": "2024-01-01",
+    "valid_to": "2024-12-31",
+    "status": "DISBURSED"
+  },
+  "expected_assessment": "NOT_DUPLICATE",
+  "expected_duplicate": false
+}
