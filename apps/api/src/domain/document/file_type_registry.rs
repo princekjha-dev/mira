@@ -2,6 +2,7 @@ use uuid::Uuid;
 use crate::errors::AppError;
 
 pub const MAX_FILE_SIZE_BYTES: i64 = 25 * 1024 * 1024; // 25 MB
+pub const PDF_COMPRESSION_THRESHOLD_BYTES: usize = 8 * 1024 * 1024;
 
 #[derive(Debug, Clone, PartialEq, Eq)]
 pub enum SupportedFormat {
@@ -89,11 +90,15 @@ impl FileTypeRegistry {
         // 2. Reject Obvious Executable / Script Signatures (Security Scan Step 1)
         Self::scan_for_malicious_signatures(bytes)?;
 
+        let declared_ext = Self::extract_extension(raw_filename);
+        if !matches!(declared_ext.as_deref(), Some("pdf" | "png" | "jpg" | "jpeg" | "webp" | "txt" | "csv" | "docx" | "xlsx")) {
+            return Err(AppError::Validation("Unsupported file extension. Accepted formats: PDF, PNG, JPG, WEBP, TXT, CSV, DOCX and XLSX.".into()));
+        }
+
         // 3. Magic Signature Detection (Never trust client MIME or extension alone)
         let detected_format = Self::detect_format_from_bytes(bytes, raw_filename)?;
 
         // 4. Client Extension Cross-Check
-        let declared_ext = Self::extract_extension(raw_filename);
         if let Some(ext) = declared_ext {
             if ext == "exe" || ext == "sh" || ext == "bat" || ext == "cmd" || ext == "js" || ext == "php" {
                 return Err(AppError::Validation(format!(

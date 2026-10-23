@@ -1,5 +1,7 @@
 use chrono::NaiveDate;
 use sqlx::{postgres::PgPoolOptions, PgPool, Row};
+use sha2::{Digest, Sha256};
+use std::path::Path;
 use uuid::Uuid;
 
 use crate::{
@@ -20,6 +22,19 @@ pub async fn create_pool(database_url: &str) -> Result<PgPool, AppError> {
 
 /// Run foundational and V2 schema migrations
 pub async fn run_migrations(pool: &PgPool) -> Result<(), AppError> {
+    sqlx::query("SELECT pg_advisory_lock(88127391)")
+        .execute(pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to acquire migration lock: {e}")))?;
+
+    let res = run_migrations_inner(pool).await;
+
+    let _ = sqlx::query("SELECT pg_advisory_unlock(88127391)").execute(pool).await;
+
+    res
+}
+
+async fn run_migrations_inner(pool: &PgPool) -> Result<(), AppError> {
     let schema_v1 = include_str!("../../../../migrations/0001_initial_schema.sql");
     sqlx::raw_sql(schema_v1)
         .execute(pool)
@@ -50,7 +65,25 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), AppError> {
         .await
         .map_err(|e| AppError::Internal(format!("V5 database migration failed: {}", e)))?;
 
-    tracing::info!("Database schema migrations (V1, V2, V3, V4 & V5) verified successfully");
+    let schema_v6 = include_str!("../../../../migrations/0006_v6_workflow_and_notifications.sql");
+    sqlx::raw_sql(schema_v6)
+        .execute(pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("V6 database migration failed: {}", e)))?;
+
+    let schema_v7 = include_str!("../../../../migrations/0007_v7_document_library.sql");
+    sqlx::raw_sql(schema_v7)
+        .execute(pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("V7 database migration failed: {}", e)))?;
+
+    let schema_v8 = include_str!("../../../../migrations/0008_demo_auth.sql");
+    sqlx::raw_sql(schema_v8)
+        .execute(pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("V8 database migration failed: {}", e)))?;
+
+    tracing::info!("Database schema migrations (V1 through V8) verified successfully");
     Ok(())
 }
 
@@ -128,12 +161,13 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     for (email, display_name, lang, role_name) in demo_users {
         let user_row = sqlx::query(
             r#"
-            INSERT INTO users (id, email, password_hash, display_name, preferred_language, is_active)
-            VALUES (gen_random_uuid(), $1, $2, $3, $4, true)
+            INSERT INTO users (id, email, password_hash, display_name, preferred_language, is_active, is_demo)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, true, true)
             ON CONFLICT (email) DO UPDATE 
             SET display_name = EXCLUDED.display_name,
                 preferred_language = EXCLUDED.preferred_language,
-                password_hash = EXCLUDED.password_hash
+                password_hash = EXCLUDED.password_hash,
+                is_demo = true
             RETURNING id
             "#,
         )
@@ -927,7 +961,74 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     .await
     .map_err(|e| AppError::Internal(format!("Failed to write seed audit event: {}", e)))?;
 
+    seed_demo_documents(pool).await?;
     tracing::info!("Deterministic V4 seed finished successfully. Entity Resolution and Duplicate Detection ready.");
+    Ok(())
+}
+
+fn synthetic_demo_pdf(label: &str) -> Vec<u8> {
+    let content = format!("BT /F1 18 Tf 72 700 Td (SYNTHETIC DEMO DOCUMENT) Tj 0 -42 Td /F1 13 Tf ({}) Tj 0 -28 Td (For Mira product testing only. Not an official certificate.) Tj ET", label);
+    let objects = [
+        "<< /Type /Catalog /Pages 2 0 R >>".to_string(),
+        "<< /Type /Pages /Kids [3 0 R] /Count 1 >>".to_string(),
+        "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Resources << /Font << /F1 4 0 R >> >> /Contents 5 0 R >>".to_string(),
+        "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>".to_string(),
+        format!("<< /Length {} >>\nstream\n{}\nendstream", content.len(), content),
+    ];
+    let mut pdf = b"%PDF-1.4\n".to_vec();
+    let mut offsets = Vec::new();
+    for (index, object) in objects.iter().enumerate() {
+        offsets.push(pdf.len());
+        pdf.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", index + 1, object).as_bytes());
+    }
+    let xref_offset = pdf.len();
+    pdf.extend_from_slice(format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).as_bytes());
+    for offset in offsets { pdf.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes()); }
+    pdf.extend_from_slice(format!("trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{}\n%%EOF", objects.len() + 1, xref_offset).as_bytes());
+    pdf
+}
+
+async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
+    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = 'citizen@mira.local'")
+        .fetch_optional(pool)
+        .await?
+        .ok_or_else(|| AppError::Internal("Synthetic demo citizen is missing during document seeding".into()))?;
+    let storage = Path::new("data/storage/safe_store");
+    tokio::fs::create_dir_all(storage).await.map_err(|e| AppError::Internal(format!("Unable to prepare document storage: {e}")))?;
+    let docs = [
+        ("Aadhaar Demo.pdf", "IDENTITY_SUPPORTING_DOCUMENT", "VERIFIED", None, 5),
+        ("Income Certificate.pdf", "INCOME_CERTIFICATE", "VERIFIED", None, 4),
+        ("Residence Certificate.pdf", "RESIDENCE_CERTIFICATE", "ACTION_REQUIRED", None, 3),
+        ("BPL Certificate.pdf", "OTHER", "EXPIRED", Some("2025-03-31T00:00:00Z"), 220),
+        ("Land Record.pdf", "PROPERTY_DOCUMENT", "PENDING_REVIEW", None, 1),
+    ];
+    for (filename, doc_type, verification, expiry, age_days) in docs {
+        let exists = sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM documents WHERE created_by = $1 AND original_filename = $2)")
+            .bind(user_id).bind(filename).fetch_one(pool).await?;
+        if exists { continue; }
+        let label = filename.trim_end_matches(".pdf");
+        let bytes = synthetic_demo_pdf(label);
+        let hash = format!("{:x}", Sha256::digest(&bytes));
+        let key = format!("{}.pdf", Uuid::new_v4());
+        tokio::fs::write(storage.join(&key), &bytes).await.map_err(|e| AppError::Internal(format!("Unable to seed demo document object: {e}")))?;
+        let row = sqlx::query(
+            r#"INSERT INTO documents (
+                public_id, owner_type, owner_id, document_type, original_filename, detected_mime_type,
+                size_bytes, original_size_bytes, sha256, storage_reference, status, verification_status, expires_at, created_by,
+                created_at, updated_at
+            ) VALUES ($1, 'CITIZEN', $2, $3, $4, 'application/pdf', $5, $5, $6, $7, 'READY', $8, $9, $2,
+                NOW() - ($10 * INTERVAL '1 day'), NOW() - ($10 * INTERVAL '1 day')) RETURNING id"#,
+        )
+        .bind(format!("DOC-DEMO-{}", Uuid::new_v4().to_string()[..8].to_uppercase()))
+        .bind(user_id).bind(doc_type).bind(filename).bind(bytes.len() as i64).bind(&hash).bind(&key)
+        .bind(verification).bind(expiry.map(|date| date.parse::<chrono::DateTime<chrono::Utc>>()).transpose().map_err(|e| AppError::Internal(e.to_string()))?).bind(age_days)
+        .fetch_one(pool).await.map_err(|e| AppError::Internal(format!("Unable to seed synthetic document metadata: {e}")))?;
+        let document_id: Uuid = row.get("id");
+        sqlx::query("INSERT INTO document_versions (document_id, version_type, storage_reference, mime_type, size_bytes, sha256, compression_type) VALUES ($1, 'ORIGINAL', $2, 'application/pdf', $3, $4, 'NONE')")
+            .bind(document_id).bind(&key).bind(bytes.len() as i64).bind(&hash).execute(pool).await?;
+        sqlx::query("INSERT INTO document_access_logs (document_id, user_id, action, purpose) VALUES ($1, $2, 'PROCESS', 'CITIZEN_SELF_SERVICE')")
+            .bind(document_id).bind(user_id).execute(pool).await?;
+    }
     Ok(())
 }
 

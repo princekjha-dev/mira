@@ -7,6 +7,7 @@ pub struct AppConfig {
     pub jwt_expiration_hours: i64,
     pub port: u16,
     pub app_env: String,
+    pub demo_mode: bool,
     pub cors_origins: Vec<String>,
 }
 
@@ -32,6 +33,13 @@ impl AppConfig {
 
         let app_env = env::var("APP_ENV").unwrap_or_else(|_| "development".to_string());
 
+        // Public demo authentication is available only outside production.
+        // The environment switch can disable it for shared development deployments.
+        let demo_mode = !app_env.eq_ignore_ascii_case("production")
+            && env::var("MIRA_DEMO_MODE")
+                .map(|value| value.eq_ignore_ascii_case("true"))
+                .unwrap_or(true);
+
         let cors_origins = env::var("CORS_ORIGINS")
             .unwrap_or_else(|_| "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000".to_string())
             .split(',')
@@ -45,6 +53,7 @@ impl AppConfig {
             jwt_expiration_hours,
             port,
             app_env,
+            demo_mode,
             cors_origins,
         }
     }

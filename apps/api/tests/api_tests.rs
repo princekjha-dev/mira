@@ -15,6 +15,7 @@ use tower::ServiceExt;
 async fn setup_test_app() -> (axum::Router, sqlx::PgPool, AppConfig) {
     let mut config = AppConfig::from_env();
     config.database_url = "postgres://postgres@127.0.0.1:5433/mira_test".to_string();
+    config.demo_mode = true;
 
     let pool = create_pool(&config.database_url)
         .await
@@ -30,6 +31,27 @@ async fn setup_test_app() -> (axum::Router, sqlx::PgPool, AppConfig) {
 
     let router = create_router(state);
     (router, pool, config)
+}
+
+#[tokio::test]
+async fn test_demo_authentication_can_be_disabled_server_side() {
+    let (_, pool, mut config) = setup_test_app().await;
+    config.demo_mode = false;
+    let app = create_router(AppState {
+        pool,
+        config: Arc::new(config),
+    });
+
+    let response = app.oneshot(
+        Request::builder()
+            .uri("/api/v1/auth/demo-login")
+            .method(Method::POST)
+            .header(header::CONTENT_TYPE, "application/json")
+            .body(Body::from(r#"{"role":"citizen"}"#))
+            .unwrap(),
+    ).await.unwrap();
+
+    assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
 
 #[tokio::test]
@@ -85,6 +107,7 @@ async fn test_demo_user_authentication_flow() {
     let token = body["token"].as_str().expect("Token should be present");
     assert!(!token.is_empty());
     assert_eq!(body["user"]["email"], "citizen@mira.local");
+    assert_eq!(body["user"]["is_demo"], true);
 
     // Access protected /api/v1/auth/me
     let me_response = app.clone()
@@ -103,6 +126,37 @@ async fn test_demo_user_authentication_flow() {
     let me_bytes = me_response.into_body().collect().await.unwrap().to_bytes();
     let me_body: Value = serde_json::from_slice(&me_bytes).unwrap();
     assert_eq!(me_body["data"]["email"], "citizen@mira.local");
+    assert_eq!(me_body["data"]["is_demo"], true);
+}
+
+#[tokio::test]
+async fn test_demo_login_issues_database_backed_roles_for_all_demo_accounts() {
+    let (app, _, _) = setup_test_app().await;
+    let demo_accounts = [
+        ("citizen", "CITIZEN"),
+        ("officer", "FIELD_OFFICIAL"),
+        ("verifier", "VERIFICATION_OFFICER"),
+        ("admin", "DEPARTMENT_ADMIN"),
+        ("auditor", "AUDITOR"),
+    ];
+
+    for (selected_role, expected_role) in demo_accounts {
+        let response = app.clone().oneshot(
+            Request::builder()
+                .uri("/api/v1/auth/demo-login")
+                .method(Method::POST)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(serde_json::json!({ "role": selected_role }).to_string()))
+                .unwrap(),
+        ).await.unwrap();
+
+        assert_eq!(response.status(), StatusCode::OK, "demo role {selected_role}");
+        let bytes = response.into_body().collect().await.unwrap().to_bytes();
+        let body: Value = serde_json::from_slice(&bytes).unwrap();
+        assert!(body["token"].as_str().is_some_and(|token| !token.is_empty()));
+        assert_eq!(body["user"]["is_demo"], true);
+        assert!(body["user"]["roles"].as_array().unwrap().iter().any(|role| role == expected_role));
+    }
 }
 
 #[tokio::test]

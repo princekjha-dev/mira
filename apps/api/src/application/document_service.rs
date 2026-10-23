@@ -32,6 +32,7 @@ use crate::{
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct UploadDocumentPayload {
     pub raw_filename: String,
+    pub display_filename: Option<String>,
     pub owner_type: String, // CITIZEN, PERSON, APPLICATION, HOUSEHOLD, PROPERTY
     pub owner_id: Uuid,
     pub specified_doc_type: Option<String>,
@@ -73,6 +74,8 @@ impl DocumentService {
         &self,
         payload: UploadDocumentPayload,
         data: &[u8],
+        original_data: Option<&[u8]>,
+        original_mime_type: Option<&str>,
         user: &AuthenticatedUser,
         ip_address: Option<String>,
         user_agent: Option<String>,
@@ -155,7 +158,19 @@ impl DocumentService {
             return Ok(existing_doc);
         }
 
-        // 6. Persist Immutable Original in Object Storage
+        // 6. Keep the submitted original immutable when client or server optimization ran.
+        let source_key = if let Some(original) = original_data {
+            let ext = match original_mime_type {
+                Some("image/jpeg") => "jpg",
+                Some("image/png") => "png",
+                Some("image/webp") => "webp",
+                Some("application/pdf") => "pdf",
+                _ => validated.detected_format.extension(),
+            };
+            let key = format!("source_{}.{}", Uuid::new_v4(), ext);
+            self.storage.put(&key, original).await?;
+            Some(key)
+        } else { None };
         self.storage.put(&validated.storage_key, data).await?;
 
         // 7. Initial Document Classification
@@ -170,33 +185,51 @@ impl DocumentService {
         let doc_public_id = format!("DOC-{}-{}", final_doc_type.as_str().split('_').next().unwrap_or("DOC"), Uuid::new_v4().to_string()[..6].to_uppercase());
 
         // 8. Create Document Record
+        let safe_display_filename = payload.display_filename.as_deref()
+            .map(FileTypeRegistry::sanitize_filename)
+            .unwrap_or_else(|| validated.sanitized_filename.clone());
         let doc = sqlx::query_as!(
             Document,
             r#"
             INSERT INTO documents (
                 public_id, owner_type, owner_id, document_type,
                 original_filename, detected_mime_type, size_bytes, sha256,
-                storage_reference, status, created_by
+                storage_reference, status, created_by, original_size_bytes
             )
-            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'PROCESSING', $10)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'PROCESSING', $10, $11)
             RETURNING *
             "#,
             doc_public_id,
             payload.owner_type,
             payload.owner_id,
             final_doc_type.as_str(),
-            validated.sanitized_filename,
+            safe_display_filename,
             validated.detected_mime,
             validated.size_bytes,
             file_sha256,
             validated.storage_key,
-            user.id
+            user.id,
+            original_data.map(|original| original.len() as i64).unwrap_or(validated.size_bytes)
         )
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Internal(format!("Failed to insert document: {}", e)))?;
 
-        // 9. Create ORIGINAL Document Version
+        self.log_document_event("DOCUMENT_UPLOADED", user, &doc, serde_json::json!({
+            "filename": doc.original_filename,
+            "size_bytes": validated.size_bytes,
+            "original_size_bytes": original_data.map(|source| source.len() as i64).unwrap_or(validated.size_bytes),
+            "mime_type": validated.detected_mime,
+        })).await?;
+        if let Some(source) = original_data.filter(|source| source.len() > validated.size_bytes as usize) {
+            self.log_document_event("DOCUMENT_COMPRESSED", user, &doc, serde_json::json!({
+                "original_size_bytes": source.len(),
+                "optimized_size_bytes": validated.size_bytes,
+                "bytes_saved": source.len() - validated.size_bytes as usize,
+            })).await?;
+        }
+
+        // 9. Record the source bytes and the optimized upload as separate immutable versions.
         sqlx::query!(
             r#"
             INSERT INTO document_versions (
@@ -205,14 +238,26 @@ impl DocumentService {
             VALUES ($1, 'ORIGINAL', $2, $3, $4, $5, 'NONE')
             "#,
             doc.id,
-            validated.storage_key,
-            validated.detected_mime,
-            validated.size_bytes,
-            file_sha256
+            source_key.as_deref().unwrap_or(&validated.storage_key),
+            original_mime_type.unwrap_or(&validated.detected_mime),
+            original_data.map(|original| original.len() as i64).unwrap_or(validated.size_bytes),
+            original_data.map(compute_sha256).unwrap_or_else(|| file_sha256.clone())
         )
         .execute(&self.pool)
         .await
         .map_err(|e| AppError::Internal(format!("Failed to record original version: {}", e)))?;
+
+        if source_key.is_some() {
+            sqlx::query!(
+                r#"INSERT INTO document_versions (document_id, version_type, storage_reference, mime_type, size_bytes, sha256, compression_type)
+                   VALUES ($1, 'OPTIMIZED', $2, $3, $4, $5, 'LOSSY')"#,
+                doc.id,
+                validated.storage_key,
+                validated.detected_mime,
+                validated.size_bytes,
+                file_sha256
+            ).execute(&self.pool).await.map_err(|e| AppError::Internal(format!("Failed to record optimized document version: {e}")))?;
+        }
 
         // 10. Generate Preview Derivative Version (Lossless optimization tracking)
         let preview_key = format!("preview_{}", validated.storage_key);
@@ -334,7 +379,7 @@ impl DocumentService {
         .map_err(|e| AppError::Internal(e.to_string()))?
         .ok_or_else(|| AppError::NotFound("Document not found".into()))?;
 
-        Self::authorize_document_access(user, &doc)?;
+        self.authorize_document_access(user, &doc).await?;
 
         self.log_access(
             doc.id,
@@ -346,6 +391,29 @@ impl DocumentService {
         ).await?;
 
         Ok(doc)
+    }
+
+    pub async fn archive_document(
+        &self,
+        doc_id: Uuid,
+        user: &AuthenticatedUser,
+        ip: Option<String>,
+        ua: Option<String>,
+    ) -> Result<Document, AppError> {
+        let doc = self.get_document(doc_id, user, "CITIZEN_SELF_SERVICE", ip.clone(), ua.clone()).await?;
+        if doc.created_by != Some(user.id) && doc.owner_id != user.id {
+            return Err(AppError::Forbidden("Only the document owner can archive this file.".into()));
+        }
+        let archived = sqlx::query_as::<_, Document>(
+            "UPDATE documents SET status = 'REVOKED', updated_at = NOW() WHERE id = $1 RETURNING *",
+        )
+        .bind(doc.id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to archive document: {e}")))?;
+        self.log_document_event("DOCUMENT_ARCHIVED", user, &archived, serde_json::json!({"reason": "Owner archived from document library"})).await?;
+        self.log_access(doc.id, Some(user.id), AccessAction::Revoke, AccessPurpose::CitizenSelfService, ip, ua).await?;
+        Ok(archived)
     }
 
     /// Secure Document Binary Download
@@ -380,15 +448,11 @@ impl DocumentService {
         owner_type: Option<&str>,
         owner_id: Option<Uuid>,
     ) -> Result<Vec<Document>, AppError> {
-        let is_admin_or_officer = user.roles.iter().any(|r| {
-            r == "VERIFICATION_OFFICER"
-                || r == "FIELD_OFFICIAL"
-                || r == "DEPARTMENT_ADMIN"
-                || r == "SUPER_ADMIN"
-                || r == "AUDITOR"
-        });
+        let can_view_all = user.roles.iter().any(|role| matches!(role.as_str(), "SUPER_ADMIN" | "AUDITOR"));
+        let is_department_admin = user.roles.iter().any(|role| role == "DEPARTMENT_ADMIN");
+        let is_officer = user.roles.iter().any(|role| matches!(role.as_str(), "VERIFICATION_OFFICER" | "FIELD_OFFICIAL"));
 
-        if is_admin_or_officer {
+        if can_view_all {
             if let (Some(ot), Some(oid)) = (owner_type, owner_id) {
                 sqlx::query_as!(
                     Document,
@@ -417,6 +481,27 @@ impl DocumentService {
                 .await
                 .map_err(|e| AppError::Internal(e.to_string()))
             }
+        } else if is_department_admin {
+            if let Some(org_id) = user.organization_id {
+                sqlx::query_as::<_, Document>(
+                    r#"SELECT d.* FROM documents d JOIN user_organizations uo ON uo.user_id = d.created_by
+                       WHERE uo.organization_id = $1 AND d.status != 'REVOKED'
+                       ORDER BY d.created_at DESC"#,
+                ).bind(org_id).fetch_all(&self.pool).await.map_err(|e| AppError::Internal(e.to_string()))
+            } else { Ok(Vec::new()) }
+        } else if is_officer {
+            sqlx::query_as::<_, Document>(
+                r#"SELECT DISTINCT d.* FROM documents d
+                   JOIN application_documents ad ON ad.document_id = d.id
+                   JOIN applications a ON a.id = ad.application_id
+                   WHERE a.metadata->'assignment'->>'assigned_to' = $1
+                     AND d.status != 'REVOKED'
+                   ORDER BY d.created_at DESC"#,
+            )
+            .bind(user.id.to_string())
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))
         } else {
             // Citizen: strictly own documents
             sqlx::query_as!(
@@ -457,6 +542,7 @@ impl DocumentService {
         payload: ExtractionVerificationPayload,
         user: &AuthenticatedUser,
     ) -> Result<DocumentVerification, AppError> {
+        self.get_document(doc_id, user, "APPLICATION_VERIFICATION", None, None).await?;
         // Enforce Officer RBAC
         let is_officer = user.roles.iter().any(|r| {
             r == "VERIFICATION_OFFICER"
@@ -543,6 +629,32 @@ impl DocumentService {
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
+
+        let any_rejected = sqlx::query_scalar::<_, bool>(
+            "SELECT EXISTS(SELECT 1 FROM document_extractions WHERE document_id = $1 AND status = 'REJECTED')",
+        )
+        .bind(doc_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+        let all_verified = sqlx::query_scalar::<_, bool>(
+            "SELECT NOT EXISTS(SELECT 1 FROM document_extractions WHERE document_id = $1 AND status NOT IN ('OFFICER_VERIFIED', 'SOURCE_VERIFIED')) AND EXISTS(SELECT 1 FROM document_extractions WHERE document_id = $1)",
+        )
+        .bind(doc_id)
+        .fetch_one(&self.pool)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
+        let document_verification_status = if any_rejected { "REJECTED" } else if all_verified { "VERIFIED" } else { "ACTION_REQUIRED" };
+        sqlx::query("UPDATE documents SET verification_status = $1, updated_at = NOW() WHERE id = $2")
+            .bind(document_verification_status)
+            .bind(doc_id)
+            .execute(&self.pool)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+        if document_verification_status == "VERIFIED" {
+            let document = self.get_document(doc_id, user, "APPLICATION_VERIFICATION", None, None).await?;
+            self.log_document_event("DOCUMENT_VERIFIED", user, &document, serde_json::json!({"verification_method": "MANUAL_INSPECTION"})).await?;
+        }
 
         Ok(verification)
     }
@@ -733,6 +845,27 @@ impl DocumentService {
         Ok(())
     }
 
+    async fn log_document_event(
+        &self,
+        event_type: &str,
+        user: &AuthenticatedUser,
+        document: &Document,
+        details: serde_json::Value,
+    ) -> Result<(), AppError> {
+        sqlx::query(
+            "INSERT INTO audit_events (event_type, user_id, organization_id, request_id, details) VALUES ($1, $2, $3, $4, $5)",
+        )
+        .bind(event_type)
+        .bind(user.id)
+        .bind(user.organization_id)
+        .bind(&user.request_id)
+        .bind(serde_json::json!({"document_id": document.id, "version": document.version_number, "details": details}))
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Internal(format!("Failed to write document audit event: {e}")))?;
+        Ok(())
+    }
+
     /// Authorization Rule: User must own the entity or hold an officer role
     fn authorize_owner_access(user: &AuthenticatedUser, owner_type: &str, owner_id: Uuid) -> Result<(), AppError> {
         let is_privileged = user.roles.iter().any(|r| {
@@ -757,25 +890,38 @@ impl DocumentService {
     }
 
     /// Authorization Rule: Check access to specific document
-    fn authorize_document_access(user: &AuthenticatedUser, doc: &Document) -> Result<(), AppError> {
-        let is_privileged = user.roles.iter().any(|r| {
-            r == "VERIFICATION_OFFICER"
-                || r == "FIELD_OFFICIAL"
-                || r == "DEPARTMENT_ADMIN"
-                || r == "SUPER_ADMIN"
-                || r == "AUDITOR"
-        });
-
-        if is_privileged {
+    async fn authorize_document_access(&self, user: &AuthenticatedUser, doc: &Document) -> Result<(), AppError> {
+        if doc.created_by == Some(user.id) || doc.owner_id == user.id {
             return Ok(());
         }
-
-        if doc.created_by != Some(user.id) && doc.owner_id != user.id {
-            return Err(AppError::Forbidden(
-                "IDOR Access Denied: You do not possess authorization to view this document.".into(),
-            ));
+        if user.roles.iter().any(|role| matches!(role.as_str(), "SUPER_ADMIN" | "AUDITOR")) {
+            return Ok(());
         }
-
-        Ok(())
+        if user.roles.iter().any(|role| role == "DEPARTMENT_ADMIN") {
+            if let Some(org_id) = user.organization_id {
+                let same_org = sqlx::query_scalar::<_, bool>(
+                    "SELECT EXISTS(SELECT 1 FROM user_organizations WHERE user_id = $1 AND organization_id = $2)",
+                ).bind(doc.created_by.unwrap_or(doc.owner_id)).bind(org_id).fetch_one(&self.pool).await
+                    .map_err(|e| AppError::Internal(e.to_string()))?;
+                if same_org { return Ok(()); }
+            }
+        }
+        let is_officer = user.roles.iter().any(|role| matches!(role.as_str(), "VERIFICATION_OFFICER" | "FIELD_OFFICIAL"));
+        if is_officer {
+            let assigned = sqlx::query_scalar::<_, bool>(
+                r#"SELECT EXISTS(
+                    SELECT 1 FROM application_documents ad
+                    JOIN applications a ON a.id = ad.application_id
+                    WHERE ad.document_id = $1 AND a.metadata->'assignment'->>'assigned_to' = $2
+                )"#,
+            )
+            .bind(doc.id)
+            .bind(user.id.to_string())
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?;
+            if assigned { return Ok(()); }
+        }
+        Err(AppError::Forbidden("Access to this private document is outside your authorized scope.".into()))
     }
 }

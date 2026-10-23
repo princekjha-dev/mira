@@ -359,6 +359,11 @@ pub struct Document {
     pub created_by: Option<Uuid>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
+    pub supersedes_document_id: Option<Uuid>,
+    pub version_number: i32,
+    pub verification_status: String,
+    pub original_size_bytes: i64,
+    pub expires_at: Option<DateTime<Utc>>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]

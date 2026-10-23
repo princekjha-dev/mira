@@ -1,0 +1,6 @@
+- [x] Redesign login and login-only header with existing civic assets.
+- [x] Preserve and verify citizen, officer and administrator demo flows and accessibility.
+- [x] Replace only login visuals with a new full-page photograph and translucent right-side panel.
+- [x] Verify layout, reduced motion, and preserved role sign-in flows.
+- [x] Blend three distinct photographs behind a compact login container; preserve all behavior.
+- [x] Verify photographic framing, role flows and accessibility across screen sizes.

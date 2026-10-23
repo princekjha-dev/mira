@@ -98,6 +98,7 @@ pub struct UserProfile {
     pub display_name: String,
     pub preferred_language: String,
     pub roles: Vec<String>,
+    pub is_demo: bool,
     pub organization: Option<OrganizationSummary>,
     pub created_at: DateTime<Utc>,
 }
@@ -723,6 +724,19 @@ pub struct DashboardStats {
     pub individual_benefits: i64,
     pub household_benefits: i64,
     pub property_benefits: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Notification {
+    pub id: Uuid,
+    pub user_id: Uuid,
+    pub r#type: String,
+    pub title: String,
+    pub message: String,
+    pub entity_type: Option<String>,
+    pub entity_id: Option<String>,
+    pub read: bool,
+    pub created_at: DateTime<Utc>,
 }
 
 pub mod entity_resolution;

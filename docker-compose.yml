@@ -30,6 +30,7 @@ services:
         condition: service_healthy
     environment:
       APP_ENV: development
+      MIRA_DEMO_MODE: "true"
       PORT: 4000
       DATABASE_URL: postgres://postgres:postgrespassword@postgres:5432/mira_dev
       JWT_SECRET: mira-v1-foundation-secure-jwt-secret-key-minimum-32-chars
@@ -38,6 +39,8 @@ services:
       RUST_LOG: mira_api=info,tower_http=info
     ports:
       - "4000:4000"
+    volumes:
+      - mira-document-storage:/app/data/storage
 
   web:
     build:
@@ -52,3 +55,4 @@ services:
 
 volumes:
   mira-pgdata:
+  mira-document-storage:

@@ -1,6 +1,7 @@
 use std::sync::Arc;
+use std::process::Stdio;
 use axum::{
-    extract::{Path, Query, State},
+    extract::{DefaultBodyLimit, Path, Query, State},
     http::{HeaderMap, StatusCode},
     response::IntoResponse,
     routing::{get, patch, post, put},
@@ -8,19 +9,22 @@ use axum::{
 };
 use chrono::NaiveDate;
 use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
+use sqlx::{PgPool, Row};
 use uuid::Uuid;
+use tokio::{io::AsyncWriteExt, process::Command};
 
 use crate::{
     application::{
-        AddHouseholdMemberRequest, ApplicationService, AuditService, AuthService, BenefitDuplicateDecisionRequest,
-        BenefitDuplicateService, BenefitService, CheckBenefitDuplicateRequest, CreateApplicationRequest,
-        CreateERCaseRequest, CreateHouseholdRequest, CreatePersonRequest, CreatePropertyAssociationRequest,
-        CreatePropertyRequest, CreateRelationshipRequest, CreateSchemeRequest, CreateSchemeRuleRequest,
-        EligibilityEngine, EntityResolutionService, GraphService, HealthService, HouseholdService,
-        LoginRequest, PersonService, ProfileService, PropertyService, RegisterRequest, ResolveERCaseRequest,
-        SchemeService, SplitHouseholdRequest, UpdateHouseholdRequest, UpdatePersonRequest,
-        UpdatePreferencesRequest, UpdateSchemeRequest, UpdateSchemeRuleRequest,
+        AddHouseholdMemberRequest, ApplicationService, AssignApplicationRequest, AuditService, AuthService,
+        BenefitDuplicateDecisionRequest, BenefitDuplicateService, BenefitService, CheckBenefitDuplicateRequest,
+        CreateApplicationRequest, CreateERCaseRequest, CreateHouseholdRequest, CreatePersonRequest,
+        CreatePropertyAssociationRequest, CreatePropertyRequest, CreateRelationshipRequest, CreateSchemeRequest,
+        CreateSchemeRuleRequest, EligibilityEngine, EntityResolutionService, GraphService, HealthService,
+        HouseholdService, LoginRequest, NotificationService, PersonService, ProfileService, PropertyService,
+        RegisterRequest, RejectApplicationRequest, RequestEvidenceRequest, ResolveERCaseRequest, SchemeService,
+        SplitHouseholdRequest, SubmitEvidenceRequest, UpdateApplicationRequest, UpdateHouseholdRequest,
+        UpdatePersonRequest, UpdatePreferencesRequest, UpdateSchemeRequest, UpdateSchemeRuleRequest,
+        VerifyApplicationRequest,
     },
     auth::AuthenticatedUser,
 
@@ -89,6 +93,51 @@ pub async fn login_handler(
     let client_ip = get_client_ip(&headers);
     let res = AuthService::login(&state.pool, &state.config, payload, &request_id, client_ip).await?;
     Ok((StatusCode::OK, Json(res)))
+}
+
+#[derive(Deserialize)]
+pub struct DemoLoginRequest {
+    role: String,
+}
+
+pub async fn demo_login_handler(
+    State(state): State<AppState>,
+    headers: HeaderMap,
+    Json(payload): Json<DemoLoginRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    if !state.config.demo_mode {
+        return Err(AppError::NotFound("Demo access is unavailable.".to_string()));
+    }
+
+    let (email, expected_role) = match payload.role.as_str() {
+        "citizen" => ("citizen@mira.local", "CITIZEN"),
+        "officer" => ("officer@mira.local", "FIELD_OFFICIAL"),
+        "verifier" => ("verifier@mira.local", "VERIFICATION_OFFICER"),
+        "admin" => ("admin@mira.local", "DEPARTMENT_ADMIN"),
+        "auditor" => ("auditor@mira.local", "AUDITOR"),
+        _ => return Err(AppError::Validation("Choose a valid demo account.".to_string())),
+    };
+
+    let request_id = get_request_id(&headers);
+    let client_ip = get_client_ip(&headers);
+    // Reuse the normal password verifier, role loading, audit trail and JWT issuance.
+    let response = AuthService::login(
+        &state.pool,
+        &state.config,
+        LoginRequest {
+            email: email.to_string(),
+            password: crate::database::DEMO_PASSWORD.to_string(),
+        },
+        &request_id,
+        client_ip,
+    )
+    .await?;
+
+    if !response.user.is_demo || !response.user.roles.iter().any(|role| role == expected_role) {
+        return Err(AppError::Forbidden("This account is not configured for the selected demo role.".to_string()));
+    }
+
+    Ok((StatusCode::OK, Json(response)))
 }
 
 pub async fn logout_handler(
@@ -606,6 +655,89 @@ pub async fn approve_application_handler(
     Ok((StatusCode::OK, Json(ApiResponse { data: benefit })))
 }
 
+pub async fn patch_application_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+    Json(payload): Json<UpdateApplicationRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    require_not_auditor(&user)?;
+    let app = ApplicationService::update_application(&state.pool, id, payload, user.id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: app })))
+}
+
+pub async fn assign_application_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+    Json(payload): Json<AssignApplicationRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    require_admin_or_officer(&user)?;
+    let app = ApplicationService::assign_application(&state.pool, id, payload, user.id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: app })))
+}
+
+pub async fn request_evidence_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+    Json(payload): Json<RequestEvidenceRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    require_admin_or_officer(&user)?;
+    let app = ApplicationService::request_evidence(&state.pool, id, payload, user.id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: app })))
+}
+
+pub async fn submit_evidence_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+    Json(payload): Json<SubmitEvidenceRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    require_not_auditor(&user)?;
+    let app = ApplicationService::submit_evidence(&state.pool, id, payload, user.id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: app })))
+}
+
+pub async fn verify_application_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+    Json(payload): Json<VerifyApplicationRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    require_admin_or_officer(&user)?;
+    let app = ApplicationService::verify_application(&state.pool, id, payload, user.id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: app })))
+}
+
+pub async fn reject_application_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+    Json(payload): Json<RejectApplicationRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    require_admin_or_officer(&user)?;
+    let app = ApplicationService::reject_application(&state.pool, id, payload, user.id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: app })))
+}
+
+pub async fn list_notifications_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    let notifs = NotificationService::list_notifications(&state.pool, user.id).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: notifs })))
+}
+
+pub async fn mark_notification_read_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    NotificationService::mark_as_read(&state.pool, id, user.id).await?;
+    Ok((StatusCode::OK, Json(MessageResponse { message: "Notification marked as read".to_string() })))
+}
+
 // 4. Benefits
 pub async fn list_benefits_handler(
     State(state): State<AppState>,
@@ -889,13 +1021,80 @@ fn decode_base64_payload(input: &str) -> Result<Vec<u8>, AppError> {
 #[derive(Deserialize)]
 pub struct UploadDocumentJsonRequest {
     pub filename: String,
+    pub original_filename: Option<String>,
     pub owner_type: String,
     pub owner_id: Uuid,
     pub specified_doc_type: Option<String>,
     pub access_purpose: Option<String>,
     pub file_content_base64: Option<String>,
+    pub original_file_content_base64: Option<String>,
+    pub original_file_mime_type: Option<String>,
     pub text_content: Option<String>,
     pub document_demo_type: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct ReplaceDocumentJsonRequest {
+    pub filename: String,
+    pub original_filename: Option<String>,
+    pub specified_doc_type: Option<String>,
+    pub file_content_base64: String,
+    pub original_file_content_base64: Option<String>,
+    pub original_file_mime_type: Option<String>,
+}
+
+#[derive(Deserialize)]
+pub struct LinkApplicationDocumentRequest {
+    pub document_id: Uuid,
+    pub document_version_id: Uuid,
+    pub required_type: String,
+}
+
+pub async fn link_application_document_handler(
+    State(state): State<AppState>,
+    Path(application_id): Path<Uuid>,
+    user: AuthenticatedUser,
+    Json(payload): Json<LinkApplicationDocumentRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let owns_application = sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM applications WHERE id = $1 AND created_by = $2)")
+        .bind(application_id).bind(user.id).fetch_one(&state.pool).await?;
+    let is_super_admin = user.roles.iter().any(|role| role == "SUPER_ADMIN");
+    let is_department_admin = user.roles.iter().any(|role| role == "DEPARTMENT_ADMIN");
+    let department_scope = if is_department_admin {
+        if let Some(org_id) = user.organization_id {
+            sqlx::query_scalar::<_, bool>(
+                "SELECT EXISTS(SELECT 1 FROM applications a JOIN user_organizations uo ON uo.user_id = a.created_by WHERE a.id = $1 AND uo.organization_id = $2)",
+            ).bind(application_id).bind(org_id).fetch_one(&state.pool).await?
+        } else { false }
+    } else { false };
+    let is_assigned_officer = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM applications WHERE id = $1 AND metadata->'assignment'->>'assigned_to' = $2)",
+    ).bind(application_id).bind(user.id.to_string()).fetch_one(&state.pool).await?;
+    if !owns_application && !is_super_admin && !department_scope && !is_assigned_officer { return Err(AppError::Forbidden("You cannot attach documents to this application.".into())); }
+    let service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    service.get_document(payload.document_id, &user, "APPLICATION_VERIFICATION", None, None).await?;
+    let version_matches = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM documents WHERE id = $1 AND (id = $2 OR supersedes_document_id = $2))",
+    ).bind(payload.document_version_id).bind(payload.document_id).fetch_one(&state.pool).await?;
+    if !version_matches { return Err(AppError::Validation("The selected document version does not belong to this document.".into())); }
+    let row = sqlx::query(
+        "INSERT INTO application_documents (application_id, document_id, document_version_id, required_type, linked_by) VALUES ($1, $2, $3, $4, $5) ON CONFLICT (application_id, document_id, document_version_id) DO UPDATE SET required_type = EXCLUDED.required_type RETURNING id, application_id, document_id, document_version_id, required_type, status, linked_by, linked_at",
+    ).bind(application_id).bind(payload.document_id).bind(payload.document_version_id).bind(&payload.required_type).bind(user.id)
+        .fetch_one(&state.pool).await?;
+    sqlx::query("INSERT INTO audit_events (event_type, user_id, organization_id, request_id, details) VALUES ('DOCUMENT_LINKED', $1, $2, $3, $4)")
+        .bind(user.id).bind(user.organization_id).bind(&user.request_id)
+        .bind(serde_json::json!({"document_id": payload.document_id, "version_id": payload.document_version_id, "application_id": application_id, "required_type": payload.required_type}))
+        .execute(&state.pool).await?;
+    Ok((StatusCode::CREATED, Json(ApiResponse { data: serde_json::json!({
+        "id": row.try_get::<Uuid, _>("id")?,
+        "application_id": row.try_get::<Uuid, _>("application_id")?,
+        "document_id": row.try_get::<Uuid, _>("document_id")?,
+        "document_version_id": row.try_get::<Uuid, _>("document_version_id")?,
+        "required_type": row.try_get::<String, _>("required_type")?,
+        "status": row.try_get::<String, _>("status")?,
+        "linked_by": row.try_get::<Uuid, _>("linked_by")?,
+        "linked_at": row.try_get::<chrono::DateTime<chrono::Utc>, _>("linked_at")?,
+    }) })))
 }
 
 #[derive(Deserialize)]
@@ -909,6 +1108,47 @@ pub struct DocumentAccessQuery {
     pub purpose: Option<String>,
 }
 
+async fn optimize_pdf_if_useful(source: Vec<u8>) -> Result<(Vec<u8>, Option<Vec<u8>>), AppError> {
+    use crate::domain::document::file_type_registry::{MAX_FILE_SIZE_BYTES, PDF_COMPRESSION_THRESHOLD_BYTES};
+    if source.len() <= PDF_COMPRESSION_THRESHOLD_BYTES || !source.starts_with(b"%PDF-") {
+        return Ok((source, None));
+    }
+    if source.windows(8).any(|window| window == b"/Encrypt") {
+        return Err(AppError::Validation("Password-protected PDF files are not supported. Remove the password and try again.".into()));
+    }
+    // Rewriting digitally signed PDFs can invalidate their signatures, so keep their exact bytes.
+    if source.windows(9).any(|window| window == b"/ByteRange") {
+        if source.len() > MAX_FILE_SIZE_BYTES as usize {
+            return Err(AppError::Validation("This signed PDF is larger than 25 MB and cannot be safely optimized without invalidating its signature.".into()));
+        }
+        return Ok((source, None));
+    }
+
+    let output_path = std::env::temp_dir().join(format!("mira-pdf-{}.pdf", Uuid::new_v4()));
+    let mut child = match Command::new("gs")
+        .args(["-dSAFER", "-dBATCH", "-dNOPAUSE", "-dQUIET", "-sDEVICE=pdfwrite", "-dCompatibilityLevel=1.7", "-dPDFSETTINGS=/prepress", "-dDetectDuplicateImages=true", "-dCompressFonts=true"])
+        .arg(format!("-sOutputFile={}", output_path.display()))
+        .stdin(Stdio::piped()).stdout(Stdio::null()).stderr(Stdio::null()).spawn()
+    {
+        Ok(child) => child,
+        Err(_) if source.len() <= MAX_FILE_SIZE_BYTES as usize => return Ok((source, None)),
+        Err(_) => return Err(AppError::Validation("Automatic PDF optimization is unavailable. This PDF exceeds 25 MB; choose a smaller file or retry when document processing is available.".into())),
+    };
+    if let Some(mut stdin) = child.stdin.take() {
+        stdin.write_all(&source).await.map_err(|e| AppError::Internal(format!("Unable to pass PDF to optimizer: {e}")))?;
+    }
+    let result = child.wait().await;
+    let output = if result.map(|status| status.success()).unwrap_or(false) {
+        tokio::fs::read(&output_path).await.ok()
+    } else { None };
+    let _ = tokio::fs::remove_file(&output_path).await;
+    if let Some(optimized) = output.filter(|bytes| bytes.len() < source.len() && bytes.starts_with(b"%PDF-")) {
+        return Ok((optimized, Some(source)));
+    }
+    if source.len() <= MAX_FILE_SIZE_BYTES as usize { Ok((source, None)) }
+    else { Err(AppError::Validation("Automatic PDF optimization could not reduce this file below 25 MB. The original was preserved; choose a smaller PDF and retry.".into())) }
+}
+
 pub async fn upload_document_handler(
     State(state): State<AppState>,
     user: AuthenticatedUser,
@@ -919,7 +1159,7 @@ pub async fn upload_document_handler(
     let ip = get_client_ip(&headers).map(|s| s.to_string());
     let ua = headers.get("user-agent").and_then(|h| h.to_str().ok()).map(|s| s.to_string());
 
-    let bytes = if let Some(ref b64) = payload.file_content_base64 {
+    let raw_bytes = if let Some(ref b64) = payload.file_content_base64 {
         decode_base64_payload(b64)?
     } else if let Some(ref txt) = payload.text_content {
         txt.as_bytes().to_vec()
@@ -928,16 +1168,23 @@ pub async fn upload_document_handler(
     } else {
         crate::domain::document::ocr::generate_fallback_ocr_text_from_filename(&payload.filename).into_bytes()
     };
+    let (bytes, original_bytes) = if payload.filename.to_lowercase().ends_with(".pdf") {
+        optimize_pdf_if_useful(raw_bytes).await?
+    } else { (raw_bytes, None) };
 
     let upload_payload = crate::application::UploadDocumentPayload {
-        raw_filename: payload.filename,
+        raw_filename: payload.filename.clone(),
+        display_filename: payload.original_filename,
         owner_type: payload.owner_type,
         owner_id: payload.owner_id,
         specified_doc_type: payload.specified_doc_type,
         access_purpose: payload.access_purpose.unwrap_or_else(|| "APPLICATION_VERIFICATION".to_string()),
     };
 
-    let doc = doc_service.upload_and_process_document(upload_payload, &bytes, &user, ip, ua).await?;
+    let browser_original = payload.original_file_content_base64.as_deref().map(decode_base64_payload).transpose()?;
+    let retained_original = original_bytes.as_deref().or(browser_original.as_deref());
+    let source_mime = if original_bytes.is_some() { Some("application/pdf") } else { payload.original_file_mime_type.as_deref() };
+    let doc = doc_service.upload_and_process_document(upload_payload, &bytes, retained_original, source_mime, &user, ip, ua).await?;
     Ok((StatusCode::CREATED, Json(ApiResponse { data: doc })))
 }
 
@@ -988,7 +1235,8 @@ pub async fn download_document_handler(
     );
     response_headers.insert(
         axum::http::header::CONTENT_DISPOSITION,
-        format!("attachment; filename=\"{}\"", doc.original_filename).parse().unwrap(),
+        format!("attachment; filename=\"{}\"", doc.original_filename.chars().map(|character| if character.is_ascii_alphanumeric() || matches!(character, '.' | '-' | '_' | ' ') { character } else { '_' }).collect::<String>())
+            .parse().map_err(|_| AppError::Internal("Unable to prepare a safe download filename.".into()))?,
     );
     response_headers.insert(
         axum::http::header::CONTENT_LENGTH,
@@ -1021,12 +1269,154 @@ pub async fn preview_document_handler(
     Ok((StatusCode::OK, response_headers, bytes))
 }
 
+pub async fn replace_document_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+    headers: HeaderMap,
+    Json(payload): Json<ReplaceDocumentJsonRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let ip = get_client_ip(&headers).map(str::to_owned);
+    let ua = headers.get("user-agent").and_then(|h| h.to_str().ok()).map(str::to_owned);
+    let prior = service.get_document(id, &user, "CITIZEN_SELF_SERVICE", ip.clone(), ua.clone()).await?;
+    if prior.created_by != Some(user.id) && prior.owner_id != user.id {
+        return Err(AppError::Forbidden("Only the document owner can replace this file.".into()));
+    }
+    let raw_bytes = decode_base64_payload(&payload.file_content_base64)?;
+    let (bytes, original_bytes) = if payload.filename.to_lowercase().ends_with(".pdf") {
+        optimize_pdf_if_useful(raw_bytes).await?
+    } else { (raw_bytes, None) };
+    let browser_original = payload.original_file_content_base64.as_deref().map(decode_base64_payload).transpose()?;
+    let retained_original = original_bytes.as_deref().or(browser_original.as_deref());
+    let source_mime = if original_bytes.is_some() { Some("application/pdf") } else { payload.original_file_mime_type.as_deref() };
+    let replacement = service.upload_and_process_document(
+        crate::application::UploadDocumentPayload {
+            raw_filename: payload.filename.clone(),
+            display_filename: payload.original_filename,
+            owner_type: prior.owner_type.clone(),
+            owner_id: prior.owner_id,
+            specified_doc_type: payload.specified_doc_type.or(Some(prior.document_type.clone())),
+            access_purpose: "CITIZEN_SELF_SERVICE".to_string(),
+        },
+        &bytes,
+        retained_original,
+        source_mime,
+        &user,
+        ip,
+        ua,
+    ).await?;
+    if replacement.id != prior.id && replacement.supersedes_document_id.is_none() {
+        sqlx::query("UPDATE documents SET supersedes_document_id = $1, version_number = $2 WHERE id = $3")
+            .bind(prior.id)
+            .bind(prior.version_number + 1)
+            .bind(replacement.id)
+            .execute(&state.pool)
+            .await
+            .map_err(|e| AppError::Internal(format!("Failed to record document version: {e}")))?;
+        sqlx::query("INSERT INTO audit_events (event_type, user_id, organization_id, request_id, details) VALUES ('DOCUMENT_REPLACED', $1, $2, $3, $4)")
+            .bind(user.id).bind(user.organization_id).bind(&user.request_id)
+            .bind(serde_json::json!({"document_id": prior.id, "previous_version": prior.version_number, "new_version_id": replacement.id, "version": prior.version_number + 1}))
+            .execute(&state.pool).await?;
+        sqlx::query("INSERT INTO audit_events (event_type, user_id, organization_id, request_id, details) VALUES ('DOCUMENT_VERSION_CREATED', $1, $2, $3, $4)")
+            .bind(user.id).bind(user.organization_id).bind(&user.request_id)
+            .bind(serde_json::json!({"document_id": replacement.id, "supersedes_document_id": prior.id, "version": prior.version_number + 1}))
+            .execute(&state.pool).await?;
+        let updated = service.get_document(replacement.id, &user, "CITIZEN_SELF_SERVICE", None, None).await?;
+        return Ok((StatusCode::CREATED, Json(ApiResponse { data: updated })));
+    }
+    Ok((StatusCode::OK, Json(ApiResponse { data: replacement })))
+}
+
+pub async fn document_versions_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    let service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    service.get_document(id, &user, "CITIZEN_SELF_SERVICE", None, None).await?;
+    let docs = sqlx::query_as::<_, crate::domain::document::models::Document>(
+        r#"WITH RECURSIVE root AS (
+               SELECT id, supersedes_document_id FROM documents WHERE id = $1
+               UNION ALL
+               SELECT parent.id, parent.supersedes_document_id
+               FROM documents parent JOIN root child ON child.supersedes_document_id = parent.id
+           ), family AS (
+               SELECT id FROM root WHERE supersedes_document_id IS NULL
+               UNION ALL
+               SELECT child.id FROM documents child JOIN family parent ON child.supersedes_document_id = parent.id
+           )
+           SELECT d.* FROM documents d JOIN family f ON f.id = d.id ORDER BY d.version_number ASC"#,
+    )
+    .bind(id)
+    .fetch_all(&state.pool)
+    .await
+    .map_err(|e| AppError::Internal(format!("Failed to load document history: {e}")))?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: docs })))
+}
+
+pub async fn document_applications_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    let service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    service.get_document(id, &user, "CITIZEN_SELF_SERVICE", None, None).await?;
+    let rows = sqlx::query(
+        r#"SELECT a.id AS application_id, a.public_id, a.application_number, a.status,
+                  s.name AS scheme_name, ad.required_type, ad.linked_at, ad.document_version_id
+           FROM application_documents ad
+           JOIN applications a ON a.id = ad.application_id
+           JOIN schemes s ON s.id = a.scheme_id
+           WHERE ad.document_id = $1 ORDER BY ad.linked_at DESC"#,
+    ).bind(id).fetch_all(&state.pool).await?;
+    let mut data = Vec::new();
+    for row in rows {
+        let app_id: Uuid = row.try_get("application_id").unwrap_or_default();
+        let pub_id: String = row.try_get("public_id").unwrap_or_default();
+        let app_num: String = row.try_get("application_number").unwrap_or_default();
+        let status: String = row.try_get("status").unwrap_or_default();
+        let scheme_name: String = row.try_get("scheme_name").unwrap_or_default();
+        let req_type: String = row.try_get("required_type").unwrap_or_default();
+        let linked_at: Option<chrono::DateTime<chrono::Utc>> = row.try_get("linked_at").ok();
+        let doc_ver_id: Option<Uuid> = row.try_get("document_version_id").ok();
+        data.push(serde_json::json!({
+            "application_id": app_id,
+            "public_id": pub_id,
+            "application_number": app_num,
+            "status": status,
+            "scheme_name": scheme_name,
+            "required_type": req_type,
+            "linked_at": linked_at,
+            "document_version_id": doc_ver_id,
+        }));
+    }
+    Ok((StatusCode::OK, Json(ApiResponse { data })))
+}
+
+pub async fn archive_document_handler(
+    State(state): State<AppState>,
+    Path(id): Path<Uuid>,
+    user: AuthenticatedUser,
+    headers: HeaderMap,
+) -> Result<impl IntoResponse, AppError> {
+    let service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    let archived = service.archive_document(
+        id,
+        &user,
+        get_client_ip(&headers).map(str::to_owned),
+        headers.get("user-agent").and_then(|h| h.to_str().ok()).map(str::to_owned),
+    ).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: archived })))
+}
+
 pub async fn get_document_extractions_handler(
     State(state): State<AppState>,
-    _user: AuthenticatedUser,
+    user: AuthenticatedUser,
     Path(id): Path<Uuid>,
 ) -> Result<impl IntoResponse, AppError> {
     let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
+    doc_service.get_document(id, &user, "CITIZEN_SELF_SERVICE", None, None).await?;
     let extractions = doc_service.get_extractions(id).await?;
     Ok((StatusCode::OK, Json(ApiResponse { data: extractions })))
 }
@@ -1107,6 +1497,7 @@ pub fn create_router(state: AppState) -> Router {
         // Authentication
         .route("/api/v1/auth/register", post(register_handler))
         .route("/api/v1/auth/login", post(login_handler))
+        .route("/api/v1/auth/demo-login", post(demo_login_handler))
         .route("/api/v1/auth/logout", post(logout_handler))
         .route("/api/v1/auth/me", get(me_handler))
 
@@ -1153,10 +1544,19 @@ pub fn create_router(state: AppState) -> Router {
 
         // V3 Applications & Assessment
         .route("/api/v1/applications", get(list_applications_handler).post(create_application_handler))
-        .route("/api/v1/applications/:id", get(get_application_handler))
+        .route("/api/v1/applications/:id", get(get_application_handler).patch(patch_application_handler))
         .route("/api/v1/applications/:id/assess", post(assess_application_handler))
         .route("/api/v1/applications/:id/submit", post(submit_application_handler))
+        .route("/api/v1/applications/:id/assign", post(assign_application_handler))
+        .route("/api/v1/applications/:id/request-evidence", post(request_evidence_handler))
+        .route("/api/v1/applications/:id/submit-evidence", post(submit_evidence_handler))
+        .route("/api/v1/applications/:id/verify", post(verify_application_handler))
         .route("/api/v1/applications/:id/approve", post(approve_application_handler))
+        .route("/api/v1/applications/:id/reject", post(reject_application_handler))
+
+        // Notifications
+        .route("/api/v1/notifications", get(list_notifications_handler))
+        .route("/api/v1/notifications/:id/read", post(mark_notification_read_handler))
 
         // V3 Benefits & Dashboard
         .route("/api/v1/benefits", get(list_benefits_handler))
@@ -1181,9 +1581,13 @@ pub fn create_router(state: AppState) -> Router {
 
         // V5 Document Intelligence & Evidence
         .route("/api/v1/documents", get(list_documents_handler).post(upload_document_handler))
-        .route("/api/v1/documents/:id", get(get_document_handler))
+        .route("/api/v1/documents/:id", get(get_document_handler).delete(archive_document_handler))
         .route("/api/v1/documents/:id/download", get(download_document_handler))
         .route("/api/v1/documents/:id/preview", get(preview_document_handler))
+        .route("/api/v1/documents/:id/replace", post(replace_document_handler))
+        .route("/api/v1/documents/:id/versions", get(document_versions_handler))
+        .route("/api/v1/documents/:id/applications", get(document_applications_handler))
+        .route("/api/v1/applications/:id/documents", post(link_application_document_handler))
         .route("/api/v1/documents/:id/extractions", get(get_document_extractions_handler))
         .route("/api/v1/documents/:id/verify-extraction", post(verify_extraction_handler))
         .route("/api/v1/cases/:id/evidence-pack", get(get_case_evidence_pack_handler))
@@ -1191,6 +1595,7 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/v1/cases/:id/evidence-report", get(get_case_evidence_report_handler))
 
         .layer(axum::Extension(state.config.clone()))
+        .layer(DefaultBodyLimit::max(72 * 1024 * 1024))
         .with_state(state)
 }
 

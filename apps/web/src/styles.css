@@ -1,0 +1,219 @@
+@import "tailwindcss" source(none);
+@source "../src";
+@import "tw-animate-css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --font-sans: "Noto Sans", "Noto Sans Devanagari", "Noto Sans Bengali", "Noto Sans Tamil", "Noto Sans Telugu", "Noto Sans Gujarati", "Noto Sans Gurmukhi", system-ui, sans-serif;
+  --radius-sm: calc(var(--radius) - 4px);
+  --radius-md: calc(var(--radius) - 2px);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) + 2px);
+  --radius-2xl: calc(var(--radius) + 4px);
+  --color-background: var(--background);
+  --color-foreground: var(--foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-popover: var(--popover);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-primary: var(--primary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
+  --color-success: var(--success);
+  --color-success-foreground: var(--success-foreground);
+  --color-warning: var(--warning);
+  --color-warning-foreground: var(--warning-foreground);
+  --color-navy: var(--navy);
+  --color-gov: var(--gov);
+  --color-teal: var(--teal);
+  --color-saffron: var(--saffron);
+  --color-indgreen: var(--indgreen);
+  --color-border: var(--border);
+  --color-input: var(--input);
+  --color-ring: var(--ring);
+  --color-ring-offset-background: var(--background);
+  --color-chart-1: var(--chart-1);
+  --color-chart-2: var(--chart-2);
+  --color-chart-3: var(--chart-3);
+  --color-chart-4: var(--chart-4);
+  --color-chart-5: var(--chart-5);
+  --color-sidebar: var(--sidebar);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-ring: var(--sidebar-ring);
+}
+
+:root {
+  --radius: 0.5rem;
+  --navy: oklch(0.33 0.08 250);
+  --gov: oklch(0.5 0.13 252);
+  --teal: oklch(0.51 0.09 185);
+  --saffron: oklch(0.75 0.16 60);
+  --indgreen: oklch(0.52 0.14 150);
+  --background: oklch(0.975 0.004 250);
+  --foreground: oklch(0.24 0.04 265);
+  --card: oklch(1 0 0);
+  --card-foreground: oklch(0.24 0.04 265);
+  --popover: oklch(1 0 0);
+  --popover-foreground: oklch(0.24 0.04 265);
+  --primary: oklch(0.33 0.08 250);
+  --primary-foreground: oklch(0.985 0.003 250);
+  --secondary: oklch(0.95 0.015 250);
+  --secondary-foreground: oklch(0.33 0.08 250);
+  --muted: oklch(0.955 0.006 250);
+  --muted-foreground: oklch(0.55 0.04 257);
+  --accent: oklch(0.95 0.025 185);
+  --accent-foreground: oklch(0.42 0.08 185);
+  --destructive: oklch(0.5 0.19 27);
+  --destructive-foreground: oklch(0.985 0 0);
+  --success: oklch(0.52 0.14 150);
+  --success-foreground: oklch(0.985 0 0);
+  --warning: oklch(0.67 0.16 60);
+  --warning-foreground: oklch(0.25 0.05 60);
+  --border: oklch(0.91 0.012 245);
+  --input: oklch(0.88 0.014 245);
+  --ring: oklch(0.5 0.13 252);
+  --chart-1: oklch(0.33 0.08 250);
+  --chart-2: oklch(0.51 0.09 185);
+  --chart-3: oklch(0.5 0.13 252);
+  --chart-4: oklch(0.67 0.16 60);
+  --chart-5: oklch(0.52 0.14 150);
+  --sidebar: oklch(0.29 0.07 250);
+  --sidebar-foreground: oklch(0.92 0.01 250);
+  --sidebar-primary: oklch(0.985 0 0);
+  --sidebar-primary-foreground: oklch(0.29 0.07 250);
+  --sidebar-accent: oklch(0.36 0.08 250);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(0.38 0.06 250);
+  --sidebar-ring: oklch(0.5 0.13 252);
+}
+
+/* High contrast accessibility mode */
+.hc {
+  --background: oklch(1 0 0);
+  --foreground: oklch(0 0 0);
+  --muted-foreground: oklch(0.25 0 0);
+  --border: oklch(0.2 0 0);
+  --input: oklch(0.2 0 0);
+  --primary: oklch(0.22 0.08 255);
+  --card-foreground: oklch(0 0 0);
+}
+.hc a { text-decoration: underline; }
+
+.reduce-motion *, .reduce-motion *::before, .reduce-motion *::after {
+  animation-duration: 0.001ms !important;
+  transition-duration: 0.001ms !important;
+}
+
+.sr-mode :focus-visible { outline: 3px solid var(--gov); outline-offset: 2px; }
+
+@layer base {
+  * { border-color: var(--color-border); }
+  html { font-family: var(--font-sans); }
+  body { background-color: var(--color-background); color: var(--color-foreground); }
+  :focus-visible { outline: 2px solid var(--color-ring); outline-offset: 2px; }
+}
+
+/* Landing hero only: independent photographic layers, no layout animation. */
+.civic-hero { --chakra-scroll: 0px; --gate-scroll: 0px; overflow: clip; }
+.hero-composition { position: relative; isolation: isolate; width: 100%; aspect-ratio: 1.18; }
+.hero-chakra-depth { position: absolute; width: 78%; top: 0; left: 1%; transform: translateY(var(--chakra-scroll)); }
+.hero-chakra { width: 100%; opacity: 0.05; animation: civic-chakra 900ms ease-out both; }
+.hero-gate-depth { position: absolute; width: 64%; top: -4%; right: 0; transform: translateY(var(--gate-scroll)); }
+.hero-gate { width: 100%; height: auto; animation: civic-gate 950ms 180ms ease-out both; }
+.hero-family { position: absolute; width: 100%; height: auto; bottom: 0; left: 0; mask-image: linear-gradient(to bottom, var(--card) 85%, transparent 100%); animation: civic-family 950ms 480ms ease-out both; }
+.hero-label, .hero-heading-line, .hero-description, .hero-actions, .hero-officer, .hero-caption { animation: civic-content 650ms ease-out both; }
+.hero-label { animation-delay: 850ms; }
+.hero-heading-line:nth-child(1) { animation-delay: 950ms; }
+.hero-heading-line:nth-child(2) { animation-delay: 1050ms; }
+.hero-heading-line:nth-child(3) { animation-delay: 1150ms; }
+.hero-description { animation-delay: 1250ms; }
+.hero-actions { animation-delay: 1350ms; }
+.hero-officer, .hero-caption { animation-delay: 1450ms; }
+.hero-explore:hover { background-color: color-mix(in oklab, var(--primary) 92%, var(--foreground)); }
+.hero-explore svg { transition: transform 180ms ease-out; }
+.hero-explore:hover svg { transform: translateX(3px); }
+.hero-track:hover { border-color: var(--gov); }
+.hero-officer { text-underline-offset: 4px; }
+@keyframes civic-chakra { from { opacity: 0; transform: scale(0.95); } to { opacity: 0.05; transform: scale(1); } }
+@keyframes civic-gate { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes civic-family { from { opacity: 0; transform: translateX(20px) scale(0.98); } to { opacity: 1; transform: translateX(0) scale(1); } }
+@keyframes civic-content { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@media (min-width: 768px) and (max-width: 1023px) {
+  .civic-hero > div { gap: 1.5rem; }
+  .civic-hero h1 { font-size: 1.875rem; }
+  .civic-hero .hero-actions a { padding-inline: 1.25rem; }
+}
+@media (max-width: 767px) {
+  .civic-hero > div { padding-block: 2rem; gap: 1.5rem; }
+  .civic-hero .hero-actions a { padding-inline: 1.25rem; }
+  .hero-composition { max-width: 480px; margin-inline: auto; aspect-ratio: 1.35; }
+  .hero-chakra-depth { width: 65%; left: 7%; }
+  .hero-chakra { opacity: 0.03; }
+  .hero-gate-depth { width: 57%; top: -7%; right: 3%; }
+  .hero-family { width: 94%; left: 3%; }
+  @keyframes civic-chakra { from { opacity: 0; transform: scale(0.95); } to { opacity: 0.03; transform: scale(1); } }
+}
+.reduce-motion .civic-hero *, .reduce-motion .civic-hero *::before, .reduce-motion .civic-hero *::after { animation: none !important; transition: none !important; }
+.reduce-motion .hero-chakra-depth, .reduce-motion .hero-gate-depth { transform: none; }
+@media (prefers-reduced-motion: reduce) {
+  .civic-hero *, .civic-hero *::before, .civic-hero *::after { animation: none !important; transition: none !important; }
+  .hero-chakra-depth, .hero-gate-depth { transform: none; }
+  .hero-explore:hover svg { transform: none; }
+}
+
+/* Login-only editorial photo montage; no split layout or glass blur. */
+.login-page {
+  --login-surface: color-mix(in oklab, var(--card) 94%, transparent);
+  --login-role-surface: color-mix(in oklab, var(--card) 90%, transparent);
+  --login-overlay: linear-gradient(90deg, color-mix(in oklab, var(--card) 34%, transparent), color-mix(in oklab, var(--card) 48%, transparent) 50%, color-mix(in oklab, var(--card) 28%, transparent));
+  --login-shadow: 0 4px 24px color-mix(in oklab, var(--navy) 6%, transparent);
+  position: relative; isolation: isolate; min-height: calc(100svh - 72px); overflow: clip;
+}
+.login-background { position: absolute; z-index: -1; inset: 0; overflow: hidden; background: var(--background); }
+.login-photo-layer { position: absolute; mask-image: radial-gradient(ellipse at center, var(--card) 30%, transparent 73%); }
+.login-background-photo { width: 100%; height: 100%; object-fit: cover; }
+.login-photo-family { --photo-opacity: .5; left: -7%; bottom: -8%; width: 48%; height: 95%; opacity: var(--photo-opacity); animation: login-family-enter 1200ms 150ms cubic-bezier(.22,1,.36,1) both; }
+.login-photo-family img { object-position: center; animation: login-family-drift 18s 1350ms ease-in-out infinite; }
+.login-photo-service { --photo-opacity: .38; right: -10%; bottom: -7%; width: 49%; height: 80%; opacity: var(--photo-opacity); animation: login-service-enter 1200ms 1500ms cubic-bezier(.22,1,.36,1) both; }
+.login-photo-service img { object-position: 55% center; animation: login-service-drift 16s 2700ms ease-in-out infinite; }
+.login-photo-civic { --photo-opacity: .28; left: 21%; top: -18%; width: 67%; height: 77%; opacity: var(--photo-opacity); animation: login-civic-enter 1400ms 2850ms cubic-bezier(.22,1,.36,1) both; }
+.login-photo-overlay { position: absolute; inset: 0; background: var(--login-overlay); }
+.login-layout { min-height: inherit; display: flex; align-items: center; justify-content: center; padding: 24px 32px; position: relative; }
+.login-access { width: 620px; max-width: 100%; }
+.login-panel { padding: 26px 30px; background: var(--login-surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--login-shadow); animation: login-enter 350ms 180ms ease-out both; }
+.login-panel > p:first-child { animation: login-enter 300ms 250ms ease-out both; }.login-panel > h1 { animation: login-enter 300ms 330ms ease-out both; }.login-panel > h1 + p { animation: login-enter 300ms 410ms ease-out both; }
+.login-progress { font-size: 11px; animation: login-enter 300ms 490ms ease-out both; }
+.login-role { gap: 12px; padding: 12px 14px; background: var(--login-role-surface); transition: background-color 180ms, border-color 180ms; animation: login-enter 300ms 560ms ease-out both; }
+.login-role:nth-child(2) { animation-delay: 640ms; }.login-role:nth-child(3) { animation-delay: 720ms; }
+.login-role:hover, .login-role:focus-visible { border-color: var(--gov); background: var(--secondary); }
+.login-role-arrow { transition: transform 180ms; }.login-role:hover .login-role-arrow { transform: translateX(3px); }
+.login-form-enter { animation: login-enter 250ms ease-out both; }
+.hc .login-panel, .hc .login-role { background: var(--card); border-color: var(--border); }
+@keyframes login-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes login-family-enter { from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-15px) scale(1.02); } to { opacity: var(--photo-opacity); clip-path: inset(0); transform: none; } }
+@keyframes login-service-enter { from { opacity: 0; clip-path: inset(0 0 0 100%); transform: translateX(15px); } to { opacity: var(--photo-opacity); clip-path: inset(0); transform: none; } }
+@keyframes login-civic-enter { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(12px) scale(1.015); } to { opacity: var(--photo-opacity); clip-path: inset(0); transform: none; } }
+@keyframes login-family-drift { 0%,100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
+@keyframes login-service-drift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@media (min-width: 768px) and (max-width: 1023px) {
+  .login-layout { padding: 24px; }.login-access { width: 570px; }.login-panel { padding: 24px; }.login-progress { gap: 12px; flex-wrap: wrap; }.login-photo-family { left: -18%; width: 65%; }.login-photo-service { right: -26%; width: 63%; }
+}
+@media (max-width: 767px) {
+  .login-layout { align-items: flex-start; padding: 20px 16px; }.login-access { width: 100%; }.login-panel { padding: 22px 16px; }.login-panel h1 { font-size: 1.375rem; }.login-progress { gap: 12px; flex-wrap: wrap; }.login-role { gap: 10px; padding: 12px; }.login-role-arrow { display: none; }
+  .login-photo-family { left: -32%; width: 140%; height: 100%; bottom: -3%; --photo-opacity: .35; }.login-photo-service { right: -35%; bottom: -4%; width: 95%; height: 45%; --photo-opacity: .12; }.login-photo-civic { left: -10%; top: -8%; width: 130%; height: 55%; --photo-opacity: .16; }
+}
+.reduce-motion .login-page *, .reduce-motion .login-page *::before { animation: none !important; transition: none !important; }
+@media (prefers-reduced-motion: reduce) { .login-page *, .login-page *::before { animation: none !important; transition: none !important; }.login-role:hover .login-role-arrow { transform: none; } }
