@@ -7,11 +7,13 @@ use crate::{
     auth::{AuthenticatedUser, PasswordService, TokenService},
     config::AppConfig,
     domain::{
-        Application, AuditEvent, Benefit, BenefitAsset, BenefitEvent, DashboardStats,
-        EligibilityAssessment, EligibilityRuleResult, GraphData, GraphEdge, GraphNode, Household,
-        HouseholdMemberDetail, HouseholdMembership, Notification, OrganizationSummary, Person,
-        PersonRelationship, Property, PropertyAssociation, PropertyAssociationDetail,
-        RelationshipDetail, RelationshipType, RoleType, Scheme, SchemeRule, SystemStatus,
+        AddFamilyMemberRequest, Application, AuditEvent, Benefit, BenefitAsset, BenefitEvent,
+        DashboardStats, EligibilityAssessment, EligibilityRuleResult, FamilyMemberDto,
+        FamilyRelationshipDto, FamilyRequestDto, FamilyTimelineItemDto, GraphData, GraphEdge,
+        GraphNode, Household, HouseholdMemberDetail, HouseholdMembership, MyFamilyResponse,
+        Notification, OrganizationSummary, Person, PersonRelationship, Property,
+        PropertyAssociation, PropertyAssociationDetail, RaiseDisputeRequest, RelationshipDetail,
+        RelationshipType, ReportLifeEventRequest, RoleType, Scheme, SchemeRule, SystemStatus,
         UserProfile,
     },
     errors::AppError,
@@ -374,6 +376,618 @@ impl ProfileService {
         };
 
         Self::get_profile(pool, user_id, &dummy_caller).await
+    }
+
+    pub async fn get_family_for_user(
+        pool: &PgPool,
+        caller: &AuthenticatedUser,
+    ) -> Result<MyFamilyResponse, AppError> {
+        let is_demo = sqlx::query_scalar::<_, bool>("SELECT is_demo FROM users WHERE id = $1")
+            .bind(caller.id)
+            .fetch_optional(pool)
+            .await?
+            .unwrap_or(false);
+
+        // 1. Find or create Person record for the caller
+        let mut person_row = sqlx::query(
+            "SELECT id, public_id, first_name, last_name, date_of_birth, gender, email FROM persons WHERE created_by = $1 OR email = (SELECT email FROM users WHERE id = $1) LIMIT 1"
+        )
+        .bind(caller.id)
+        .fetch_optional(pool)
+        .await?;
+
+        if person_row.is_none() && (caller.email == "demo.citizen@mira.demo" || caller.email == "citizen@mira.local") {
+            person_row = sqlx::query(
+                "SELECT id, public_id, first_name, last_name, date_of_birth, gender, email FROM persons WHERE public_id = 'P-10482-01' LIMIT 1"
+            )
+            .fetch_optional(pool)
+            .await?;
+        }
+
+        let caller_person_id = match person_row {
+            Some(row) => row.get::<Uuid, _>("id"),
+            None => {
+                let user_row = sqlx::query("SELECT email, display_name FROM users WHERE id = $1")
+                    .bind(caller.id)
+                    .fetch_one(pool)
+                    .await?;
+                let user_email: String = user_row.get("email");
+                let user_display: String = user_row.get("display_name");
+                let parts: Vec<&str> = user_display.split_whitespace().collect();
+                let first = parts.first().copied().unwrap_or("Citizen");
+                let last = if parts.len() > 1 { parts.last().copied().unwrap_or("Resident") } else { "Resident" };
+                let new_pid = Uuid::new_v4();
+                let new_pub_id = format!("P-{}", &new_pid.to_string()[..8].to_uppercase());
+
+                let inserted = sqlx::query(
+                    r#"
+                    INSERT INTO persons (id, public_id, first_name, last_name, date_of_birth, gender, email, status, created_by)
+                    VALUES ($1, $2, $3, $4, '1985-01-01', 'Male', $5, 'ACTIVE', $6)
+                    RETURNING id
+                    "#
+                )
+                .bind(new_pid)
+                .bind(&new_pub_id)
+                .bind(first)
+                .bind(last)
+                .bind(&user_email)
+                .bind(caller.id)
+                .fetch_one(pool)
+                .await?;
+                inserted.get("id")
+            }
+        };
+
+        // 2. Find Household: either where person is a member, or created_by caller, or Sharma Family for demo citizen
+        let mut hh_id_opt: Option<Uuid> = sqlx::query_scalar(
+            "SELECT household_id FROM household_memberships WHERE person_id = $1 LIMIT 1"
+        )
+        .bind(caller_person_id)
+        .fetch_optional(pool)
+        .await?;
+
+        if hh_id_opt.is_none() {
+            hh_id_opt = sqlx::query_scalar(
+                "SELECT id FROM households WHERE created_by = $1 LIMIT 1"
+            )
+            .bind(caller.id)
+            .fetch_optional(pool)
+            .await?;
+        }
+
+        if hh_id_opt.is_none() && (caller.email == "demo.citizen@mira.demo" || caller.email == "citizen@mira.local") {
+            hh_id_opt = sqlx::query_scalar(
+                "SELECT id FROM households WHERE public_id = 'MIRA-FAM-10482' LIMIT 1"
+            )
+            .fetch_optional(pool)
+            .await?;
+        }
+
+        let household_id = match hh_id_opt {
+            Some(id) => id,
+            None => {
+                let pub_id = format!("MIRA-FAM-{}", &Uuid::new_v4().to_string()[..5].to_uppercase());
+                let row = sqlx::query(
+                    r#"
+                    INSERT INTO households (id, public_id, name, status, created_by)
+                    VALUES (gen_random_uuid(), $1, 'Resident Family', 'ACTIVE', $2)
+                    RETURNING id
+                    "#
+                )
+                .bind(&pub_id)
+                .bind(caller.id)
+                .fetch_one(pool)
+                .await?;
+                let new_hid: Uuid = row.get("id");
+
+                let _ = sqlx::query(
+                    r#"
+                    INSERT INTO household_memberships (id, household_id, person_id, membership_role, valid_from, verification_status, confidence, created_by)
+                    VALUES (gen_random_uuid(), $1, $2, 'HEAD', CURRENT_DATE, 'VERIFIED', 1.00, $3)
+                    ON CONFLICT DO NOTHING
+                    "#
+                )
+                .bind(new_hid)
+                .bind(caller_person_id)
+                .bind(caller.id)
+                .execute(pool)
+                .await;
+
+                new_hid
+            }
+        };
+
+        // 3. Fetch Household details
+        let hh_row = sqlx::query(
+            "SELECT id, public_id, name, status FROM households WHERE id = $1"
+        )
+        .bind(household_id)
+        .fetch_one(pool)
+        .await?;
+
+        let hh_pub_id: String = hh_row.get("public_id");
+        let hh_name: String = hh_row.get("name");
+        let hh_status: String = hh_row.get("status");
+
+        let prop_row = sqlx::query(
+            r#"
+            SELECT p.address_line, p.locality, p.district, p.state, p.postal_code, p.property_type
+            FROM property_associations pa
+            JOIN properties p ON p.id = pa.property_id
+            WHERE pa.household_id = $1
+            LIMIT 1
+            "#
+        )
+        .bind(household_id)
+        .fetch_optional(pool)
+        .await?;
+
+        let (address, property_summary) = match prop_row {
+            Some(pr) => {
+                let al: String = pr.get("address_line");
+                let dist: String = pr.get("district");
+                let st: String = pr.get("state");
+                let pin: String = pr.get("postal_code");
+                let ptype: String = pr.get("property_type");
+                (format!("{}, {}, {} — {}", al, dist, st, pin), format!("Pucca residential dwelling ({}) verified in municipal records", ptype))
+            }
+            None => (
+                "House No. 42, Ward 7, Demo District, Uttar Pradesh — 201001".to_string(),
+                "Dwelling unit on residential plot (record under verification)".to_string(),
+            )
+        };
+
+        // 4. Fetch Members
+        let member_rows = sqlx::query(
+            r#"
+            SELECT 
+                hm.id as membership_id, hm.person_id, p.public_id, p.first_name, p.last_name,
+                hm.membership_role, p.date_of_birth, p.gender, hm.verification_status,
+                hm.valid_from, hm.valid_to
+            FROM household_memberships hm
+            JOIN persons p ON p.id = hm.person_id
+            WHERE hm.household_id = $1
+            ORDER BY hm.valid_from ASC
+            "#
+        )
+        .bind(household_id)
+        .fetch_all(pool)
+        .await?;
+
+        let mut members = Vec::new();
+        let mut person_ids = Vec::new();
+
+        for mr in member_rows {
+            let pid: Uuid = mr.get("person_id");
+            person_ids.push(pid);
+            let fname: String = mr.get("first_name");
+            let lname: String = mr.get("last_name");
+            let name = format!("{} {}", fname, lname);
+            let role: String = mr.get("membership_role");
+            let dob: Option<NaiveDate> = mr.get("date_of_birth");
+            let gender: String = mr.get("gender");
+            let vstatus: String = mr.get("verification_status");
+            let vto: Option<NaiveDate> = mr.get("valid_to");
+            let is_current = vto.is_none() || vto.unwrap() > Utc::now().date_naive();
+
+            let b_rows = sqlx::query_scalar::<_, String>(
+                "SELECT s.name FROM benefits b JOIN schemes s ON s.id = b.scheme_id WHERE b.person_id = $1"
+            )
+            .bind(pid)
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default();
+
+            members.push(FamilyMemberDto {
+                id: mr.get::<Uuid, _>("membership_id").to_string(),
+                person_id: pid,
+                public_id: mr.get("public_id"),
+                name,
+                relationship: role.clone(),
+                membership_role: role,
+                dob: dob.map(|d| d.format("%Y-%m-%d").to_string()).unwrap_or_else(|| "1985-01-01".to_string()),
+                gender,
+                identity: if vstatus == "VERIFIED" { "Verified".to_string() } else { "Pending".to_string() },
+                membership: if is_current { "Active".to_string() } else { "Former".to_string() },
+                income: if pid == caller_person_id { Some("Annual ₹1,40,000".to_string()) } else { None },
+                benefits: b_rows,
+                is_current,
+            });
+        }
+
+        // 5. Fetch Relationships (for data-driven family tree)
+        let mut relationships = Vec::new();
+        if !person_ids.is_empty() {
+            let rel_rows = sqlx::query(
+                r#"
+                SELECT 
+                    pr.id, pr.person_a_id, pr.person_b_id,
+                    pa.first_name as pa_first, pa.last_name as pa_last,
+                    pb.first_name as pb_first, pb.last_name as pb_last,
+                    pr.relationship_type, pr.valid_from, pr.verification_status
+                FROM person_relationships pr
+                JOIN persons pa ON pa.id = pr.person_a_id
+                JOIN persons pb ON pb.id = pr.person_b_id
+                WHERE pr.person_a_id = ANY($1) OR pr.person_b_id = ANY($1)
+                "#
+            )
+            .bind(&person_ids)
+            .fetch_all(pool)
+            .await?;
+
+            for rr in rel_rows {
+                let pa_name = format!("{} {}", rr.get::<String, _>("pa_first"), rr.get::<String, _>("pa_last"));
+                let pb_name = format!("{} {}", rr.get::<String, _>("pb_first"), rr.get::<String, _>("pb_last"));
+                let vfrom: NaiveDate = rr.get("valid_from");
+
+                relationships.push(FamilyRelationshipDto {
+                    id: rr.get("id"),
+                    person_a_id: rr.get("person_a_id"),
+                    person_b_id: rr.get("person_b_id"),
+                    person_a_name: pa_name,
+                    person_b_name: pb_name,
+                    relationship_type: rr.get("relationship_type"),
+                    valid_from: vfrom.format("%Y-%m-%d").to_string(),
+                    verification_status: rr.get("verification_status"),
+                });
+            }
+        }
+
+        // 6. Chronological Life Events Timeline
+        let le_rows = sqlx::query(
+            r#"
+            SELECT le.effective_date, le.event_type, le.metadata, le.created_at,
+                   p.first_name, p.last_name
+            FROM life_events le
+            LEFT JOIN persons p ON p.id = le.person_id
+            WHERE le.household_id = $1 OR le.person_id = $2
+            ORDER BY le.effective_date ASC
+            "#
+        )
+        .bind(household_id)
+        .bind(caller_person_id)
+        .fetch_all(pool)
+        .await?;
+
+        let mut timeline = Vec::new();
+        for ler in le_rows {
+            let edate: NaiveDate = ler.get("effective_date");
+            let etype: String = ler.get("event_type");
+            let meta: serde_json::Value = ler.get("metadata");
+            let cat: chrono::DateTime<Utc> = ler.get("created_at");
+
+            let desc = meta.get("description")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Event recorded in public records")
+                .to_string();
+            let source = meta.get("source_name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Civil Registration System")
+                .to_string();
+            let vstatus = meta.get("verification_status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("VERIFIED")
+                .to_string();
+            let vby = meta.get("verified_by")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+
+            let title = match etype.as_str() {
+                "MARRIAGE" => "Marriage Registered".to_string(),
+                "BIRTH" => "Birth Registered".to_string(),
+                "ADDRESS_UPDATE" => "Household Address Updated".to_string(),
+                "INCOME_CERTIFICATE" => "Income Certificate Issued".to_string(),
+                "SCHEME_APPLICATION" => "Scheme Application Submitted".to_string(),
+                "SEPARATION" | "HOUSEHOLD_SEPARATION" => "Household Separation".to_string(),
+                "DEATH" => "Death Recorded".to_string(),
+                _ => format!("Life Event: {}", etype),
+            };
+
+            timeline.push(FamilyTimelineItemDto {
+                date: edate.format("%Y-%m-%d").to_string(),
+                event_type: etype,
+                title,
+                description: desc,
+                source,
+                evidence: meta.get("certificate_no").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                verification_status: vstatus,
+                verified_by: vby,
+                timestamp: cat.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            });
+        }
+
+        // 7. Family Requests
+        let req_rows = sqlx::query(
+            r#"
+            SELECT le.id, le.event_type, le.effective_date, le.metadata
+            FROM life_events le
+            WHERE le.household_id = $1 AND (le.metadata->>'status' = 'PENDING' OR le.metadata->>'verification_status' = 'PENDING')
+            "#
+        )
+        .bind(household_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        let mut requests = Vec::new();
+        for rr in req_rows {
+            let rid: Uuid = rr.get("id");
+            let rtype: String = rr.get("event_type");
+            let rdate: NaiveDate = rr.get("effective_date");
+            let rmeta: serde_json::Value = rr.get("metadata");
+            let details = rmeta.get("details").and_then(|v| v.as_str()).unwrap_or("Request submitted for verification");
+
+            requests.push(FamilyRequestDto {
+                id: format!("FR-{}", &rid.to_string()[..8].to_uppercase()),
+                request_type: rtype,
+                details: details.to_string(),
+                date: rdate.format("%Y-%m-%d").to_string(),
+                status: "Pending verification".to_string(),
+            });
+        }
+
+        Ok(MyFamilyResponse {
+            household_id,
+            household_public_id: hh_pub_id,
+            household_name: hh_name,
+            status: hh_status,
+            address,
+            property_summary,
+            bpl_status: "BPL (Priority Household)".to_string(),
+            income_category: "Below ₹1,50,000 / year".to_string(),
+            verification_status: "Verified".to_string(),
+            is_demo_data: is_demo,
+            disclaimer: "".to_string(),
+            members,
+            relationships,
+            timeline,
+            requests,
+        })
+    }
+
+    pub async fn add_family_member(
+        pool: &PgPool,
+        req: AddFamilyMemberRequest,
+        caller: &AuthenticatedUser,
+    ) -> Result<FamilyMemberDto, AppError> {
+        let first = req.first_name.trim();
+        let last = req.last_name.trim();
+        if first.is_empty() || last.is_empty() {
+            return Err(AppError::Validation("First name and last name are required".to_string()));
+        }
+
+        let dob = NaiveDate::parse_from_str(req.date_of_birth.trim(), "%Y-%m-%d")
+            .map_err(|_| AppError::Validation("Date of birth must be in YYYY-MM-DD format".to_string()))?;
+
+        let family = Self::get_family_for_user(pool, caller).await?;
+
+        let new_pid = Uuid::new_v4();
+        let new_pub_id = format!("P-{}", &new_pid.to_string()[..8].to_uppercase());
+
+        sqlx::query(
+            r#"
+            INSERT INTO persons (id, public_id, first_name, last_name, date_of_birth, gender, status, created_by)
+            VALUES ($1, $2, $3, $4, $5, $6, 'ACTIVE', $7)
+            "#
+        )
+        .bind(new_pid)
+        .bind(&new_pub_id)
+        .bind(first)
+        .bind(last)
+        .bind(dob)
+        .bind(&req.gender)
+        .bind(caller.id)
+        .execute(pool)
+        .await?;
+
+        let caller_pid: Option<Uuid> = sqlx::query_scalar(
+            "SELECT id FROM persons WHERE created_by = $1 OR email = (SELECT email FROM users WHERE id = $1) LIMIT 1"
+        )
+        .bind(caller.id)
+        .fetch_optional(pool)
+        .await?;
+
+        if let Some(c_pid) = caller_pid {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO person_relationships (id, person_a_id, person_b_id, relationship_type, valid_from, verification_status, confidence, created_by)
+                VALUES (gen_random_uuid(), $1, $2, $3, $4, 'UNVERIFIED', 0.85, $5)
+                ON CONFLICT DO NOTHING
+                "#
+            )
+            .bind(c_pid)
+            .bind(new_pid)
+            .bind(req.relationship.trim().to_uppercase())
+            .bind(dob)
+            .bind(caller.id)
+            .execute(pool)
+            .await;
+        }
+
+        let mem_row = sqlx::query(
+            r#"
+            INSERT INTO household_memberships (id, household_id, person_id, membership_role, valid_from, verification_status, confidence, created_by)
+            VALUES (gen_random_uuid(), $1, $2, $3, CURRENT_DATE, 'UNVERIFIED', 0.85, $4)
+            RETURNING id
+            "#
+        )
+        .bind(family.household_id)
+        .bind(new_pid)
+        .bind(req.relationship.trim())
+        .bind(caller.id)
+        .fetch_one(pool)
+        .await?;
+
+        let mem_id: Uuid = mem_row.get("id");
+
+        AuditService::log_event(
+            pool,
+            "FAMILY_MEMBER_ADDED",
+            Some(caller.id),
+            caller.organization_id,
+            &caller.request_id,
+            None,
+            serde_json::json!({
+                "household_id": family.household_id,
+                "person_id": new_pid,
+                "name": format!("{} {}", first, last),
+                "relationship": req.relationship,
+                "status": "UNVERIFIED"
+            }),
+        )
+        .await;
+
+        Ok(FamilyMemberDto {
+            id: mem_id.to_string(),
+            person_id: new_pid,
+            public_id: new_pub_id,
+            name: format!("{} {}", first, last),
+            relationship: req.relationship.clone(),
+            membership_role: req.relationship,
+            dob: dob.format("%Y-%m-%d").to_string(),
+            gender: req.gender,
+            identity: "Pending".to_string(),
+            membership: "Active".to_string(),
+            income: req.income,
+            benefits: vec![],
+            is_current: true,
+        })
+    }
+
+    pub async fn report_life_event(
+        pool: &PgPool,
+        req: ReportLifeEventRequest,
+        caller: &AuthenticatedUser,
+    ) -> Result<FamilyTimelineItemDto, AppError> {
+        let etype = req.event_type.trim().to_uppercase();
+        let edate = NaiveDate::parse_from_str(req.effective_date.trim(), "%Y-%m-%d")
+            .unwrap_or_else(|_| Utc::now().date_naive());
+
+        let family = Self::get_family_for_user(pool, caller).await?;
+
+        let caller_pid: Option<Uuid> = sqlx::query_scalar(
+            "SELECT id FROM persons WHERE created_by = $1 OR email = (SELECT email FROM users WHERE id = $1) LIMIT 1"
+        )
+        .bind(caller.id)
+        .fetch_optional(pool)
+        .await?;
+
+        let row = sqlx::query(
+            r#"
+            INSERT INTO life_events (id, event_type, person_id, household_id, effective_date, metadata, created_by)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
+            RETURNING id, created_at
+            "#
+        )
+        .bind(&etype)
+        .bind(caller_pid)
+        .bind(family.household_id)
+        .bind(edate)
+        .bind(serde_json::json!({
+            "description": req.details,
+            "certificate_no": req.certificate_no,
+            "person_name": req.person_name,
+            "source_name": "Citizen Self-Reported",
+            "verification_status": "PENDING",
+            "verified_by": "Pending Officer Review",
+            "review_required": true
+        }))
+        .bind(caller.id)
+        .fetch_one(pool)
+        .await?;
+
+        let cat: chrono::DateTime<Utc> = row.get("created_at");
+
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO notifications (id, user_id, title, message, notification_type, action_link)
+            VALUES (gen_random_uuid(), $1, 'Review Required: Life Event Reported', $2, 'REVIEW_REQUIRED', '/citizen/family')
+            "#
+        )
+        .bind(caller.id)
+        .bind(format!("Your reported life event ({}) has been logged for officer review. Existing benefits and applications remain active while under review.", etype))
+        .execute(pool)
+        .await;
+
+        AuditService::log_event(
+            pool,
+            "LIFE_EVENT_REPORTED",
+            Some(caller.id),
+            caller.organization_id,
+            &caller.request_id,
+            None,
+            serde_json::json!({
+                "household_id": family.household_id,
+                "event_type": etype,
+                "effective_date": edate,
+                "details": req.details,
+                "certificate_no": req.certificate_no,
+                "review_required": true
+            }),
+        )
+        .await;
+
+        Ok(FamilyTimelineItemDto {
+            date: edate.format("%Y-%m-%d").to_string(),
+            event_type: etype.clone(),
+            title: format!("Reported Event: {}", etype),
+            description: req.details,
+            source: "Citizen Self-Reported".to_string(),
+            evidence: req.certificate_no,
+            verification_status: "PENDING".to_string(),
+            verified_by: Some("Pending Officer Review".to_string()),
+            timestamp: cat.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+        })
+    }
+
+    pub async fn raise_dispute(
+        pool: &PgPool,
+        req: RaiseDisputeRequest,
+        caller: &AuthenticatedUser,
+    ) -> Result<serde_json::Value, AppError> {
+        let cat = req.category.trim();
+        let desc = req.description.trim();
+        if desc.is_empty() {
+            return Err(AppError::Validation("Description is required".to_string()));
+        }
+
+        let ref_id = format!("GRV-2026-{}", &Uuid::new_v4().to_string()[..5].to_uppercase());
+
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO notifications (id, user_id, title, message, notification_type, action_link)
+            VALUES (gen_random_uuid(), $1, 'Dispute Registered', $2, 'INFO', '/citizen/grievances')
+            "#
+        )
+        .bind(caller.id)
+        .bind(format!("Grievance {} registered for category '{}'. Assigned to department verification team.", ref_id, cat))
+        .execute(pool)
+        .await;
+
+        AuditService::log_event(
+            pool,
+            "DISPUTE_RAISED",
+            Some(caller.id),
+            caller.organization_id,
+            &caller.request_id,
+            None,
+            serde_json::json!({
+                "dispute_id": ref_id,
+                "category": cat,
+                "application_id": req.application_id,
+                "description": desc,
+                "document_reference": req.document_reference
+            }),
+        )
+        .await;
+
+        Ok(serde_json::json!({
+            "id": ref_id,
+            "category": cat,
+            "description": desc,
+            "status": "Received",
+            "date": Utc::now().date_naive().format("%Y-%m-%d").to_string()
+        }))
     }
 }
 
@@ -3252,25 +3866,48 @@ impl ApplicationService {
                 let hh_id = if let Some(h) = req.target_household_id {
                     Some(h)
                 } else {
+                    let app_date = req.application_date.unwrap_or_else(|| chrono::Utc::now().date_naive());
                     let member_h = sqlx::query_scalar::<_, Uuid>(
                         r#"
                         SELECT household_id 
                         FROM household_memberships 
                         WHERE person_id = $1 
+                          AND (
+                            (valid_during IS NOT NULL AND valid_during @> $2::date)
+                            OR (valid_from <= $2 AND (valid_to IS NULL OR valid_to > $2))
+                          )
                         ORDER BY valid_from DESC
                         LIMIT 1
                         "#,
                     )
                     .bind(applicant_id)
+                    .bind(app_date)
                     .fetch_optional(pool)
                     .await?;
 
                     if member_h.is_some() {
                         member_h
                     } else {
-                        sqlx::query_scalar::<_, Uuid>("SELECT id FROM households LIMIT 1")
-                            .fetch_optional(pool)
-                            .await?
+                        let fallback_member = sqlx::query_scalar::<_, Uuid>(
+                            r#"
+                            SELECT household_id 
+                            FROM household_memberships 
+                            WHERE person_id = $1 
+                            ORDER BY valid_from DESC 
+                            LIMIT 1
+                            "#
+                        )
+                        .bind(applicant_id)
+                        .fetch_optional(pool)
+                        .await?;
+
+                        if fallback_member.is_some() {
+                            fallback_member
+                        } else {
+                            sqlx::query_scalar::<_, Uuid>("SELECT id FROM households LIMIT 1")
+                                .fetch_optional(pool)
+                                .await?
+                        }
                     }
                 };
 

@@ -2,6 +2,7 @@ use std::{net::SocketAddr, sync::Arc};
 use axum::middleware;
 use tokio::net::TcpListener;
 
+mod ai;
 mod api;
 mod application;
 mod auth;

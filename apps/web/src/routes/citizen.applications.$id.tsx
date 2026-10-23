@@ -10,6 +10,7 @@ import { Label } from "@/components/ui/label";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Empty, PageHeader, Panel, StatusBadge, Timeline } from "@/components/gov/ui";
 import { DocUploadCard, type UploadedDoc } from "@/components/gov/DocUpload";
+import { CommentsThread } from "@/components/gov/CommentsThread";
 
 export const Route = createFileRoute("/citizen/applications/$id")({
   head: ({ params }) => ({ meta: [{ title: `Application ${params.id}` }, { name: "description", content: "Application details, timeline and actions." }, { property: "og:title", content: `Application ${params.id}` }, { property: "og:description", content: "Application status and timeline." }] }),
@@ -109,6 +110,8 @@ function AppDetail() {
             {a.events.length === 0 ? <p className="text-sm text-muted-foreground">No activity yet.</p> :
               <ul className="space-y-3">{[...a.events].reverse().map((e, i) => <li key={i} className="border-l-2 pl-3 text-sm"><p>{e.text}</p><p className="text-xs text-muted-foreground">{e.date} · {e.by}</p></li>)}</ul>}
           </Panel>
+
+          <CommentsThread recordType="application" recordId={a.id} />
         </div>
         <Panel title="Application timeline"><Timeline app={a} /></Panel>
       </div>

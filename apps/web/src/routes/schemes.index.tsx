@@ -14,6 +14,7 @@ import {
 } from "@/components/ui/select";
 import { SchemeCard } from "@/components/gov/SchemeCard";
 import { Empty, PageContainer, PageHeader } from "@/components/gov/ui";
+import { MiraCard } from "@/components/mira/MiraPrimitives";
 
 type S = { q?: string; category?: string };
 export const Route = createFileRoute("/schemes/")({
@@ -130,8 +131,9 @@ function Schemes() {
         crumbs={[{ label: "Home", to: "/" }, { label: "Schemes" }]}
       />
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
-        <aside
-          className="h-fit space-y-4 rounded-lg border bg-card p-4"
+        <MiraCard
+          variant="elevated"
+          className="h-fit space-y-4 p-5 rounded-2xl"
           aria-label="Filters"
         >
           <form
@@ -141,7 +143,7 @@ function Schemes() {
             }}
             role="search"
           >
-            <Label htmlFor="q" className="text-xs">
+            <Label htmlFor="q" className="text-xs font-medium text-foreground">
               Search
             </Label>
             <div className="mt-1 flex gap-2">
@@ -150,14 +152,15 @@ function Schemes() {
                 value={q}
                 onChange={(e) => setQ(e.target.value)}
                 placeholder="Search schemes by name or keyword"
+                className="h-9"
               />
-              <Button size="icon" type="submit" aria-label="Search">
+              <Button size="icon" type="submit" aria-label="Search" className="h-9 w-9 shrink-0 tactile-btn">
                 <Search className="h-4 w-4" />
               </Button>
             </div>
           </form>
           <div>
-            <Label className="text-xs">Scheme category</Label>
+            <Label className="text-xs font-medium text-foreground">Scheme category</Label>
             <Select
               value={category}
               onValueChange={(v) =>
@@ -199,7 +202,7 @@ function Schemes() {
             STATES.slice(1).map((s) => [s, s]),
           )}
           <div>
-            <Label htmlFor="age" className="text-xs">
+            <Label htmlFor="age" className="text-xs font-medium text-foreground">
               Age
             </Label>
             <Input
@@ -209,7 +212,7 @@ function Schemes() {
               max={120}
               value={f.age}
               onChange={(e) => setF({ ...f, age: e.target.value })}
-              className="mt-1"
+              className="mt-1 h-9"
               placeholder="e.g. 42"
             />
           </div>
@@ -224,7 +227,7 @@ function Schemes() {
           ])}
           <Button
             variant="outline"
-            className="w-full"
+            className="w-full tactile-btn h-9"
             onClick={() => {
               setF({
                 level: ANY,
@@ -239,10 +242,10 @@ function Schemes() {
               nav({ search: {} });
             }}
           >
-            <RotateCcw className="mr-1 h-4 w-4" />
+            <RotateCcw className="mr-1.5 h-3.5 w-3.5" />
             Reset filters
           </Button>
-        </aside>
+        </MiraCard>
         <div>
           <p className="mb-3 text-sm text-muted-foreground" aria-live="polite">
             {list.length} scheme{list.length !== 1 && "s"} found

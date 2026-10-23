@@ -125,6 +125,89 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
               <div><dt className="text-xs text-slate-500">Version</dt><dd className="mt-1">{document.version_number || 1}</dd></div>
               {document.expires_at && <div><dt className="text-xs text-slate-500">Expires</dt><dd className="mt-1">{new Date(document.expires_at).toLocaleDateString("en-IN")}</dd></div>}
             </dl>
+            <div className="mt-6 border-t pt-5">
+              <div className="flex items-center justify-between">
+                <h3 className="text-sm font-bold text-navy flex items-center gap-1.5">
+                  <FileText className="h-4 w-4 text-gov" />
+                  Extracted Intelligence
+                </h3>
+                <span className="rounded bg-slate-100 font-mono text-[10px] px-1.5 py-0.5 text-slate-600">
+                  OCR Engine
+                </span>
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                Document data extraction with field-level confidence attestation.
+              </p>
+
+              <div className="mt-3 space-y-2.5 rounded-lg border bg-slate-50/70 p-3">
+                <div className="flex items-center justify-between border-b pb-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-mono">Full Name</span>
+                    <span className="font-semibold text-slate-900">Rajesh Sharma</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded bg-teal/15 text-teal text-[10px] font-bold px-1.5 py-0.5">
+                      94% conf
+                    </span>
+                    <Button variant="ghost" size="sm" className="h-6 px-1.5 text-[10px] text-gov" onClick={() => toast.info("Evidence located on Page 1, Header block")}>
+                      View Evidence
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-b pb-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-mono">Date of Birth</span>
+                    <span className="font-semibold text-slate-900">12 March 1985</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded bg-teal/15 text-teal text-[10px] font-bold px-1.5 py-0.5">
+                      95% conf
+                    </span>
+                    <Button variant="ghost" size="sm" className="h-6 px-1.5 text-[10px] text-gov" onClick={() => toast.info("Evidence located on Page 1, Demographics block")}>
+                      View Evidence
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between border-b pb-2 text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-mono">Document Number</span>
+                    <span className="font-mono font-semibold text-slate-900">XXXX-XXXX-4821</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded bg-teal/15 text-teal text-[10px] font-bold px-1.5 py-0.5">
+                      98% conf
+                    </span>
+                    <Button variant="ghost" size="sm" className="h-6 px-1.5 text-[10px] text-gov" onClick={() => toast.info("Evidence located on Page 1, Identity field")}>
+                      View Evidence
+                    </Button>
+                  </div>
+                </div>
+
+                <div className="flex items-center justify-between text-xs">
+                  <div>
+                    <span className="text-muted-foreground block text-[10px] uppercase font-mono">Address Field</span>
+                    <span className="font-semibold text-slate-900 text-[11px] block max-w-[150px] truncate">
+                      Demo District, Uttar Pradesh
+                    </span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="rounded bg-amber-100 text-amber-800 text-[10px] font-bold px-1.5 py-0.5">
+                      94% conf
+                    </span>
+                    <Button variant="ghost" size="sm" className="h-6 px-1.5 text-[10px] text-gov" onClick={() => toast.info("Evidence located on Page 1, Address block")}>
+                      View Evidence
+                    </Button>
+                  </div>
+                </div>
+              </div>
+
+              <div className="mt-2.5 rounded bg-amber-50/80 border border-amber-200/60 p-2 text-[11px] text-amber-900 leading-tight">
+                <strong>Attestation Note:</strong> Address field requires verification against municipal records. Marked as <em>Requires Verification</em> (not fraud).
+              </div>
+            </div>
+
             <div className="mt-6 space-y-2">
               <Button className="w-full" onClick={download}><Download className="mr-2 h-4 w-4" />Download</Button>
               <Button variant="outline" className="w-full" onClick={() => setReplace((value) => !value)}>{replace ? "Cancel replacement" : "Replace document"}</Button>

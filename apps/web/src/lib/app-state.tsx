@@ -21,6 +21,17 @@ import {
   type Notification,
   type VaultDoc,
   type Benefit,
+  type MessageThread,
+  type CommentItem,
+  type FieldVisit,
+  type FileRecord,
+  type DecisionRecord,
+  SEED_MESSAGES,
+  SEED_COMMENTS,
+  SEED_FIELD_VISITS,
+  SEED_FILES,
+  SEED_DECISIONS,
+  DEMO_PROFILES,
 } from "./data";
 import { translate, type DictKey, type LangCode } from "./i18n";
 import {
@@ -42,7 +53,14 @@ import {
   mapRoleToUiRole,
 } from "./api";
 
-export type Role = "citizen" | "officer" | "verifier" | "admin" | "auditor";
+export type Role =
+  | "citizen"
+  | "officer"
+  | "verifier"
+  | "scheme"
+  | "supervisor"
+  | "admin"
+  | "auditor";
 export interface Session {
   role: Role;
   name: string;
@@ -100,6 +118,11 @@ export interface AppState {
   grievances: Grievance[];
   familyRequests: FamilyRequest[];
   ruleVersions: RuleVersion[];
+  messages: MessageThread[];
+  comments: CommentItem[];
+  fieldVisits: FieldVisit[];
+  files: FileRecord[];
+  decisions: DecisionRecord[];
 }
 
 const initial: AppState = {
@@ -116,6 +139,11 @@ const initial: AppState = {
   benefits: BENEFITS,
   alerts: DUPLICATE_ALERTS,
   vault: VAULT,
+  messages: SEED_MESSAGES,
+  comments: SEED_COMMENTS,
+  fieldVisits: SEED_FIELD_VISITS,
+  files: SEED_FILES,
+  decisions: SEED_DECISIONS,
   grievances: [
     {
       id: "GRV-2026-01182",
@@ -238,6 +266,27 @@ interface Ctx {
     reason: string,
     notes: string,
   ) => Promise<Application>;
+  sendMessage: (msg: {
+    toEmail: string;
+    toName?: string;
+    toRole?: string;
+    subject: string;
+    body: string;
+    applicationId?: string;
+    threadId?: string;
+  }) => void;
+  markMessageRead: (threadId: string) => void;
+  toggleStarMessage: (threadId: string) => void;
+  archiveMessage: (threadId: string) => void;
+  addComment: (comment: {
+    recordType: CommentItem["recordType"];
+    recordId: string;
+    text: string;
+    mentions?: string[];
+    replyToId?: string;
+  }) => void;
+  updateFieldVisit: (visitId: string, patch: Partial<FieldVisit>) => void;
+  addFileVersion: (fileId: string, newVersion: { filename: string; sizeBytes: number; reason: string }) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -713,6 +762,166 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       verifyApp,
       approveApp,
       rejectApp,
+      sendMessage: (msg) => {
+        set((s) => {
+          const senderName = s.session?.name || "User";
+          const senderEmail = s.session?.apiEmail || "user@mira.local";
+          const senderRole = s.session?.role || "citizen";
+          const now = nowStamp().slice(0, 16);
+
+          if (msg.threadId) {
+            return {
+              messages: s.messages.map((t) =>
+                t.id === msg.threadId
+                  ? {
+                      ...t,
+                      timestamp: now,
+                      preview: msg.body.slice(0, 100),
+                      messages: [
+                        ...t.messages,
+                        {
+                          id: "m-" + Date.now(),
+                          senderName,
+                          senderEmail,
+                          senderRole,
+                          timestamp: now,
+                          body: msg.body,
+                        },
+                      ],
+                    }
+                  : t,
+              ),
+            };
+          }
+
+          const newThread: MessageThread = {
+            id: "MSG-2026-" + Math.floor(1000 + Math.random() * 9000),
+            subject: msg.subject,
+            sender: {
+              name: senderName,
+              email: senderEmail,
+              role: senderRole,
+              department: s.session?.department,
+            },
+            recipient: {
+              name: msg.toName || msg.toEmail.split("@")[0],
+              email: msg.toEmail,
+              role: msg.toRole || "user",
+            },
+            preview: msg.body.slice(0, 100),
+            timestamp: now,
+            status: "read",
+            folder: "sent",
+            applicationId: msg.applicationId,
+            messages: [
+              {
+                id: "m-" + Date.now(),
+                senderName,
+                senderEmail,
+                senderRole,
+                timestamp: now,
+                body: msg.body,
+              },
+            ],
+          };
+          return { messages: [newThread, ...s.messages] };
+        });
+      },
+      markMessageRead: (threadId) =>
+        set((s) => ({
+          messages: s.messages.map((m) =>
+            m.id === threadId ? { ...m, status: "read" } : m,
+          ),
+        })),
+      toggleStarMessage: (threadId) =>
+        set((s) => ({
+          messages: s.messages.map((m) =>
+            m.id === threadId ? { ...m, isStarred: !m.isStarred } : m,
+          ),
+        })),
+      archiveMessage: (threadId) =>
+        set((s) => ({
+          messages: s.messages.map((m) =>
+            m.id === threadId ? { ...m, folder: "archived" as const, isArchived: true } : m,
+          ),
+        })),
+      addComment: (comment) =>
+        set((s) => {
+          const authorName = s.session?.name || "Official";
+          const authorRole = s.session?.role || "officer";
+          const now = nowStamp().slice(0, 16);
+
+          if (comment.replyToId) {
+            return {
+              comments: s.comments.map((c) =>
+                c.id === comment.replyToId
+                  ? {
+                      ...c,
+                      replies: [
+                        ...c.replies,
+                        {
+                          id: "rep-" + Date.now(),
+                          author: { name: authorName, role: authorRole },
+                          timestamp: now,
+                          text: comment.text,
+                          mentions: comment.mentions,
+                        },
+                      ],
+                    }
+                  : c,
+              ),
+            };
+          }
+
+          const newComment: CommentItem = {
+            id: "COM-" + Date.now(),
+            recordType: comment.recordType,
+            recordId: comment.recordId,
+            author: {
+              name: authorName,
+              role: authorRole,
+              department: s.session?.department,
+            },
+            timestamp: now,
+            text: comment.text,
+            mentions: comment.mentions,
+            replies: [],
+            isResolved: false,
+          };
+          return { comments: [...s.comments, newComment] };
+        }),
+      updateFieldVisit: (visitId, patch) =>
+        set((s) => ({
+          fieldVisits: s.fieldVisits.map((v) =>
+            v.id === visitId ? { ...v, ...patch } : v,
+          ),
+        })),
+      addFileVersion: (fileId, newVersion) =>
+        set((s) => ({
+          files: s.files.map((f) => {
+            if (f.id !== fileId) return f;
+            const nextVer = f.currentVersion + 1;
+            return {
+              ...f,
+              name: newVersion.filename,
+              sizeBytes: newVersion.sizeBytes,
+              currentVersion: nextVer,
+              verificationStatus: "Pending Review" as const,
+              uploadedDate: nowStamp().slice(0, 10),
+              versions: [
+                {
+                  versionNumber: nextVer,
+                  filename: newVersion.filename,
+                  sizeBytes: newVersion.sizeBytes,
+                  uploadedBy: s.session?.name || "Citizen",
+                  uploadedAt: nowStamp().slice(0, 16),
+                  reason: newVersion.reason,
+                },
+                ...f.versions,
+              ],
+            };
+          }),
+        })),
     };
   }, [
     state,

@@ -9,6 +9,8 @@ pub enum RoleType {
     Citizen,
     FieldOfficial,
     VerificationOfficer,
+    SchemeOfficer,
+    Supervisor,
     DepartmentAdmin,
     Auditor,
     SuperAdmin,
@@ -20,6 +22,8 @@ impl RoleType {
             RoleType::Citizen => "CITIZEN",
             RoleType::FieldOfficial => "FIELD_OFFICIAL",
             RoleType::VerificationOfficer => "VERIFICATION_OFFICER",
+            RoleType::SchemeOfficer => "SCHEME_OFFICER",
+            RoleType::Supervisor => "SUPERVISOR",
             RoleType::DepartmentAdmin => "DEPARTMENT_ADMIN",
             RoleType::Auditor => "AUDITOR",
             RoleType::SuperAdmin => "SUPER_ADMIN",
@@ -31,6 +35,8 @@ impl RoleType {
             "CITIZEN" => Some(RoleType::Citizen),
             "FIELD_OFFICIAL" => Some(RoleType::FieldOfficial),
             "VERIFICATION_OFFICER" => Some(RoleType::VerificationOfficer),
+            "SCHEME_OFFICER" => Some(RoleType::SchemeOfficer),
+            "SUPERVISOR" => Some(RoleType::Supervisor),
             "DEPARTMENT_ADMIN" => Some(RoleType::DepartmentAdmin),
             "AUDITOR" => Some(RoleType::Auditor),
             "SUPER_ADMIN" => Some(RoleType::SuperAdmin),
@@ -41,14 +47,19 @@ impl RoleType {
     pub fn can_view_all_profiles(&self) -> bool {
         matches!(
             self,
-            RoleType::DepartmentAdmin | RoleType::Auditor | RoleType::SuperAdmin | RoleType::VerificationOfficer
+            RoleType::DepartmentAdmin
+                | RoleType::Auditor
+                | RoleType::SuperAdmin
+                | RoleType::VerificationOfficer
+                | RoleType::SchemeOfficer
+                | RoleType::Supervisor
         )
     }
 
     pub fn can_view_audit_logs(&self) -> bool {
         matches!(
             self,
-            RoleType::Auditor | RoleType::DepartmentAdmin | RoleType::SuperAdmin
+            RoleType::Auditor | RoleType::DepartmentAdmin | RoleType::SuperAdmin | RoleType::Supervisor
         )
     }
 
@@ -326,6 +337,103 @@ pub struct RelationshipDetail {
     pub verification_status: String,
     pub confidence: f64,
     pub source_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FamilyMemberDto {
+    pub id: String,
+    pub person_id: Uuid,
+    pub public_id: String,
+    pub name: String,
+    pub relationship: String,
+    pub membership_role: String,
+    pub dob: String,
+    pub gender: String,
+    pub identity: String,
+    pub membership: String,
+    pub income: Option<String>,
+    pub benefits: Vec<String>,
+    pub is_current: bool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FamilyRelationshipDto {
+    pub id: Uuid,
+    pub person_a_id: Uuid,
+    pub person_b_id: Uuid,
+    pub person_a_name: String,
+    pub person_b_name: String,
+    pub relationship_type: String,
+    pub valid_from: String,
+    pub verification_status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FamilyTimelineItemDto {
+    pub date: String,
+    pub event_type: String,
+    pub title: String,
+    pub description: String,
+    pub source: String,
+    pub evidence: Option<String>,
+    pub verification_status: String,
+    pub verified_by: Option<String>,
+    pub timestamp: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct FamilyRequestDto {
+    pub id: String,
+    pub request_type: String,
+    pub details: String,
+    pub date: String,
+    pub status: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct MyFamilyResponse {
+    pub household_id: Uuid,
+    pub household_public_id: String,
+    pub household_name: String,
+    pub status: String,
+    pub address: String,
+    pub property_summary: String,
+    pub bpl_status: String,
+    pub income_category: String,
+    pub verification_status: String,
+    pub is_demo_data: bool,
+    pub disclaimer: String,
+    pub members: Vec<FamilyMemberDto>,
+    pub relationships: Vec<FamilyRelationshipDto>,
+    pub timeline: Vec<FamilyTimelineItemDto>,
+    pub requests: Vec<FamilyRequestDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct AddFamilyMemberRequest {
+    pub first_name: String,
+    pub last_name: String,
+    pub relationship: String,
+    pub date_of_birth: String,
+    pub gender: String,
+    pub income: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct ReportLifeEventRequest {
+    pub event_type: String,
+    pub effective_date: String,
+    pub person_name: Option<String>,
+    pub details: String,
+    pub certificate_no: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RaiseDisputeRequest {
+    pub application_id: Option<String>,
+    pub category: String,
+    pub description: String,
+    pub document_reference: Option<String>,
 }
 
 /// Property entity

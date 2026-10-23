@@ -8,6 +8,7 @@ import appCss from "../styles.css?url";
 import { reportLovableError } from "../lib/lovable-error-reporting";
 import { AppStateProvider } from "@/lib/app-state";
 import { SiteFooter, SiteHeader } from "@/components/gov/SiteHeader";
+import { MiraAiAssistant } from "@/components/gov/MiraAiAssistant";
 import { Toaster } from "@/components/ui/sonner";
 
 function NotFoundComponent() {
@@ -55,7 +56,7 @@ export const Route = createRootRouteWithContext<{ queryClient: QueryClient }>()(
     ],
     links: [
       { rel: "preconnect", href: "https://fonts.googleapis.com" },
-      { rel: "preconnect", href: "https://fonts.gstatic.com", crossOrigin: "anonymous" },
+      { rel: "preconnect", href: "https://gstatic.com" },
       { rel: "stylesheet", href: FONTS },
       { rel: "stylesheet", href: appCss },
       { rel: "icon", href: "/miraicon.svg", type: "image/svg+xml" },
@@ -79,11 +80,19 @@ function RootShell({ children }: { children: ReactNode }) {
 function RootComponent() {
   const { queryClient } = Route.useRouteContext();
   const path = useRouterState({ select: (s) => s.location.pathname });
-  const workspace = (path.startsWith("/officer") && !path.startsWith("/officer/login")) || path.startsWith("/department");
+  const workspace =
+    path.startsWith("/citizen") ||
+    (path.startsWith("/officer") && !path.startsWith("/officer/login")) ||
+    path.startsWith("/department") ||
+    path.startsWith("/verifier") ||
+    path.startsWith("/auditor");
+
   return (
     <QueryClientProvider client={queryClient}>
       <AppStateProvider>
-        {workspace ? <Outlet /> : (
+        {workspace ? (
+          <Outlet />
+        ) : (
           <div className="flex min-h-screen flex-col">
             <SiteHeader />
             <main id="main" className="flex-1"><Outlet /></main>

@@ -1,1 +1,0 @@
-import{ft as e,mt as t}from"./button-BaiGjx8X.js";import{n}from"./dist-vM3SOkLo.js";var r=t(e(),1),i=Object.defineProperty,a=(e,t)=>i(e,`name`,{value:t,configurable:!0}),o=r.useInsertionEffect;function s(e){let t=r.useRef(e);return typeof o==`function`?o(()=>{t.current=e}):n(()=>{t.current=e}),r.useMemo(()=>((...e)=>t.current?.(...e)),[])}a(s,`useCallbackRef`);export{s as t};

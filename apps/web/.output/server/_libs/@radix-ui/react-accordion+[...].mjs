@@ -310,26 +310,9 @@ __name$9(composeContextScopes, "composeContextScopes");
 //#region node_modules/@radix-ui/react-use-layout-effect/dist/index.mjs
 var useLayoutEffect2 = globalThis?.document ? import_react.useLayoutEffect : () => {};
 //#endregion
-//#region node_modules/@radix-ui/react-id/dist/index.mjs
+//#region node_modules/@radix-ui/react-use-effect-event/dist/index.mjs
 var __defProp$8 = Object.defineProperty;
 var __name$8 = (target, value) => __defProp$8(target, "name", {
-	value,
-	configurable: true
-});
-var useReactId = import_react[" useId ".trim().toString()] || (() => void 0);
-var count = 0;
-function useId(deterministicId) {
-	const [id, setId] = import_react.useState(useReactId());
-	useLayoutEffect2(() => {
-		if (!deterministicId) setId((reactId) => reactId ?? String(count++));
-	}, [deterministicId]);
-	return deterministicId || (id ? `radix-${id}` : "");
-}
-__name$8(useId, "useId");
-//#endregion
-//#region node_modules/@radix-ui/react-use-effect-event/dist/index.mjs
-var __defProp$7 = Object.defineProperty;
-var __name$7 = (target, value) => __defProp$7(target, "name", {
 	value,
 	configurable: true
 });
@@ -348,16 +331,16 @@ function useEffectEvent(callback) {
 	});
 	return import_react.useMemo(() => ((...args) => ref.current?.(...args)), []);
 }
-__name$7(useEffectEvent, "useEffectEvent");
+__name$8(useEffectEvent, "useEffectEvent");
 //#endregion
 //#region node_modules/@radix-ui/react-use-controllable-state/dist/index.mjs
-var __defProp$6 = Object.defineProperty;
-var __name$6 = (target, value) => __defProp$6(target, "name", {
+var __defProp$7 = Object.defineProperty;
+var __name$7 = (target, value) => __defProp$7(target, "name", {
 	value,
 	configurable: true
 });
 var useInsertionEffect = import_react[" useInsertionEffect ".trim().toString()] || useLayoutEffect2;
-function useControllableState({ prop, defaultProp, onChange = /* @__PURE__ */ __name$6(() => {}, "onChange"), caller }) {
+function useControllableState({ prop, defaultProp, onChange = /* @__PURE__ */ __name$7(() => {}, "onChange"), caller }) {
 	const [uncontrolledProp, setUncontrolledProp, onChangeRef] = useUncontrolledState({
 		defaultProp,
 		onChange
@@ -375,7 +358,7 @@ function useControllableState({ prop, defaultProp, onChange = /* @__PURE__ */ __
 		onChangeRef
 	])];
 }
-__name$6(useControllableState, "useControllableState");
+__name$7(useControllableState, "useControllableState");
 function useUncontrolledState({ defaultProp, onChange }) {
 	const [value, setValue] = import_react.useState(defaultProp);
 	const prevValueRef = import_react.useRef(value);
@@ -395,11 +378,11 @@ function useUncontrolledState({ defaultProp, onChange }) {
 		onChangeRef
 	];
 }
-__name$6(useUncontrolledState, "useUncontrolledState");
+__name$7(useUncontrolledState, "useUncontrolledState");
 function isFunction(value) {
 	return typeof value === "function";
 }
-__name$6(isFunction, "isFunction");
+__name$7(isFunction, "isFunction");
 var SYNC_STATE = Symbol("RADIX:SYNC_STATE");
 function useControllableStateReducer(reducer, userArgs, initialArg, init) {
 	const { prop: controlledState, defaultProp, onChange: onChangeProp, caller } = userArgs;
@@ -450,12 +433,12 @@ function useControllableStateReducer(reducer, userArgs, initialArg, init) {
 	]);
 	return [state, dispatch];
 }
-__name$6(useControllableStateReducer, "useControllableStateReducer");
+__name$7(useControllableStateReducer, "useControllableStateReducer");
 //#endregion
 //#region node_modules/@radix-ui/react-primitive/dist/index.mjs
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
-var __defProp$5 = Object.defineProperty;
-var __name$5 = (target, value) => __defProp$5(target, "name", {
+var __defProp$6 = Object.defineProperty;
+var __name$6 = (target, value) => __defProp$6(target, "name", {
 	value,
 	configurable: true
 });
@@ -497,153 +480,11 @@ var Primitive = [
 function dispatchDiscreteCustomEvent(target, event) {
 	if (target) import_react_dom.flushSync(() => target.dispatchEvent(event));
 }
-__name$5(dispatchDiscreteCustomEvent, "dispatchDiscreteCustomEvent");
-//#endregion
-//#region node_modules/@radix-ui/react-presence/dist/index.mjs
-var __defProp$4 = Object.defineProperty;
-var __name$4 = (target, value) => __defProp$4(target, "name", {
-	value,
-	configurable: true
-});
-function useStateMachine(initialState, machine) {
-	return import_react.useReducer((state, event) => {
-		return machine[state][event] ?? state;
-	}, initialState);
-}
-__name$4(useStateMachine, "useStateMachine");
-var Presence = /* @__PURE__ */ __name$4((props) => {
-	const { present, children } = props;
-	const presence = usePresence(present);
-	const child = typeof children === "function" ? children({ present: presence.isPresent }) : import_react.Children.only(children);
-	const ref = useStableComposedRefs(presence.ref, getElementRef(child));
-	return typeof children === "function" || presence.isPresent ? import_react.cloneElement(child, { ref }) : null;
-}, "Presence");
-function usePresence(present) {
-	const [node, setNode] = import_react.useState();
-	const stylesRef = import_react.useRef(null);
-	const prevPresentRef = import_react.useRef(present);
-	const prevAnimationNameRef = import_react.useRef("none");
-	const mountAnimationNameRef = import_react.useRef(void 0);
-	const [state, send] = useStateMachine(present ? "mounted" : "unmounted", {
-		mounted: {
-			UNMOUNT: "unmounted",
-			ANIMATION_OUT: "unmountSuspended"
-		},
-		unmountSuspended: {
-			MOUNT: "mounted",
-			ANIMATION_END: "unmounted"
-		},
-		unmounted: { MOUNT: "mounted" }
-	});
-	import_react.useEffect(() => {
-		if (state === "mounted") {
-			prevAnimationNameRef.current = mountAnimationNameRef.current ?? getAnimationName(stylesRef.current);
-			mountAnimationNameRef.current = void 0;
-		} else prevAnimationNameRef.current = "none";
-	}, [state]);
-	useLayoutEffect2(() => {
-		const styles = stylesRef.current;
-		const wasPresent = prevPresentRef.current;
-		if (wasPresent !== present) {
-			const prevAnimationName = prevAnimationNameRef.current;
-			const currentAnimationName = getAnimationName(styles);
-			if (present) {
-				mountAnimationNameRef.current = currentAnimationName;
-				send("MOUNT");
-			} else if (currentAnimationName === "none" || styles?.display === "none") send("UNMOUNT");
-			else if (wasPresent && prevAnimationName !== currentAnimationName) send("ANIMATION_OUT");
-			else send("UNMOUNT");
-			prevPresentRef.current = present;
-		}
-	}, [present, send]);
-	useLayoutEffect2(() => {
-		if (node) {
-			let timeoutId;
-			const ownerWindow = node.ownerDocument.defaultView ?? window;
-			const handleAnimationEnd = /* @__PURE__ */ __name$4((event) => {
-				const isCurrentAnimation = getAnimationName(stylesRef.current).includes(CSS.escape(event.animationName));
-				if (event.target === node && isCurrentAnimation) {
-					send("ANIMATION_END");
-					if (!prevPresentRef.current) {
-						const currentFillMode = node.style.animationFillMode;
-						node.style.animationFillMode = "forwards";
-						timeoutId = ownerWindow.setTimeout(() => {
-							if (node.style.animationFillMode === "forwards") node.style.animationFillMode = currentFillMode;
-						});
-					}
-				}
-			}, "handleAnimationEnd");
-			const handleAnimationStart = /* @__PURE__ */ __name$4((event) => {
-				if (event.target === node) prevAnimationNameRef.current = getAnimationName(stylesRef.current);
-			}, "handleAnimationStart");
-			node.addEventListener("animationstart", handleAnimationStart);
-			node.addEventListener("animationcancel", handleAnimationEnd);
-			node.addEventListener("animationend", handleAnimationEnd);
-			return () => {
-				ownerWindow.clearTimeout(timeoutId);
-				node.removeEventListener("animationstart", handleAnimationStart);
-				node.removeEventListener("animationcancel", handleAnimationEnd);
-				node.removeEventListener("animationend", handleAnimationEnd);
-			};
-		} else send("ANIMATION_END");
-	}, [node, send]);
-	return {
-		isPresent: ["mounted", "unmountSuspended"].includes(state),
-		ref: import_react.useCallback((node2) => {
-			if (node2) {
-				const styles = getComputedStyle(node2);
-				stylesRef.current = styles;
-				mountAnimationNameRef.current = getAnimationName(styles);
-			} else stylesRef.current = null;
-			setNode(node2);
-		}, [])
-	};
-}
-__name$4(usePresence, "usePresence");
-function setRef(ref, value) {
-	if (typeof ref === "function") return ref(value);
-	else if (ref !== null && ref !== void 0) ref.current = value;
-}
-__name$4(setRef, "setRef");
-function useStableComposedRefs(...refs) {
-	const refsRef = import_react.useRef(refs);
-	refsRef.current = refs;
-	return import_react.useCallback((node) => {
-		const currentRefs = refsRef.current;
-		let hasCleanup = false;
-		const cleanups = currentRefs.map((ref) => {
-			const cleanup = setRef(ref, node);
-			if (!hasCleanup && typeof cleanup === "function") hasCleanup = true;
-			return cleanup;
-		});
-		if (hasCleanup) return () => {
-			for (let i = 0; i < cleanups.length; i++) {
-				const cleanup = cleanups[i];
-				if (typeof cleanup === "function") cleanup();
-				else setRef(currentRefs[i], null);
-			}
-		};
-	}, []);
-}
-__name$4(useStableComposedRefs, "useStableComposedRefs");
-function getAnimationName(styles) {
-	return styles?.animationName || "none";
-}
-__name$4(getAnimationName, "getAnimationName");
-function getElementRef(element) {
-	let getter = Object.getOwnPropertyDescriptor(element.props, "ref")?.get;
-	let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
-	if (mayWarn) return element.ref;
-	getter = Object.getOwnPropertyDescriptor(element, "ref")?.get;
-	mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
-	if (mayWarn) return element.props.ref;
-	return element.props.ref || element.ref;
-}
-__name$4(getElementRef, "getElementRef");
+__name$6(dispatchDiscreteCustomEvent, "dispatchDiscreteCustomEvent");
 //#endregion
 //#region node_modules/@radix-ui/react-collection/dist/index.mjs
-var __defProp$3 = Object.defineProperty;
-var __name$3 = (target, value) => __defProp$3(target, "name", {
+var __defProp$5 = Object.defineProperty;
+var __name$5 = (target, value) => __defProp$5(target, "name", {
 	value,
 	configurable: true
 });
@@ -655,7 +496,7 @@ function createCollection(name) {
 		collectionRef: { current: null },
 		itemMap: /* @__PURE__ */ new Map()
 	});
-	const CollectionProvider = /* @__PURE__ */ __name$3((props) => {
+	const CollectionProvider = /* @__PURE__ */ __name$5((props) => {
 		const { scope, children } = props;
 		const ref = import_react.useRef(null);
 		const itemMap = import_react.useRef(/* @__PURE__ */ new Map()).current;
@@ -709,7 +550,7 @@ function createCollection(name) {
 			return Array.from(context.itemMap.values()).sort((a, b) => orderedNodes.indexOf(a.ref.current) - orderedNodes.indexOf(b.ref.current));
 		}, [context.collectionRef, context.itemMap]);
 	}
-	__name$3(useCollection, "useCollection");
+	__name$5(useCollection, "useCollection");
 	return [
 		{
 			Provider: CollectionProvider,
@@ -720,11 +561,11 @@ function createCollection(name) {
 		createCollectionScope
 	];
 }
-__name$3(createCollection, "createCollection");
+__name$5(createCollection, "createCollection");
 var __instanciated = /* @__PURE__ */ new WeakMap();
 var OrderedDict = class _OrderedDict extends Map {
 	static {
-		__name$3(this, "OrderedDict");
+		__name$5(this, "OrderedDict");
 	}
 	#keys;
 	constructor(entries) {
@@ -1006,18 +847,18 @@ function at(array, index) {
 	const actualIndex = toSafeIndex(array, index);
 	return actualIndex === -1 ? void 0 : array[actualIndex];
 }
-__name$3(at, "at");
+__name$5(at, "at");
 function toSafeIndex(array, index) {
 	const length = array.length;
 	const relativeIndex = toSafeInteger(index);
 	const actualIndex = relativeIndex >= 0 ? relativeIndex : length + relativeIndex;
 	return actualIndex < 0 || actualIndex >= length ? -1 : actualIndex;
 }
-__name$3(toSafeIndex, "toSafeIndex");
+__name$5(toSafeIndex, "toSafeIndex");
 function toSafeInteger(number) {
 	return number !== number || number === 0 ? 0 : Math.trunc(number);
 }
-__name$3(toSafeInteger, "toSafeInteger");
+__name$5(toSafeInteger, "toSafeInteger");
 // @__NO_SIDE_EFFECTS__
 function createCollection2(name) {
 	const PROVIDER_NAME = name + "CollectionProvider";
@@ -1026,14 +867,14 @@ function createCollection2(name) {
 	CollectionStableContextProvider.displayName = name + "CollectionStableContextProvider";
 	const [CollectionStatefulContextProvider, useStatefulCollectionContext] = createCollectionContext(PROVIDER_NAME);
 	CollectionStatefulContextProvider.displayName = name + "CollectionStatefulContextProvider";
-	const CollectionProvider = /* @__PURE__ */ __name$3(({ state, ...props }) => {
+	const CollectionProvider = /* @__PURE__ */ __name$5(({ state, ...props }) => {
 		return state ? /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CollectionProviderImpl, {
 			...props,
 			state
 		}) : /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CollectionInit, { ...props });
 	}, "CollectionProvider");
 	CollectionProvider.displayName = PROVIDER_NAME;
-	const CollectionInit = /* @__PURE__ */ __name$3((props) => {
+	const CollectionInit = /* @__PURE__ */ __name$5((props) => {
 		const state = useInitCollection();
 		return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(CollectionProviderImpl, {
 			...props,
@@ -1041,7 +882,7 @@ function createCollection2(name) {
 		});
 	}, "CollectionInit");
 	CollectionInit.displayName = name + "CollectionInit";
-	const CollectionProviderImpl = /* @__PURE__ */ __name$3((props) => {
+	const CollectionProviderImpl = /* @__PURE__ */ __name$5((props) => {
 		const { scope, children, state } = props;
 		const ref = import_react.useRef(null);
 		const [collectionElement, setCollectionElement] = import_react.useState(null);
@@ -1164,17 +1005,17 @@ function createCollection2(name) {
 	function useInitCollection() {
 		return import_react.useState(new OrderedDict());
 	}
-	__name$3(useInitCollection, "useInitCollection");
+	__name$5(useInitCollection, "useInitCollection");
 	function useCollection(scope) {
 		const { collection } = useStatefulCollectionContext(name + "CollectionConsumer", scope);
 		return collection;
 	}
-	__name$3(useCollection, "useCollection");
+	__name$5(useCollection, "useCollection");
 	function useGetCollection(scope) {
 		const { getCollection } = useStableCollectionContext(name + "CollectionConsumer", scope);
 		return getCollection;
 	}
-	__name$3(useGetCollection, "useGetCollection");
+	__name$5(useGetCollection, "useGetCollection");
 	return [{
 		Provider: CollectionProvider,
 		Slot: CollectionSlot,
@@ -1186,7 +1027,7 @@ function createCollection2(name) {
 		useInitCollection
 	}];
 }
-__name$3(createCollection2, "createCollection");
+__name$5(createCollection2, "createCollection");
 function shallowEqual(a, b) {
 	if (a === b) return true;
 	if (typeof a !== "object" || typeof b !== "object") return false;
@@ -1200,11 +1041,11 @@ function shallowEqual(a, b) {
 	}
 	return true;
 }
-__name$3(shallowEqual, "shallowEqual");
+__name$5(shallowEqual, "shallowEqual");
 function isElementPreceding(a, b) {
 	return !!(b.compareDocumentPosition(a) & Node.DOCUMENT_POSITION_PRECEDING);
 }
-__name$3(isElementPreceding, "isElementPreceding");
+__name$5(isElementPreceding, "isElementPreceding");
 function isInDocumentOrder(dict) {
 	let previous;
 	for (const element of dict.keys()) {
@@ -1216,11 +1057,11 @@ function isInDocumentOrder(dict) {
 	}
 	return true;
 }
-__name$3(isInDocumentOrder, "isInDocumentOrder");
+__name$5(isInDocumentOrder, "isInDocumentOrder");
 function sortByDocumentPosition(a, b) {
 	return !a[1].element || !b[1].element ? 0 : isElementPreceding(a[1].element, b[1].element) ? -1 : 1;
 }
-__name$3(sortByDocumentPosition, "sortByDocumentPosition");
+__name$5(sortByDocumentPosition, "sortByDocumentPosition");
 function getChildListObserver(callback) {
 	return new MutationObserver((mutationsList) => {
 		for (const mutation of mutationsList) if (mutation.type === "childList") {
@@ -1229,11 +1070,11 @@ function getChildListObserver(callback) {
 		}
 	});
 }
-__name$3(getChildListObserver, "getChildListObserver");
+__name$5(getChildListObserver, "getChildListObserver");
 //#endregion
 //#region node_modules/@radix-ui/react-direction/dist/index.mjs
-var __defProp$2 = Object.defineProperty;
-var __name$2 = (target, value) => __defProp$2(target, "name", {
+var __defProp$4 = Object.defineProperty;
+var __name$4 = (target, value) => __defProp$4(target, "name", {
 	value,
 	configurable: true
 });
@@ -1246,7 +1087,166 @@ function useDirection(localDir) {
 	const globalDir = import_react.useContext(DirectionContext);
 	return localDir || globalDir || Direction$1.LTR;
 }
-__name$2(useDirection, "useDirection");
+__name$4(useDirection, "useDirection");
+//#endregion
+//#region node_modules/@radix-ui/react-id/dist/index.mjs
+var __defProp$3 = Object.defineProperty;
+var __name$3 = (target, value) => __defProp$3(target, "name", {
+	value,
+	configurable: true
+});
+var useReactId = import_react[" useId ".trim().toString()] || (() => void 0);
+var count = 0;
+function useId(deterministicId) {
+	const [id, setId] = import_react.useState(useReactId());
+	useLayoutEffect2(() => {
+		if (!deterministicId) setId((reactId) => reactId ?? String(count++));
+	}, [deterministicId]);
+	return deterministicId || (id ? `radix-${id}` : "");
+}
+__name$3(useId, "useId");
+//#endregion
+//#region node_modules/@radix-ui/react-presence/dist/index.mjs
+var __defProp$2 = Object.defineProperty;
+var __name$2 = (target, value) => __defProp$2(target, "name", {
+	value,
+	configurable: true
+});
+function useStateMachine(initialState, machine) {
+	return import_react.useReducer((state, event) => {
+		return machine[state][event] ?? state;
+	}, initialState);
+}
+__name$2(useStateMachine, "useStateMachine");
+var Presence = /* @__PURE__ */ __name$2((props) => {
+	const { present, children } = props;
+	const presence = usePresence(present);
+	const child = typeof children === "function" ? children({ present: presence.isPresent }) : import_react.Children.only(children);
+	const ref = useStableComposedRefs(presence.ref, getElementRef(child));
+	return typeof children === "function" || presence.isPresent ? import_react.cloneElement(child, { ref }) : null;
+}, "Presence");
+function usePresence(present) {
+	const [node, setNode] = import_react.useState();
+	const stylesRef = import_react.useRef(null);
+	const prevPresentRef = import_react.useRef(present);
+	const prevAnimationNameRef = import_react.useRef("none");
+	const mountAnimationNameRef = import_react.useRef(void 0);
+	const [state, send] = useStateMachine(present ? "mounted" : "unmounted", {
+		mounted: {
+			UNMOUNT: "unmounted",
+			ANIMATION_OUT: "unmountSuspended"
+		},
+		unmountSuspended: {
+			MOUNT: "mounted",
+			ANIMATION_END: "unmounted"
+		},
+		unmounted: { MOUNT: "mounted" }
+	});
+	import_react.useEffect(() => {
+		if (state === "mounted") {
+			prevAnimationNameRef.current = mountAnimationNameRef.current ?? getAnimationName(stylesRef.current);
+			mountAnimationNameRef.current = void 0;
+		} else prevAnimationNameRef.current = "none";
+	}, [state]);
+	useLayoutEffect2(() => {
+		const styles = stylesRef.current;
+		const wasPresent = prevPresentRef.current;
+		if (wasPresent !== present) {
+			const prevAnimationName = prevAnimationNameRef.current;
+			const currentAnimationName = getAnimationName(styles);
+			if (present) {
+				mountAnimationNameRef.current = currentAnimationName;
+				send("MOUNT");
+			} else if (currentAnimationName === "none" || styles?.display === "none") send("UNMOUNT");
+			else if (wasPresent && prevAnimationName !== currentAnimationName) send("ANIMATION_OUT");
+			else send("UNMOUNT");
+			prevPresentRef.current = present;
+		}
+	}, [present, send]);
+	useLayoutEffect2(() => {
+		if (node) {
+			let timeoutId;
+			const ownerWindow = node.ownerDocument.defaultView ?? window;
+			const handleAnimationEnd = /* @__PURE__ */ __name$2((event) => {
+				const isCurrentAnimation = getAnimationName(stylesRef.current).includes(CSS.escape(event.animationName));
+				if (event.target === node && isCurrentAnimation) {
+					send("ANIMATION_END");
+					if (!prevPresentRef.current) {
+						const currentFillMode = node.style.animationFillMode;
+						node.style.animationFillMode = "forwards";
+						timeoutId = ownerWindow.setTimeout(() => {
+							if (node.style.animationFillMode === "forwards") node.style.animationFillMode = currentFillMode;
+						});
+					}
+				}
+			}, "handleAnimationEnd");
+			const handleAnimationStart = /* @__PURE__ */ __name$2((event) => {
+				if (event.target === node) prevAnimationNameRef.current = getAnimationName(stylesRef.current);
+			}, "handleAnimationStart");
+			node.addEventListener("animationstart", handleAnimationStart);
+			node.addEventListener("animationcancel", handleAnimationEnd);
+			node.addEventListener("animationend", handleAnimationEnd);
+			return () => {
+				ownerWindow.clearTimeout(timeoutId);
+				node.removeEventListener("animationstart", handleAnimationStart);
+				node.removeEventListener("animationcancel", handleAnimationEnd);
+				node.removeEventListener("animationend", handleAnimationEnd);
+			};
+		} else send("ANIMATION_END");
+	}, [node, send]);
+	return {
+		isPresent: ["mounted", "unmountSuspended"].includes(state),
+		ref: import_react.useCallback((node2) => {
+			if (node2) {
+				const styles = getComputedStyle(node2);
+				stylesRef.current = styles;
+				mountAnimationNameRef.current = getAnimationName(styles);
+			} else stylesRef.current = null;
+			setNode(node2);
+		}, [])
+	};
+}
+__name$2(usePresence, "usePresence");
+function setRef(ref, value) {
+	if (typeof ref === "function") return ref(value);
+	else if (ref !== null && ref !== void 0) ref.current = value;
+}
+__name$2(setRef, "setRef");
+function useStableComposedRefs(...refs) {
+	const refsRef = import_react.useRef(refs);
+	refsRef.current = refs;
+	return import_react.useCallback((node) => {
+		const currentRefs = refsRef.current;
+		let hasCleanup = false;
+		const cleanups = currentRefs.map((ref) => {
+			const cleanup = setRef(ref, node);
+			if (!hasCleanup && typeof cleanup === "function") hasCleanup = true;
+			return cleanup;
+		});
+		if (hasCleanup) return () => {
+			for (let i = 0; i < cleanups.length; i++) {
+				const cleanup = cleanups[i];
+				if (typeof cleanup === "function") cleanup();
+				else setRef(currentRefs[i], null);
+			}
+		};
+	}, []);
+}
+__name$2(useStableComposedRefs, "useStableComposedRefs");
+function getAnimationName(styles) {
+	return styles?.animationName || "none";
+}
+__name$2(getAnimationName, "getAnimationName");
+function getElementRef(element) {
+	let getter = Object.getOwnPropertyDescriptor(element.props, "ref")?.get;
+	let mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+	if (mayWarn) return element.ref;
+	getter = Object.getOwnPropertyDescriptor(element, "ref")?.get;
+	mayWarn = getter && "isReactWarning" in getter && getter.isReactWarning;
+	if (mayWarn) return element.props.ref;
+	return element.props.ref || element.ref;
+}
+__name$2(getElementRef, "getElementRef");
 //#endregion
 //#region node_modules/@radix-ui/react-collapsible/dist/index.mjs
 var __defProp$1 = Object.defineProperty;
@@ -1611,4 +1611,4 @@ function getState(open) {
 }
 __name(getState, "getState");
 //#endregion
-export { useComposedRefs as _, AccordionTrigger as a, Presence as c, useControllableState as d, useId as f, createSlot as g, Slot as h, AccordionItem as i, Primitive as l, createContextScope as m, AccordionContent as n, useDirection as o, useLayoutEffect2 as p, AccordionHeader as r, createCollection as s, Accordion as t, dispatchDiscreteCustomEvent as u, require_jsx_runtime as v };
+export { createSlottable as _, AccordionTrigger as a, useDirection as c, dispatchDiscreteCustomEvent as d, useControllableState as f, createSlot as g, Slot as h, AccordionItem as i, createCollection as l, createContextScope as m, AccordionContent as n, Presence as o, useLayoutEffect2 as p, AccordionHeader as r, useId as s, Accordion as t, Primitive as u, useComposedRefs as v, require_jsx_runtime as y };

@@ -36,6 +36,8 @@ export const Route = createFileRoute("/track")({
   component: Track,
 });
 
+import { MiraCard } from "@/components/mira/MiraPrimitives";
+
 function referenceMatches(app: Application, query: string) {
   const extended = app as Application & { rawId?: string };
   return [app.id, extended.rawId].some(
@@ -66,13 +68,13 @@ function ApplicationTrackCard({ app }: { app: Application }) {
   const schemeName =
     getScheme(app.schemeId)?.name || extended.schemeName || "Application";
   return (
-    <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:p-5">
-      <div className="flex flex-col gap-3 border-b border-slate-100 pb-4 sm:flex-row sm:items-start sm:justify-between">
+    <MiraCard variant="elevated" className="p-5 sm:p-6 transition-all">
+      <div className="flex flex-col gap-3 border-b border-border/60 pb-4 sm:flex-row sm:items-start sm:justify-between">
         <div className="min-w-0">
-          <h2 className="text-base font-semibold text-slate-950">
+          <h2 className="text-base sm:text-lg font-semibold tracking-tight text-foreground">
             {schemeName}
           </h2>
-          <p className="mt-1 break-all font-mono text-xs text-slate-600">
+          <p className="mt-1 break-all font-mono text-xs text-muted-foreground">
             {app.id}
           </p>
         </div>
@@ -80,29 +82,29 @@ function ApplicationTrackCard({ app }: { app: Application }) {
       </div>
       <dl className="grid gap-3 py-4 text-sm sm:grid-cols-3">
         <div>
-          <dt className="text-xs text-slate-500">Submitted</dt>
-          <dd className="mt-1 text-slate-800">{fmtDate(app.appliedOn)}</dd>
+          <dt className="text-xs text-muted-foreground">Submitted</dt>
+          <dd className="mt-1 font-medium text-foreground">{fmtDate(app.appliedOn)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500">Last updated</dt>
-          <dd className="mt-1 text-slate-800">{fmtDate(app.updatedOn)}</dd>
+          <dt className="text-xs text-muted-foreground">Last updated</dt>
+          <dd className="mt-1 font-medium text-foreground">{fmtDate(app.updatedOn)}</dd>
         </div>
         <div>
-          <dt className="text-xs text-slate-500">Next step</dt>
-          <dd className="mt-1 leading-5 text-slate-800">{nextStep(app)}</dd>
+          <dt className="text-xs text-muted-foreground">Next step</dt>
+          <dd className="mt-1 leading-5 text-foreground">{nextStep(app)}</dd>
         </div>
       </dl>
-      <div className="border-t border-slate-100 pt-4">
-        <h3 className="mb-3 text-sm font-semibold text-slate-900">
+      <div className="border-t border-border/60 pt-4">
+        <h3 className="mb-3 text-sm font-semibold tracking-tight text-foreground">
           Application progress
         </h3>
         <Timeline app={app} />
       </div>
-      <div className="mt-4 border-t border-slate-100 pt-3">
+      <div className="mt-4 border-t border-border/60 pt-3">
         <Button
           variant="link"
           size="sm"
-          className="h-auto p-0 text-blue-700"
+          className="h-auto p-0 text-primary font-medium group"
           asChild
         >
           <Link
@@ -112,11 +114,11 @@ function ApplicationTrackCard({ app }: { app: Application }) {
             }}
           >
             View application details
-            <ArrowRight className="h-4 w-4" />
+            <ArrowRight className="h-3.5 w-3.5 ml-1 transition-transform group-hover:translate-x-0.5" />
           </Link>
         </Button>
       </div>
-    </article>
+    </MiraCard>
   );
 }
 
@@ -189,15 +191,15 @@ function Track() {
         title="Track your application"
         desc="See the current status of your welfare applications and what happens next."
       />
-      <Panel className="mb-7">
+      <MiraCard variant="elevated" className="mb-7 p-6">
         <form onSubmit={search} role="search" noValidate>
           <Label
             htmlFor="application-reference"
-            className="text-sm font-medium text-slate-900"
+            className="text-sm font-medium text-foreground"
           >
             Search by application reference
           </Label>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-xs text-muted-foreground">
             Use the reference shown on your submission acknowledgement.
           </p>
           <div className="mt-3 flex flex-col gap-2 sm:flex-row">
@@ -213,23 +215,24 @@ function Track() {
               aria-describedby={
                 formatError ? "track-reference-error" : undefined
               }
+              className="h-10"
             />
-            <Button type="submit" className="sm:min-w-32">
-              <Search className="h-4 w-4" />
+            <Button type="submit" className="sm:min-w-36 h-10 tactile-btn">
+              <Search className="h-4 w-4 mr-1.5" />
               Track application
             </Button>
           </div>
           {formatError && (
             <p
               id="track-reference-error"
-              className="mt-2 text-sm text-destructive"
+              className="mt-2 text-xs text-destructive"
               role="alert"
             >
               {formatError}
             </p>
           )}
         </form>
-      </Panel>
+      </MiraCard>
 
       {submittedId && !loading && !error && !searched && (
         <div className="mb-6">

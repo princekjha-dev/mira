@@ -1,23 +1,100 @@
 import { createFileRoute } from "@tanstack/react-router";
+import { useState } from "react";
 import { toast } from "sonner";
-import { useApp } from "@/lib/app-state";
+import {
+  Navigation,
+  MapPin,
+  Camera,
+  CheckCircle2,
+  HardDrive,
+} from "lucide-react";
+import { ProfilePage, ProfileSection, ProfileRow } from "@/components/mira/profile";
+import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
-import { PageHeader, Panel } from "@/components/gov/ui";
-import { AccessibilityControls } from "@/components/gov/AccessibilityDialog";
 
 export const Route = createFileRoute("/officer/settings")({
-  head: () => ({ meta: [{ title: "Settings — Officer" }, { name: "description", content: "Officer profile, security and accessibility settings." }, { property: "og:title", content: "Officer Settings" }, { property: "og:description", content: "Officer settings." }] }),
-  component: S,
+  head: () => ({
+    meta: [
+      { title: "Profile & Field Operations — Field Official" },
+      { name: "description", content: "Field verification officer identity, GPS tracking status, and offline route sync." },
+    ],
+  }),
+  component: OfficerProfileRoute,
 });
 
-function S() {
-  const { state } = useApp();
+function OfficerProfileRoute() {
+  const [offlineRoute, setOfflineRoute] = useState(true);
+  const [highPrecisionGps, setHighPrecisionGps] = useState(true);
+
   return (
-    <div className="space-y-4">
-      <PageHeader title="Settings" />
-      <Panel title="Officer profile"><dl className="grid gap-3 text-sm sm:grid-cols-2"><div><dt className="text-xs text-muted-foreground">Name</dt><dd>{state.session?.name}</dd></div><div><dt className="text-xs text-muted-foreground">Officer ID</dt><dd className="font-mono">{state.session?.id}</dd></div><div><dt className="text-xs text-muted-foreground">Department</dt><dd>{state.session?.department}</dd></div><div><dt className="text-xs text-muted-foreground">Role</dt><dd>Block Development Officer (Reviewer)</dd></div></dl></Panel>
-      <Panel title="Security"><div className="flex flex-wrap gap-2"><Button variant="outline" onClick={() => toast.success("Password change link sent to your official email (demo)")}>Change password</Button><Button variant="outline" onClick={() => toast.success("All other sessions signed out")}>Sign out other sessions</Button></div></Panel>
-      <Panel title="Accessibility"><AccessibilityControls /></Panel>
-    </div>
+    <ProfilePage
+      roleSpecificSection={
+        <ProfileSection
+          title="Field Operations & Geotagging"
+          description="GPS inspection parameters and offline cluster route synchronization"
+        >
+          <ProfileRow
+            icon={Navigation}
+            title="Daily Inspection Route Sync"
+            description="Pre-fetches cluster route maps and household files for disconnected rural zones"
+            action={
+              <Switch
+                checked={offlineRoute}
+                onCheckedChange={(val) => {
+                  setOfflineRoute(val);
+                  toast.success(
+                    val
+                      ? "Offline route sync enabled"
+                      : "Offline route sync disabled"
+                  );
+                }}
+              />
+            }
+          />
+
+          <ProfileRow
+            icon={MapPin}
+            title="High-Precision Differential GPS"
+            description="Enforces sub-meter geotagging accuracy for dwelling inspection photographs"
+            action={
+              <Switch
+                checked={highPrecisionGps}
+                onCheckedChange={(val) => {
+                  setHighPrecisionGps(val);
+                  toast.success(
+                    val
+                      ? "Sub-meter GNSS enabled"
+                      : "Standard cellular GPS fallback active"
+                  );
+                }}
+              />
+            }
+          />
+
+          <ProfileRow
+            icon={Camera}
+            title="Biometric & Presence Confirmation"
+            description="UIDAI RD Service facial recognition driver on field tablet"
+            value={
+              <span className="inline-flex items-center gap-1 font-mono text-[10px] font-semibold text-emerald-700 dark:text-emerald-400 bg-emerald-500/10 border border-emerald-500/20 px-2 py-0.5 rounded-full">
+                <CheckCircle2 className="h-3 w-3" />
+                Driver Active (L1 Biometric)
+              </span>
+            }
+            action={
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => toast.success("Biometric test scan successful (Demo)")}
+                className="h-7 text-xs ml-2"
+              >
+                Test RD
+              </Button>
+            }
+            isLast
+          />
+        </ProfileSection>
+      }
+    />
   );
 }

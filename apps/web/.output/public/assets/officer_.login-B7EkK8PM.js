@@ -1,1 +1,0 @@
-import{V as e}from"./button-BaiGjx8X.js";import{f as t}from"./index-BjArMQQi.js";var n=e(),r=()=>(0,n.jsx)(t,{initialRole:`officer`});export{r as component};

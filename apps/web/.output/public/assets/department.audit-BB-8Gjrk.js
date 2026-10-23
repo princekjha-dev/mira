@@ -1,1 +1,0 @@
-import{V as e}from"./button-BaiGjx8X.js";import{s as t}from"./ui-Weh0tGmv.js";import{t as n}from"./AuditTable-2fl1LKN4.js";var r=e(),i=()=>(0,r.jsxs)(`div`,{children:[(0,r.jsx)(t,{title:`Audit Logs`,desc:`Includes officer decisions, rule changes and record verifications.`}),(0,r.jsx)(n,{})]});export{i as component};

@@ -1,1 +1,0 @@
-import{V as e}from"./button-BaiGjx8X.js";import{s as t}from"./ui-Weh0tGmv.js";import{t as n}from"./Reports-CQkxOnLJ.js";var r=e(),i=()=>(0,r.jsxs)(`div`,{children:[(0,r.jsx)(t,{title:`Reports`}),(0,r.jsx)(n,{})]});export{i as component};

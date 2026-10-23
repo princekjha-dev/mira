@@ -99,6 +99,8 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
         (RoleType::Citizen.as_str(), "Resident citizen seeking public documentation & entitlements"),
         (RoleType::FieldOfficial.as_str(), "Civic field operative validating local resident credentials"),
         (RoleType::VerificationOfficer.as_str(), "Verification and adjudication officer reviewing claims"),
+        (RoleType::SchemeOfficer.as_str(), "Scheme officer reviewing policy, eligibility & sanctions"),
+        (RoleType::Supervisor.as_str(), "Supervisor reviewing escalated cases and second approvals"),
         (RoleType::DepartmentAdmin.as_str(), "Administrative authority managing department operations"),
         (RoleType::Auditor.as_str(), "Independent oversight auditor inspecting access and logs"),
         (RoleType::SuperAdmin.as_str(), "System infrastructure administrator"),
@@ -149,7 +151,15 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     let demo_pw_hash = PasswordService::hash(DEMO_PASSWORD)?;
 
     let demo_users = [
-        ("citizen@mira.local", "Rajesh Kumar (Citizen)", "en", RoleType::Citizen.as_str()),
+        // Standard prompt demo accounts
+        ("demo.citizen@mira.demo", "Rajesh Sharma (Citizen)", "en", RoleType::Citizen.as_str()),
+        ("demo.verifier@mira.demo", "Vikram Malhotra (Verification Officer)", "en", RoleType::VerificationOfficer.as_str()),
+        ("demo.scheme@mira.demo", "Sunita Verma (Scheme Officer)", "en", RoleType::SchemeOfficer.as_str()),
+        ("demo.supervisor@mira.demo", "Arun Deshmukh (Supervisor)", "en", RoleType::Supervisor.as_str()),
+        ("demo.auditor@mira.demo", "Kavita Rao (Auditor)", "en", RoleType::Auditor.as_str()),
+        ("demo.admin@mira.demo", "System Administrator", "en", RoleType::DepartmentAdmin.as_str()),
+        // Legacy aliases
+        ("citizen@mira.local", "Rajesh Sharma (Citizen)", "en", RoleType::Citizen.as_str()),
         ("officer@mira.local", "Priya Sharma (Field Official)", "en", RoleType::FieldOfficial.as_str()),
         ("verifier@mira.local", "Anil Verma (Verification Officer)", "hi", RoleType::VerificationOfficer.as_str()),
         ("admin@mira.local", "Sunita Patel (Department Admin)", "en", RoleType::DepartmentAdmin.as_str()),
@@ -961,8 +971,9 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     .await
     .map_err(|e| AppError::Internal(format!("Failed to write seed audit event: {}", e)))?;
 
+    seed_sharma_family(pool, admin_user_id, source_hr_id, source_fv_id).await?;
     seed_demo_documents(pool).await?;
-    tracing::info!("Deterministic V4 seed finished successfully. Entity Resolution and Duplicate Detection ready.");
+    tracing::info!("Deterministic V4 seed finished successfully. Sharma Family (MIRA-FAM-10482) and Duplicate Detection ready.");
     Ok(())
 }
 
@@ -988,46 +999,441 @@ fn synthetic_demo_pdf(label: &str) -> Vec<u8> {
     pdf
 }
 
-async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
-    let user_id = sqlx::query_scalar::<_, Uuid>("SELECT id FROM users WHERE email = 'citizen@mira.local'")
+async fn seed_sharma_family(
+    pool: &PgPool,
+    admin_user_id: Uuid,
+    source_hr_id: Uuid,
+    source_fv_id: Uuid,
+) -> Result<(), AppError> {
+    let citizen_user_id = sqlx::query_scalar::<_, Uuid>(
+        "SELECT id FROM users WHERE email = 'demo.citizen@mira.demo' OR email = 'citizen@mira.local' ORDER BY (email = 'demo.citizen@mira.demo') DESC LIMIT 1"
+    )
+    .fetch_optional(pool)
+    .await?
+    .unwrap_or(admin_user_id);
+
+    // 1. Household: MIRA-FAM-10482
+    let hh_row = sqlx::query(
+        r#"
+        INSERT INTO households (id, public_id, name, status, created_by)
+        VALUES (gen_random_uuid(), 'MIRA-FAM-10482', 'Sharma Family', 'ACTIVE', $1)
+        ON CONFLICT (public_id) DO UPDATE SET name = EXCLUDED.name, status = EXCLUDED.status
+        RETURNING id
+        "#,
+    )
+    .bind(citizen_user_id)
+    .fetch_one(pool)
+    .await?;
+
+    let sharma_hh_id: Uuid = hh_row.get("id");
+
+    // 2. Persons for Sharma Family:
+    let sharma_persons = [
+        ("P-10482-01", "Rajesh", "Sharma", NaiveDate::from_ymd_opt(1985, 3, 12), "Male", "demo.citizen@mira.demo", "XXXX-XXXX-4821"),
+        ("P-10482-02", "Sunita", "Sharma", NaiveDate::from_ymd_opt(1988, 7, 24), "Female", "sunita.sharma@mira.demo", "XXXX-XXXX-7722"),
+        ("P-10482-03", "Ananya", "Sharma", NaiveDate::from_ymd_opt(2012, 5, 18), "Female", "ananya.sharma@mira.demo", "XXXX-XXXX-9410"),
+        ("P-10482-04", "Aarav", "Sharma", NaiveDate::from_ymd_opt(2016, 9, 10), "Male", "aarav.sharma@mira.demo", "XXXX-XXXX-4412"),
+        ("P-10482-05", "Meena", "Sharma", NaiveDate::from_ymd_opt(1960, 11, 4), "Female", "meena.sharma@mira.demo", "XXXX-XXXX-1102"),
+    ];
+
+    let mut person_map = std::collections::HashMap::new();
+
+    for (pub_id, fname, lname, dob, gender, email, masked_id) in sharma_persons {
+        let p_row = sqlx::query(
+            r#"
+            INSERT INTO persons (id, public_id, first_name, last_name, date_of_birth, gender, email, status, created_by)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'ACTIVE', $7)
+            ON CONFLICT (public_id) DO UPDATE
+            SET first_name = EXCLUDED.first_name, last_name = EXCLUDED.last_name, email = EXCLUDED.email
+            RETURNING id
+            "#,
+        )
+        .bind(pub_id)
+        .bind(fname)
+        .bind(lname)
+        .bind(dob)
+        .bind(gender)
+        .bind(email)
+        .bind(citizen_user_id)
+        .fetch_one(pool)
+        .await?;
+
+        let pid: Uuid = p_row.get("id");
+        person_map.insert(pub_id, pid);
+
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO person_identifiers (id, person_id, identifier_type, identifier_reference, source_id, verified)
+            VALUES (gen_random_uuid(), $1, 'DEMO_AADHAAR', $2, $3, true)
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(pid)
+        .bind(masked_id)
+        .bind(source_hr_id)
+        .execute(pool)
+        .await;
+    }
+
+    let rajesh_id = person_map["P-10482-01"];
+    let sunita_id = person_map["P-10482-02"];
+    let ananya_id = person_map["P-10482-03"];
+    let aarav_id = person_map["P-10482-04"];
+    let meena_id = person_map["P-10482-05"];
+
+    // 3. Relationships:
+    let rels = [
+        (rajesh_id, sunita_id, "SPOUSE", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
+        (rajesh_id, ananya_id, "PARENT", NaiveDate::from_ymd_opt(2012, 5, 18).unwrap()),
+        (sunita_id, ananya_id, "PARENT", NaiveDate::from_ymd_opt(2012, 5, 18).unwrap()),
+        (rajesh_id, aarav_id, "PARENT", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
+        (sunita_id, aarav_id, "PARENT", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
+        (meena_id, rajesh_id, "PARENT", NaiveDate::from_ymd_opt(1985, 3, 12).unwrap()),
+        (ananya_id, aarav_id, "SIBLING", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
+    ];
+
+    for (p_a, p_b, rtype, vfrom) in rels {
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO person_relationships (id, person_a_id, person_b_id, relationship_type, valid_from, source_id, verification_status, confidence, created_by)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'VERIFIED', 1.00, $6)
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(p_a)
+        .bind(p_b)
+        .bind(rtype)
+        .bind(vfrom)
+        .bind(source_fv_id)
+        .bind(citizen_user_id)
+        .execute(pool)
+        .await;
+    }
+
+    // 4. Memberships in Sharma Household:
+    let members = [
+        (rajesh_id, "HEAD", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
+        (sunita_id, "SPOUSE", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
+        (ananya_id, "CHILD", NaiveDate::from_ymd_opt(2012, 5, 18).unwrap()),
+        (aarav_id, "CHILD", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
+        (meena_id, "DEPENDENT", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
+    ];
+
+    for (pid, role, vfrom) in members {
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO household_memberships (id, household_id, person_id, membership_role, valid_from, source_id, verification_status, confidence, created_by)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'VERIFIED', 1.00, $6)
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(sharma_hh_id)
+        .bind(pid)
+        .bind(role)
+        .bind(vfrom)
+        .bind(source_hr_id)
+        .bind(citizen_user_id)
+        .execute(pool)
+        .await;
+    }
+
+    // 5. Property for Sharma Family:
+    let prop_row = sqlx::query(
+        r#"
+        INSERT INTO properties (id, public_id, property_type, address_line, locality, district, state, postal_code, latitude, longitude)
+        VALUES (gen_random_uuid(), 'PROP-SHARMA-01', 'HOUSE', 'House No. 42, Ward 7, Demo District', 'Civil Lines', 'Demo District', 'Uttar Pradesh', '201001', 26.8467, 80.9462)
+        ON CONFLICT (public_id) DO UPDATE SET address_line = EXCLUDED.address_line
+        RETURNING id
+        "#,
+    )
+    .fetch_one(pool)
+    .await?;
+
+    let sharma_prop_id: Uuid = prop_row.get("id");
+
+    let _ = sqlx::query(
+        r#"
+        INSERT INTO property_associations (id, property_id, household_id, association_type, valid_from, verification_status, confidence)
+        VALUES (gen_random_uuid(), $1, $2, 'HOUSEHOLD_OCCUPIES', '2010-02-14', 'VERIFIED', 1.00)
+        ON CONFLICT DO NOTHING
+        "#,
+    )
+    .bind(sharma_prop_id)
+    .bind(sharma_hh_id)
+    .execute(pool)
+    .await;
+
+    // 6. Life Events Timeline for Sharma Family:
+    let timeline_events = [
+        ("MARRIAGE", Some(rajesh_id), NaiveDate::from_ymd_opt(2010, 2, 14).unwrap(), "Marriage registered with Sunita Sharma (Civil Registration Office)", "Civil Registration Office"),
+        ("BIRTH", Some(ananya_id), NaiveDate::from_ymd_opt(2012, 5, 18).unwrap(), "Ananya Sharma born (Civil Registration System, BR-2012-0941)", "Civil Registration System"),
+        ("BIRTH", Some(aarav_id), NaiveDate::from_ymd_opt(2016, 9, 10).unwrap(), "Aarav Sharma born (Civil Registration System, BR-2016-4412)", "Civil Registration System"),
+        ("ADDRESS_UPDATE", Some(rajesh_id), NaiveDate::from_ymd_opt(2018, 6, 15).unwrap(), "Household address updated to Demo District, Uttar Pradesh", "Field Verification Unit"),
+        ("INCOME_CERTIFICATE", Some(rajesh_id), NaiveDate::from_ymd_opt(2024, 4, 10).unwrap(), "Income certificate issued (₹1,40,000 / year)", "Revenue Department"),
+        ("SCHEME_APPLICATION", Some(rajesh_id), NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(), "New scheme application submitted: Student Scholarship", "Mira Portal"),
+    ];
+
+    for (etype, pid, edate, desc, sname) in timeline_events {
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO life_events (id, event_type, person_id, household_id, effective_date, metadata, created_by)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(etype)
+        .bind(pid)
+        .bind(sharma_hh_id)
+        .bind(edate)
+        .bind(serde_json::json!({
+            "description": desc,
+            "source_name": sname,
+            "verification_status": "VERIFIED",
+            "verified_by": "Field Verification Officer"
+        }))
+        .bind(citizen_user_id)
+        .execute(pool)
+        .await;
+    }
+
+    // 7. Scenario 1: Clarification Request Application
+    let sch_scholarship_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_STUDENT_SCHOLARSHIP'")
         .fetch_optional(pool)
-        .await?
-        .ok_or_else(|| AppError::Internal("Synthetic demo citizen is missing during document seeding".into()))?;
+        .await?;
+
+    if let Some(sch_id) = sch_scholarship_id {
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO applications (
+                id, public_id, application_number, scheme_id, applicant_person_id, target_person_id,
+                submitted_at, status, current_stage, application_date, metadata, created_by
+            )
+            VALUES (
+                gen_random_uuid(), 'APP-2026-10482', 'APP-SCHOLAR-2026-10482', $1, $2, $3,
+                '2026-01-12T09:30:00Z', 'UNDER_VERIFICATION', 'EVIDENCE_REQUESTED', '2026-01-12', $4, $5
+            )
+            ON CONFLICT (application_number) DO UPDATE
+            SET status = EXCLUDED.status, current_stage = EXCLUDED.current_stage, metadata = EXCLUDED.metadata
+            "#,
+        )
+        .bind(sch_id)
+        .bind(rajesh_id)
+        .bind(ananya_id)
+        .bind(serde_json::json!({
+            "declared_income": 140000,
+            "applicant_name": "Rajesh Sharma",
+            "target_name": "Ananya Sharma",
+            "household_public_id": "MIRA-FAM-10482",
+            "evidence_requests": [
+                {
+                    "id": "EV-REQ-10482",
+                    "evidence_type": "RESIDENCE_PROOF",
+                    "reason": "Address Variation Flagged",
+                    "description": "Preliminary document extraction found address text variation with municipal database. Please upload current address proof / electricity bill.",
+                    "status": "PENDING",
+                    "requested_at": "2026-01-14T11:00:00Z",
+                    "requested_by": "Verification Officer"
+                }
+            ],
+            "clarification_needed": true,
+            "notes": "Evidence requested by verification officer."
+        }))
+        .bind(citizen_user_id)
+        .execute(pool)
+        .await;
+
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO notifications (id, user_id, title, message, notification_type, action_link)
+            VALUES (gen_random_uuid(), $1, 'Action Required: Clarification Requested', 'Verification officer requested updated residence document for application APP-SCHOLAR-2026-10482.', 'ACTION_REQUIRED', '/citizen/applications/APP-2026-10482')
+            ON CONFLICT DO NOTHING
+            "#,
+        )
+        .bind(citizen_user_id)
+        .execute(pool)
+        .await;
+    }
+
+    // 8. Scenario 2: Potential Duplicate Detection Case
+    let sch_sanitation_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_HH_SANITATION'")
+        .fetch_optional(pool)
+        .await?;
+
+    if let Some(san_id) = sch_sanitation_id {
+        let dup_app_row = sqlx::query(
+            r#"
+            INSERT INTO applications (
+                id, public_id, application_number, scheme_id, applicant_person_id, target_household_id, target_property_id,
+                submitted_at, status, current_stage, application_date, metadata, created_by
+            )
+            VALUES (
+                gen_random_uuid(), 'APP-2026-10483', 'APP-SAN-2026-10483', $1, $2, $3, $4,
+                '2026-01-14T14:00:00Z', 'UNDER_VERIFICATION', 'OFFICER_REVIEW', '2026-01-14', $5, $6
+            )
+            ON CONFLICT (application_number) DO UPDATE SET status = EXCLUDED.status
+            RETURNING id
+            "#,
+        )
+        .bind(san_id)
+        .bind(rajesh_id)
+        .bind(sharma_hh_id)
+        .bind(sharma_prop_id)
+        .bind(serde_json::json!({
+            "duplicate_alert": true,
+            "notes": "Potential overlap identified with prior household sanitation record."
+        }))
+        .bind(citizen_user_id)
+        .fetch_one(pool)
+        .await?;
+
+        let dup_app_id: Uuid = dup_app_row.get("id");
+
+        let dup_case_row = sqlx::query(
+            r#"
+            INSERT INTO benefit_duplicate_cases (
+                id, public_id, application_id, scheme_id, benefit_scope, benefit_unit_type,
+                household_id, status, priority, assessment, reason, recommended_action, created_by
+            )
+            VALUES (
+                gen_random_uuid(), 'CASE-DUP-2026-10483', $1, $2, 'HOUSEHOLD', 'HOUSEHOLD',
+                $3, 'OPEN', 'MEDIUM', 'POTENTIAL_DUPLICATE',
+                'Potential duplicate detected because two applications share matching identity reference and overlapping benefit period.',
+                'MANUAL_REVIEW', $4
+            )
+            ON CONFLICT (public_id) DO UPDATE SET status = EXCLUDED.status
+            RETURNING id
+            "#,
+        )
+        .bind(dup_app_id)
+        .bind(san_id)
+        .bind(sharma_hh_id)
+        .bind(admin_user_id)
+        .fetch_one(pool)
+        .await?;
+
+        let case_id: Uuid = dup_case_row.get("id");
+
+        let existing_benefit_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM benefits WHERE scheme_id = $1 LIMIT 1")
+            .bind(san_id)
+            .fetch_optional(pool)
+            .await?;
+
+        if let Some(eb_id) = existing_benefit_id {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO benefit_duplicate_candidates (
+                    id, case_id, existing_benefit_id, candidate_rank, duplicate_category, overlap_score, explanation
+                )
+                VALUES (
+                    gen_random_uuid(), $1, $2, 1, 'POTENTIAL_DUPLICATE', 0.84,
+                    'Prior sanitation asset allocated under common household lineage. Verification required to confirm whether this is a legitimate new dwelling allotment.'
+                )
+                ON CONFLICT DO NOTHING
+                "#,
+            )
+            .bind(case_id)
+            .bind(eb_id)
+            .execute(pool)
+            .await;
+        }
+    }
+
+    Ok(())
+}
+
+async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
+    let users = sqlx::query_scalar::<_, Uuid>(
+        "SELECT id FROM users WHERE email IN ('demo.citizen@mira.demo', 'citizen@mira.local')"
+    )
+    .fetch_all(pool)
+    .await?;
+
+    if users.is_empty() {
+        return Ok(());
+    }
+
     let storage = Path::new("data/storage/safe_store");
     tokio::fs::create_dir_all(storage).await.map_err(|e| AppError::Internal(format!("Unable to prepare document storage: {e}")))?;
+
     let docs = [
-        ("Aadhaar Demo.pdf", "IDENTITY_SUPPORTING_DOCUMENT", "VERIFIED", None, 5),
-        ("Income Certificate.pdf", "INCOME_CERTIFICATE", "VERIFIED", None, 4),
-        ("Residence Certificate.pdf", "RESIDENCE_CERTIFICATE", "ACTION_REQUIRED", None, 3),
-        ("BPL Certificate.pdf", "OTHER", "EXPIRED", Some("2025-03-31T00:00:00Z"), 220),
-        ("Land Record.pdf", "PROPERTY_DOCUMENT", "PENDING_REVIEW", None, 1),
+        ("Aadhaar Card - Rajesh Sharma.pdf", "IDENTITY_SUPPORTING_DOCUMENT", "VERIFIED", None, 5),
+        ("Income Certificate 2024-25.pdf", "INCOME_CERTIFICATE", "VERIFIED", None, 4),
+        ("Residence Certificate - Ward 7.pdf", "RESIDENCE_CERTIFICATE", "ACTION_REQUIRED", None, 3),
+        ("BPL Priority Ration Card.pdf", "OTHER", "EXPIRED", Some("2025-03-31T00:00:00Z"), 220),
+        ("Land Revenue Record.pdf", "PROPERTY_DOCUMENT", "PENDING_REVIEW", None, 1),
     ];
-    for (filename, doc_type, verification, expiry, age_days) in docs {
-        let exists = sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM documents WHERE created_by = $1 AND original_filename = $2)")
-            .bind(user_id).bind(filename).fetch_one(pool).await?;
-        if exists { continue; }
-        let label = filename.trim_end_matches(".pdf");
-        let bytes = synthetic_demo_pdf(label);
-        let hash = format!("{:x}", Sha256::digest(&bytes));
-        let key = format!("{}.pdf", Uuid::new_v4());
-        tokio::fs::write(storage.join(&key), &bytes).await.map_err(|e| AppError::Internal(format!("Unable to seed demo document object: {e}")))?;
-        let row = sqlx::query(
-            r#"INSERT INTO documents (
-                public_id, owner_type, owner_id, document_type, original_filename, detected_mime_type,
-                size_bytes, original_size_bytes, sha256, storage_reference, status, verification_status, expires_at, created_by,
-                created_at, updated_at
-            ) VALUES ($1, 'CITIZEN', $2, $3, $4, 'application/pdf', $5, $5, $6, $7, 'READY', $8, $9, $2,
-                NOW() - ($10 * INTERVAL '1 day'), NOW() - ($10 * INTERVAL '1 day')) RETURNING id"#,
-        )
-        .bind(format!("DOC-DEMO-{}", Uuid::new_v4().to_string()[..8].to_uppercase()))
-        .bind(user_id).bind(doc_type).bind(filename).bind(bytes.len() as i64).bind(&hash).bind(&key)
-        .bind(verification).bind(expiry.map(|date| date.parse::<chrono::DateTime<chrono::Utc>>()).transpose().map_err(|e| AppError::Internal(e.to_string()))?).bind(age_days)
-        .fetch_one(pool).await.map_err(|e| AppError::Internal(format!("Unable to seed synthetic document metadata: {e}")))?;
-        let document_id: Uuid = row.get("id");
-        sqlx::query("INSERT INTO document_versions (document_id, version_type, storage_reference, mime_type, size_bytes, sha256, compression_type) VALUES ($1, 'ORIGINAL', $2, 'application/pdf', $3, $4, 'NONE')")
-            .bind(document_id).bind(&key).bind(bytes.len() as i64).bind(&hash).execute(pool).await?;
-        sqlx::query("INSERT INTO document_access_logs (document_id, user_id, action, purpose) VALUES ($1, $2, 'PROCESS', 'CITIZEN_SELF_SERVICE')")
-            .bind(document_id).bind(user_id).execute(pool).await?;
+
+    for user_id in users {
+        for (filename, doc_type, verification, expiry, age_days) in docs {
+            let exists = sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM documents WHERE created_by = $1 AND original_filename = $2)")
+                .bind(user_id).bind(filename).fetch_one(pool).await?;
+            if exists { continue; }
+            let label = filename.trim_end_matches(".pdf");
+            let bytes = synthetic_demo_pdf(label);
+            let hash = format!("{:x}", Sha256::digest(&bytes));
+            let key = format!("{}.pdf", Uuid::new_v4());
+            tokio::fs::write(storage.join(&key), &bytes).await.map_err(|e| AppError::Internal(format!("Unable to seed demo document object: {e}")))?;
+            let row = sqlx::query(
+                r#"INSERT INTO documents (
+                    public_id, owner_type, owner_id, document_type, original_filename, detected_mime_type,
+                    size_bytes, original_size_bytes, sha256, storage_reference, status, verification_status, expires_at, created_by,
+                    created_at, updated_at
+                ) VALUES ($1, 'CITIZEN', $2, $3, $4, 'application/pdf', $5, $5, $6, $7, 'READY', $8, $9, $2,
+                    NOW() - ($10 * INTERVAL '1 day'), NOW() - ($10 * INTERVAL '1 day')) RETURNING id"#,
+            )
+            .bind(format!("DOC-DEMO-{}", Uuid::new_v4().to_string()[..8].to_uppercase()))
+            .bind(user_id).bind(doc_type).bind(filename).bind(bytes.len() as i64).bind(&hash).bind(&key)
+            .bind(verification).bind(expiry.map(|date| date.parse::<chrono::DateTime<chrono::Utc>>()).transpose().map_err(|e| AppError::Internal(e.to_string()))?).bind(age_days)
+            .fetch_one(pool).await.map_err(|e| AppError::Internal(format!("Unable to seed synthetic document metadata: {e}")))?;
+            let document_id: Uuid = row.get("id");
+
+            sqlx::query("INSERT INTO document_versions (document_id, version_type, storage_reference, mime_type, size_bytes, sha256, compression_type) VALUES ($1, 'ORIGINAL', $2, 'application/pdf', $3, $4, 'NONE')")
+                .bind(document_id).bind(&key).bind(bytes.len() as i64).bind(&hash).execute(pool).await?;
+            sqlx::query("INSERT INTO document_access_logs (document_id, user_id, action, purpose) VALUES ($1, $2, 'PROCESS', 'CITIZEN_SELF_SERVICE')")
+                .bind(document_id).bind(user_id).execute(pool).await?;
+
+            // Add realistic extracted fields
+            if doc_type == "IDENTITY_SUPPORTING_DOCUMENT" {
+                let _ = sqlx::query(
+                    r#"
+                    INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                    VALUES 
+                    ($1, 'Name', 'Rajesh Sharma', 'RAJESH SHARMA', 0.94, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                    ($1, 'DOB', '12 March 1985', '1985-03-12', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                    ($1, 'Document Number', 'XXXX-XXXX-4821', 'XXXX-XXXX-4821', 0.98, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                    ($1, 'Address', 'Demo District, Uttar Pradesh', 'DEMO DISTRICT UTTAR PRADESH', 0.94, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
+                    "#
+                )
+                .bind(document_id)
+                .execute(pool)
+                .await;
+            } else if doc_type == "INCOME_CERTIFICATE" {
+                let _ = sqlx::query(
+                    r#"
+                    INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                    VALUES 
+                    ($1, 'Annual Income', '₹1,40,000', '140000', 0.96, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                    ($1, 'Certificate Number', 'IC-2024-UP-09881', 'IC-2024-UP-09881', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                    ($1, 'Issuing Authority', 'Tehsildar, Demo District', 'TEHSILDAR DEMO DISTRICT', 0.92, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
+                    "#
+                )
+                .bind(document_id)
+                .execute(pool)
+                .await;
+            } else if doc_type == "RESIDENCE_CERTIFICATE" {
+                let _ = sqlx::query(
+                    r#"
+                    INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                    VALUES 
+                    ($1, 'Address', 'Ward 7, Civil Lines, Demo District', 'WARD 7 CIVIL LINES DEMO DISTRICT', 0.88, 'DEMO_OCR_SIMULATION', 'CONFLICTING'),
+                    ($1, 'Applicant Name', 'Rajesh Sharma', 'RAJESH SHARMA', 0.93, 'DEMO_OCR_SIMULATION', 'SYSTEM_EXTRACTED')
+                    "#
+                )
+                .bind(document_id)
+                .execute(pool)
+                .await;
+            }
+        }
     }
     Ok(())
 }

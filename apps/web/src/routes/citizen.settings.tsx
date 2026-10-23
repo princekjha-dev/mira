@@ -1,60 +1,187 @@
-import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { createFileRoute } from "@tanstack/react-router";
 import { useState } from "react";
 import { toast } from "sonner";
-import { useApp } from "@/lib/app-state";
-import { CITIZEN } from "@/lib/data";
-import { LANGUAGES } from "@/lib/i18n";
+import {
+  FileCheck,
+  Building,
+  Landmark,
+  FileSpreadsheet,
+  Banknote,
+  FileText,
+  Unlink,
+  Link as LinkIcon,
+  ShieldCheck,
+} from "lucide-react";
+import { ProfilePage, ProfileSection, ProfileRow } from "@/components/mira/profile";
 import { Button } from "@/components/ui/button";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle } from "@/components/ui/alert-dialog";
-import { PageHeader, Panel, Pill } from "@/components/gov/ui";
-import { AccessibilityControls } from "@/components/gov/AccessibilityDialog";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from "@/components/ui/alert-dialog";
 
 export const Route = createFileRoute("/citizen/settings")({
-  head: () => ({ meta: [{ title: "Settings — Citizen" }, { name: "description", content: "Language, accessibility, notifications, privacy and security settings." }, { property: "og:title", content: "Settings" }, { property: "og:description", content: "Manage your preferences." }] }),
-  component: Settings,
+  head: () => ({
+    meta: [
+      { title: "Profile & Account — Citizen" },
+      { name: "description", content: "Citizen profile, authenticated identity, connected government records, and preferences." },
+    ],
+  }),
+  component: CitizenProfileRoute,
 });
 
-function Settings() {
-  const { state, set, logout } = useApp();
-  const nav = useNavigate();
-  const [links, setLinks] = useState([
-    { k: "Civil registration (birth/death)", on: true }, { k: "Revenue — income certificates", on: true },
-    { k: "Land records (Tehsil)", on: true }, { k: "Rural Development — BPL list", on: true }, { k: "Bank account (DBT)", on: false },
+function CitizenProfileRoute() {
+  const [records, setRecords] = useState([
+    { id: "civil", label: "Civil Registration (Birth & Family Tree)", linked: true, icon: FileCheck },
+    { id: "revenue", label: "Revenue Registry (Income & Caste Certificates)", linked: true, icon: Building },
+    { id: "land", label: "Tehsil Bhulekh (Land & Holding Records)", linked: true, icon: Landmark },
+    { id: "bpl", label: "Rural Development (NFSA & BPL Roster)", linked: true, icon: FileSpreadsheet },
+    { id: "dbt", label: "DBT Direct Benefit Bank Account (PFMS)", linked: false, icon: Banknote },
   ]);
-  const [revoke, setRevoke] = useState<string | null>(null);
+  const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
+
+  const handleToggle = (item: (typeof records)[0]) => {
+    if (item.linked) {
+      setRevokeTarget(item.label);
+    } else {
+      setRecords((prev) =>
+        prev.map((r) => (r.id === item.id ? { ...r, linked: true } : r))
+      );
+      toast.success(`${item.label} successfully linked.`);
+    }
+  };
+
+  const confirmUnlink = () => {
+    if (!revokeTarget) return;
+    setRecords((prev) =>
+      prev.map((r) => (r.label === revokeTarget ? { ...r, linked: false } : r))
+    );
+    toast.info(`${revokeTarget} unlinked from real-time verification.`);
+    setRevokeTarget(null);
+  };
+
   return (
-    <div>
-      <PageHeader title="Settings" />
-      <Tabs defaultValue="language" className="space-y-4">
-        <TabsList className="h-auto flex-wrap">
-          {["language", "accessibility", "notifications", "privacy", "records", "security", "help"].map((t) => <TabsTrigger key={t} value={t} className="capitalize">{t === "records" ? "Connected records" : t === "privacy" ? "Privacy & consent" : t === "security" ? "Login / security" : t}</TabsTrigger>)}
-        </TabsList>
-        <TabsContent value="language"><Panel title="Language"><div className="grid grid-cols-2 gap-2 sm:grid-cols-4">{LANGUAGES.map((l) => <Button key={l.code} variant={state.lang === l.code ? "default" : "outline"} onClick={() => { set({ lang: l.code }); toast.success(`Language set to ${l.label}`); }}>{l.label}</Button>)}</div></Panel></TabsContent>
-        <TabsContent value="accessibility"><Panel title="Accessibility"><AccessibilityControls /></Panel></TabsContent>
-        <TabsContent value="notifications"><Panel title="Notification preferences"><div className="space-y-4">
-          {([["sms", "SMS to " + CITIZEN.mobile], ["email", "Email to " + CITIZEN.email], ["app", "In-app notifications"]] as const).map(([k, l]) => (
-            <div key={k} className="flex items-center justify-between"><Label htmlFor={k}>{l}</Label><Switch id={k} checked={state.notifPrefs[k]} onCheckedChange={(v) => { set((s) => ({ notifPrefs: { ...s.notifPrefs, [k]: v } })); toast.success("Preference saved"); }} /></div>
-          ))}</div></Panel></TabsContent>
-        <TabsContent value="privacy"><Panel title="Privacy & consent"><p className="text-sm text-muted-foreground">You have given consent for departments to access linked records only when processing your applications. Every access is recorded in the audit log.</p>
-          <ul className="mt-3 space-y-2 text-sm"><li className="flex justify-between"><span>Consent for scheme verification</span><Pill t="ok">Active</Pill></li><li className="flex justify-between"><span>Consent for household benefit check</span><Pill t="ok">Active</Pill></li></ul>
-          <Button variant="outline" className="mt-4" onClick={() => toast.success("Your data access report has been prepared", { description: "Available in Notifications within 24 hours (demo)." })}>Request my data access report</Button></Panel></TabsContent>
-        <TabsContent value="records"><Panel title="Connected records"><ul className="divide-y">{links.map((l, i) => (
-          <li key={l.k} className="flex items-center justify-between py-3 text-sm"><span>{l.k}</span><div className="flex items-center gap-3"><Pill t={l.on ? "ok" : "neutral"}>{l.on ? "Linked" : "Not linked"}</Pill>
-            <Button size="sm" variant="outline" onClick={() => l.on ? setRevoke(l.k) : (setLinks(links.map((x, j) => (j === i ? { ...x, on: true } : x))), toast.success(`${l.k} linked`))}>{l.on ? "Unlink" : "Link"}</Button></div></li>
-        ))}</ul></Panel></TabsContent>
-        <TabsContent value="security"><Panel title="Login / security"><dl className="space-y-2 text-sm"><div className="flex justify-between"><dt>Sign-in method</dt><dd>Aadhaar OTP (demo)</dd></div><div className="flex justify-between"><dt>Registered mobile</dt><dd>{CITIZEN.mobile}</dd></div><div className="flex justify-between"><dt>Last sign-in</dt><dd>This session</dd></div></dl>
-          <Button variant="outline" className="mt-4" onClick={() => toast.success("Signed out of all other devices")}>Sign out of other devices</Button></Panel></TabsContent>
-        <TabsContent value="help"><Panel title="Help"><p className="text-sm">Visit <Link to="/help" className="text-gov underline">Help & Support</Link> for FAQs, or <Link to="/citizen/grievances" className="text-gov underline">raise a grievance</Link>.</p></Panel></TabsContent>
-      </Tabs>
-      <div className="mt-6"><Button variant="destructive" onClick={() => { logout(); toast.success("Logged out"); nav({ to: "/" }); }}>Logout</Button></div>
-      <AlertDialog open={!!revoke} onOpenChange={(o) => !o && setRevoke(null)}>
-        <AlertDialogContent><AlertDialogHeader><AlertDialogTitle>Unlink {revoke}?</AlertDialogTitle><AlertDialogDescription>Applications that need this record will ask you to upload documents manually instead.</AlertDialogDescription></AlertDialogHeader>
-          <AlertDialogFooter><AlertDialogCancel>Cancel</AlertDialogCancel><AlertDialogAction onClick={() => { setLinks(links.map((x) => (x.k === revoke ? { ...x, on: false } : x))); toast.success("Record unlinked"); }}>Unlink</AlertDialogAction></AlertDialogFooter>
+    <>
+      <ProfilePage
+        roleSpecificSection={
+          <>
+            {/* Connected Government Records Section */}
+            <ProfileSection
+              title="Connected Government Registries"
+              description="Authorised state registries synchronized for instant benefit eligibility verification"
+            >
+              {records.map((r, i) => (
+                <ProfileRow
+                  key={r.id}
+                  icon={r.icon}
+                  title={r.label}
+                  description={
+                    r.linked
+                      ? "Real-time state API synchronization active"
+                      : "Manual document upload required for verification"
+                  }
+                  value={
+                    <span
+                      className={`inline-flex items-center gap-1 font-mono text-[10px] font-semibold px-2 py-0.5 rounded-full border ${
+                        r.linked
+                          ? "bg-emerald-500/10 text-emerald-700 dark:text-emerald-400 border-emerald-500/20"
+                          : "bg-slate-100 text-slate-500 border-slate-200 dark:bg-slate-800 dark:border-slate-700"
+                      }`}
+                    >
+                      <span
+                        className={`h-1.5 w-1.5 rounded-full ${
+                          r.linked ? "bg-emerald-500" : "bg-slate-400"
+                        }`}
+                      />
+                      {r.linked ? "Synchronized" : "Disconnected"}
+                    </span>
+                  }
+                  action={
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleToggle(r)}
+                      className="h-7 text-xs ml-2"
+                    >
+                      {r.linked ? "Disconnect" : "Connect"}
+                    </Button>
+                  }
+                  isLast={i === records.length - 1}
+                />
+              ))}
+            </ProfileSection>
+
+            {/* Privacy & Consent Section */}
+            <ProfileSection
+              title="Privacy, Data Consent & Audit"
+              description="Statutory non-repudiation and consent receipts recorded in immutable audit log"
+            >
+              <ProfileRow
+                icon={ShieldCheck}
+                title="Application Verification Consent"
+                description="Permission for officers to query linked records for scheme sanctions"
+                value={
+                  <span className="text-emerald-600 dark:text-emerald-400 font-semibold text-xs">
+                    Active Consent
+                  </span>
+                }
+              />
+              <ProfileRow
+                icon={FileText}
+                title="Data Access Disclosure Report"
+                description="Full forensic report of every officer and department that accessed your files"
+                action={
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() =>
+                      toast.success("Forensic disclosure report prepared", {
+                        description: "Available in your Notifications within 24 hours.",
+                      })
+                    }
+                    className="h-7 text-xs"
+                  >
+                    Request Report
+                  </Button>
+                }
+                isLast
+              />
+            </ProfileSection>
+          </>
+        }
+      />
+
+      {/* Confirmation Dialog */}
+      <AlertDialog
+        open={!!revokeTarget}
+        onOpenChange={(o) => !o && setRevokeTarget(null)}
+      >
+        <AlertDialogContent className="rounded-2xl">
+          <AlertDialogHeader>
+            <AlertDialogTitle className="text-sm font-semibold">
+              Disconnect {revokeTarget}?
+            </AlertDialogTitle>
+            <AlertDialogDescription className="text-xs text-muted-foreground">
+              Applications requiring this registry will require physical document
+              upload and slower manual tehsil verification.
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel className="text-xs h-8">Cancel</AlertDialogCancel>
+            <AlertDialogAction
+              onClick={confirmUnlink}
+              className="text-xs h-8 bg-rose-600 hover:bg-rose-700 text-white"
+            >
+              Disconnect
+            </AlertDialogAction>
+          </AlertDialogFooter>
         </AlertDialogContent>
       </AlertDialog>
-    </div>
+    </>
   );
 }

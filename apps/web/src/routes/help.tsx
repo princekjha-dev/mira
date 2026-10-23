@@ -22,6 +22,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Empty, PageContainer, PageHeader, Panel } from "@/components/gov/ui";
+import { MiraCard } from "@/components/mira/MiraPrimitives";
 
 type HelpSearch = { q?: string };
 export const Route = createFileRoute("/help")({
@@ -162,61 +163,62 @@ function Help() {
         title="How can we help?"
         desc="Find answers, understand your applications, or get help with Mira services."
       />
-      <form
-        onSubmit={searchHelp}
-        role="search"
-        className="mb-7 rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:p-5"
+      <MiraCard
+        variant="elevated"
+        className="mb-7 p-4 sm:p-5"
       >
-        <label
-          htmlFor="help-search"
-          className="text-sm font-medium text-slate-900"
-        >
-          Search help articles, schemes or services
-        </label>
-        <div className="mt-2 flex flex-col gap-2 sm:flex-row">
-          <div className="relative min-w-0 flex-1">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
-            <Input
-              id="help-search"
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="Try ‘documents’ or ‘application status’"
-              className="pl-9"
-            />
+        <form onSubmit={searchHelp} role="search">
+          <label
+            htmlFor="help-search"
+            className="text-sm font-medium text-foreground"
+          >
+            Search help articles, schemes or services
+          </label>
+          <div className="mt-2 flex flex-col gap-2 sm:flex-row">
+            <div className="relative min-w-0 flex-1">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+              <Input
+                id="help-search"
+                value={query}
+                onChange={(event) => setQuery(event.target.value)}
+                placeholder="Try ‘documents’ or ‘application status’"
+                className="pl-9 h-10"
+              />
+            </div>
+            <Button type="submit" className="sm:min-w-28 h-10 tactile-btn">
+              <Search className="h-4 w-4 mr-1.5" />
+              Search
+            </Button>
           </div>
-          <Button type="submit" className="sm:min-w-28">
-            <Search className="h-4 w-4" />
-            Search
-          </Button>
-        </div>
-      </form>
+        </form>
+      </MiraCard>
 
       <section className="mb-8" aria-labelledby="help-topics-heading">
         <div className="mb-3">
           <h2
             id="help-topics-heading"
-            className="text-lg font-semibold tracking-tight text-slate-950"
+            className="text-lg font-semibold tracking-tight text-foreground"
           >
             Browse by topic
           </h2>
-          <p className="mt-1 text-sm text-slate-600">
+          <p className="mt-1 text-xs text-muted-foreground">
             Go directly to the Mira service related to your question.
           </p>
         </div>
-        <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid gap-2.5 sm:grid-cols-2 lg:grid-cols-4">
           {CATEGORIES.map(({ label, to, icon: Icon }) => (
             <Link
               to={to}
               key={label}
-              className="group flex min-h-[76px] items-center gap-3 rounded-lg border border-slate-200 bg-white p-3.5 transition-colors hover:border-slate-300 hover:bg-stone-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-blue-600"
+              className="group flex min-h-[72px] items-center gap-3 rounded-xl border border-border/70 bg-card p-3.5 transition-all duration-200 hover:border-primary/40 hover:shadow-xs active:scale-[0.99] tactile-card"
             >
-              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-md bg-stone-100 text-slate-700">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-muted/60 text-foreground transition-transform group-hover:scale-105">
                 <Icon className="h-4 w-4" />
               </span>
-              <span className="min-w-0 flex-1 text-sm font-medium text-slate-900">
+              <span className="min-w-0 flex-1 text-sm font-medium text-foreground">
                 {label}
               </span>
-              <ArrowRight className="h-4 w-4 shrink-0 text-slate-400 transition-transform group-hover:translate-x-0.5" />
+              <ArrowRight className="h-4 w-4 shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5" />
             </Link>
           ))}
         </div>

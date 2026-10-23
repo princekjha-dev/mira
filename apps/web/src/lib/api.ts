@@ -152,7 +152,7 @@ export async function getMe(token: string): Promise<ApiAuthResponse["user"]> {
 }
 
 export async function authenticateDemo(
-  role: "citizen" | "officer" | "verifier" | "admin" | "auditor",
+  role: "citizen" | "officer" | "verifier" | "scheme" | "supervisor" | "admin" | "auditor",
 ): Promise<ApiAuthResponse> {
   let response: Response;
   try {
@@ -186,8 +186,10 @@ export async function authenticateDemo(
 
 export function mapRoleToUiRole(roles: string[]): Role {
   if (roles.includes("AUDITOR")) return "auditor";
-  if (roles.includes("VERIFICATION_OFFICER")) return "verifier";
   if (roles.includes("DEPARTMENT_ADMIN")) return "admin";
+  if (roles.includes("SUPERVISOR")) return "supervisor";
+  if (roles.includes("SCHEME_OFFICER")) return "scheme";
+  if (roles.includes("VERIFICATION_OFFICER")) return "verifier";
   if (roles.includes("FIELD_OFFICIAL") || roles.includes("OFFICER"))
     return "officer";
   return "citizen";
@@ -757,3 +759,180 @@ export const documentPreviewUrl = (id: string) =>
   apiUrl(`/api/v1/documents/${id}/preview?purpose=CITIZEN_SELF_SERVICE`);
 export const documentDownloadUrl = (id: string) =>
   apiUrl(`/api/v1/documents/${id}/download?purpose=CITIZEN_SELF_SERVICE`);
+
+export interface ApiFamilyMember {
+  id: string;
+  person_id: string;
+  public_id: string;
+  name: string;
+  relationship: string;
+  membership_role: string;
+  dob: string;
+  gender: string;
+  identity: string;
+  membership: string;
+  income: string | null;
+  benefits: string[];
+  is_current: boolean;
+}
+
+export interface ApiFamilyRelationship {
+  id: string;
+  person_a_id: string;
+  person_b_id: string;
+  person_a_name: string;
+  person_b_name: string;
+  relationship_type: string;
+  valid_from: string | null;
+  verification_status: string;
+}
+
+export interface ApiFamilyTimelineItem {
+  date: string;
+  event_type: string;
+  title: string;
+  description: string;
+  source: string;
+  evidence: string | null;
+  verification_status: string;
+  verified_by: string;
+  timestamp: string;
+}
+
+export interface ApiFamilyRequest {
+  id: string;
+  type: string;
+  requested_at: string;
+  status: string;
+  details: string;
+  changes: Record<string, any>;
+}
+
+export interface ApiFamilyResponse {
+  household_id: string;
+  household_public_id: string;
+  household_name: string;
+  status: string;
+  address: string;
+  property_summary: string;
+  bpl_status: string;
+  income_category: string;
+  verification_status: string;
+  is_demo_data: boolean;
+  disclaimer: string;
+  members: ApiFamilyMember[];
+  relationships: ApiFamilyRelationship[];
+  timeline: ApiFamilyTimelineItem[];
+  requests: ApiFamilyRequest[];
+}
+
+export async function fetchMyFamily(
+  sessionOrToken: Session | string | null,
+): Promise<ApiFamilyResponse> {
+  const res = await apiRequest<ApiEnvelope<ApiFamilyResponse>>(
+    sessionOrToken,
+    "/api/v1/profile/family",
+  );
+  return res.data;
+}
+
+export async function addFamilyMember(
+  sessionOrToken: Session | string | null,
+  payload: {
+    first_name: string;
+    last_name: string;
+    relationship: string;
+    date_of_birth: string;
+    gender: string;
+    income?: string | null;
+  },
+): Promise<ApiFamilyMember> {
+  const res = await apiRequest<ApiEnvelope<ApiFamilyMember>>(
+    sessionOrToken,
+    "/api/v1/profile/family/members",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return res.data;
+}
+
+export async function reportLifeEvent(
+  sessionOrToken: Session | string | null,
+  payload: {
+    event_type: string;
+    effective_date: string;
+    person_name?: string | null;
+    details: string;
+    certificate_no?: string | null;
+  },
+): Promise<ApiFamilyTimelineItem> {
+  const res = await apiRequest<ApiEnvelope<ApiFamilyTimelineItem>>(
+    sessionOrToken,
+    "/api/v1/profile/family/events",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return res.data;
+}
+
+export async function raiseFamilyDispute(
+  sessionOrToken: Session | string | null,
+  payload: {
+    application_id?: string | null;
+    category: string;
+    description: string;
+    document_reference?: string | null;
+  },
+): Promise<any> {
+  const res = await apiRequest<ApiEnvelope<any>>(
+    sessionOrToken,
+    "/api/v1/profile/family/disputes",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+  return res.data;
+}
+
+export async function fetchDocumentExtractions(
+  sessionOrToken: Session | string | null,
+  docId: string,
+): Promise<any> {
+  const res = await apiRequest<ApiEnvelope<any>>(
+    sessionOrToken,
+    `/api/v1/documents/${docId}/extractions`,
+  );
+  return res.data;
+}
+
+export interface ApiAiChatRequest {
+  message: string;
+  route?: string;
+  history?: Array<{ role: "user" | "assistant"; content: string }>;
+}
+
+export interface ApiAiChatResponse {
+  reply: string;
+  role: string;
+  context_summary: string;
+  is_live_llm: boolean;
+}
+
+export async function sendMiraAiChat(
+  sessionOrToken: Session | string | null,
+  payload: ApiAiChatRequest,
+): Promise<ApiAiChatResponse> {
+  return apiRequest<ApiAiChatResponse>(
+    sessionOrToken,
+    "/api/v1/ai/chat",
+    {
+      method: "POST",
+      body: JSON.stringify(payload),
+    },
+  );
+}

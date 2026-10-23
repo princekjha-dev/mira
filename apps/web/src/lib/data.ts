@@ -433,12 +433,15 @@ export type AppStatus = (typeof STATUSES)[number];
 
 export const TIMELINE_STAGES = [
   "Application Submitted",
-  "Documents Checked",
-  "Eligibility Verified",
-  "Duplicate Check",
+  "Documents Received",
+  "Identity Verification",
+  "Family Verification",
+  "Eligibility Evaluation",
   "Officer Review",
+  "Clarification Requested",
   "Decision",
-  "Benefit / Disbursement",
+  "Benefit Processing",
+  "Completed",
 ];
 
 export interface AppEvent {
@@ -915,6 +918,8 @@ export interface DuplicateAlert {
   sources: string[];
   status:
     | "Open"
+    | "Investigation Signal"
+    | "Legitimate Overlap"
     | "Not Duplicate"
     | "Confirmed Duplicate"
     | "Evidence Requested"
@@ -927,6 +932,62 @@ export interface DuplicateAlert {
   }[];
 }
 export const DUPLICATE_ALERTS: DuplicateAlert[] = [
+  {
+    id: "DA-2026-10483",
+    severity: "Medium",
+    appId: "APP-2026-10482",
+    scheme: "National Food Security Mission (NFSA Priority Ration)",
+    applicant: "Rajesh Sharma",
+    household: "MIRA-FAM-10482",
+    match:
+      "Potential duplicate detected: Sunita Sharma (Spouse) in active Antyodaya Ration Scheme under legacy district registry",
+    reason:
+      "Potential duplicate detected because two applications share matching identity reference and overlapping benefit period under Sharma household. Requires Human-in-the-Loop review.",
+    sources: [
+      "NFSA Registry Database",
+      "Civil Registration System",
+      "Municipal Household Survey",
+    ],
+    status: "Investigation Signal",
+    compare: [
+      {
+        field: "Household ID",
+        current: "MIRA-FAM-10482",
+        existing: "MIRA-FAM-10482 (Pre-unification registry)",
+        same: true,
+      },
+      {
+        field: "Identity Reference",
+        current: "XXXX-XXXX-4821 (Rajesh Sharma)",
+        existing: "XXXX-XXXX-4821 (Linked Family Card)",
+        same: true,
+      },
+      {
+        field: "Family Relationship",
+        current: "Rajesh Sharma (Household Head)",
+        existing: "Sunita Sharma (Spouse / Card Member)",
+        same: false,
+      },
+      {
+        field: "Address",
+        current: "House No. 42, Ward 7, Demo District",
+        existing: "House No. 42, Ward 7, Demo District",
+        same: true,
+      },
+      {
+        field: "Benefit Period",
+        current: "2026-2027 (Active application)",
+        existing: "2024-2026 (Expiring legacy entitlement)",
+        same: true,
+      },
+      {
+        field: "Statutory Rule",
+        current: "NFSA Rule 4(b) Single Family Quota",
+        existing: "Subsumes prior district card",
+        same: false,
+      },
+    ],
+  },
   {
     id: "DA-2026-0091",
     severity: "High",
@@ -1127,4 +1188,713 @@ export const fmtDate = (d: string) => {
     year: "numeric",
   });
 };
+
+// ============================================================================
+// 1. Inbox & Mail System Models and Seed Data
+// ============================================================================
+
+export interface MailAttachment {
+  id: string;
+  name: string;
+  size: number;
+  type: string;
+  url?: string;
+}
+
+export interface MailMessage {
+  id: string;
+  senderName: string;
+  senderEmail: string;
+  senderRole: string;
+  timestamp: string;
+  body: string;
+  attachments?: MailAttachment[];
+}
+
+export interface MessageThread {
+  id: string;
+  subject: string;
+  sender: {
+    name: string;
+    email: string;
+    role: string;
+    department?: string;
+    avatar?: string;
+  };
+  recipient: {
+    name: string;
+    email: string;
+    role: string;
+  };
+  preview: string;
+  timestamp: string;
+  status: "unread" | "read";
+  isStarred?: boolean;
+  isArchived?: boolean;
+  folder: "inbox" | "sent" | "starred" | "archived" | "important";
+  applicationId?: string;
+  tags?: string[];
+  messages: MailMessage[];
+}
+
+export const SEED_MESSAGES: MessageThread[] = [
+  {
+    id: "MSG-2026-901",
+    subject: "Clarification: Income Certificate Document for Application APP-2026-000318",
+    sender: {
+      name: "Neha Verma",
+      email: "verifier@mira.local",
+      role: "verifier",
+      department: "Social Welfare Verification Cell",
+    },
+    recipient: {
+      name: "Ananya Sharma",
+      email: "citizen@mira.local",
+      role: "citizen",
+    },
+    preview: "Please upload a clearer copy of your Tehsil-issued income certificate. The seal on Page 1 is partially obscured.",
+    timestamp: "2026-10-22 14:30",
+    status: "unread",
+    isStarred: true,
+    folder: "inbox",
+    applicationId: "APP-2026-000318",
+    tags: ["Action Required", "Evidence"],
+    messages: [
+      {
+        id: "M-1",
+        senderName: "Neha Verma",
+        senderEmail: "verifier@mira.local",
+        senderRole: "verifier",
+        timestamp: "2026-10-22 10:15",
+        body: "Namaste Ananya ji, during document verification for your Rural Housing Assistance application (APP-2026-000318), we noticed the municipal seal on Page 1 of the Income Certificate is partially obscured. Kindly upload a clear scanned copy or attested certificate so we can advance your file to sanction.",
+        attachments: [
+          {
+            id: "att-1",
+            name: "income_sample_spec.pdf",
+            size: 142000,
+            type: "application/pdf",
+          },
+        ],
+      },
+      {
+        id: "M-1-REPLY",
+        senderName: "Ananya Sharma",
+        senderEmail: "citizen@mira.local",
+        senderRole: "citizen",
+        timestamp: "2026-10-22 12:40",
+        body: "Respected Neha ji, I have obtained the re-attested income certificate directly from Tehsil Sadar office with the official seal clearly visible on both pages. Kindly confirm if this satisfies the verification requirement.",
+        attachments: [
+          {
+            id: "att-2",
+            name: "attested_income_oct2026.pdf",
+            size: 198000,
+            type: "application/pdf",
+          },
+        ],
+      },
+      {
+        id: "M-1-FINAL",
+        senderName: "Neha Verma",
+        senderEmail: "verifier@mira.local",
+        senderRole: "verifier",
+        timestamp: "2026-10-22 14:30",
+        body: "Ananya ji, thank you for the prompt re-submission. The revenue seal and Tehsil registration number have been verified against the state database. Your application APP-2026-000318 is now approved for second-stage sanction.",
+      },
+    ],
+  },
+  {
+    id: "MSG-2026-902",
+    subject: "Field Verification Visit Scheduled: Lucknow Urban Zone 3",
+    sender: {
+      name: "Ravi Kumar",
+      email: "officer@mira.local",
+      role: "officer",
+      department: "District Welfare Office",
+    },
+    recipient: {
+      name: "Ananya Sharma",
+      email: "citizen@mira.local",
+      role: "citizen",
+    },
+    preview: "Physical household inspection scheduled for 24 Oct 2026 between 10:00 AM and 1:00 PM.",
+    timestamp: "2026-10-21 11:15",
+    status: "read",
+    isStarred: false,
+    folder: "inbox",
+    applicationId: "APP-2026-000318",
+    tags: ["Field Visit", "Schedule"],
+    messages: [
+      {
+        id: "M-2",
+        senderName: "Ravi Kumar",
+        senderEmail: "officer@mira.local",
+        senderRole: "officer",
+        timestamp: "2026-10-21 11:15",
+        body: "Hello Ananya ji, this is Field Official Ravi Kumar from the District Welfare Office. I have been assigned to verify your household residence and physical dwelling condition for your housing grant application. I will visit House No. 42, Ward 7 tomorrow between 10:00 AM and 1:00 PM. Please have original identity proofs ready for inspection.",
+      },
+    ],
+  },
+  {
+    id: "MSG-2026-903",
+    subject: "Household Survey Lineage Attestation Confirmed",
+    sender: {
+      name: "Arjun Mehta",
+      email: "admin@mira.local",
+      role: "admin",
+      department: "Department of Social Welfare",
+    },
+    recipient: {
+      name: "Neha Verma",
+      email: "verifier@mira.local",
+      role: "verifier",
+    },
+    preview: "State family register synchronised for Lucknow district. Household SH-HH-10482 attested.",
+    timestamp: "2026-10-20 16:45",
+    status: "read",
+    isStarred: false,
+    folder: "inbox",
+    applicationId: "APP-2026-000318",
+    tags: ["Operations", "System"],
+    messages: [
+      {
+        id: "M-3",
+        senderName: "Arjun Mehta",
+        senderEmail: "admin@mira.local",
+        senderRole: "admin",
+        timestamp: "2026-10-20 16:45",
+        body: "Neha, the automated batch reconciliation with Tehsil Sadar Land Registry completed successfully. Any pending cross-scheme checks on household SH-HH-10482 can now proceed under Rule Version 3.2.",
+      },
+    ],
+  },
+  {
+    id: "MSG-2026-904",
+    subject: "Audit Query: High-impact Sanction Sampling for Q3 2026",
+    sender: {
+      name: "Priya Nair",
+      email: "auditor@mira.local",
+      role: "auditor",
+      department: "Office of the Principal Accountant General",
+    },
+    recipient: {
+      name: "Arjun Mehta",
+      email: "admin@mira.local",
+      role: "admin",
+    },
+    preview: "Requesting immutable decision exports for block grants exceeding ₹1,00,000.",
+    timestamp: "2026-10-19 09:30",
+    status: "read",
+    isStarred: true,
+    folder: "inbox",
+    tags: ["Compliance", "Audit"],
+    messages: [
+      {
+        id: "M-4",
+        senderName: "Priya Nair",
+        senderEmail: "auditor@mira.local",
+        senderRole: "auditor",
+        timestamp: "2026-10-19 09:30",
+        body: "Director Mehta, as part of the statutory quarterly audit under the Public Welfare Transparency Act, please ensure all second-tier supervisor reviews for rural housing grants sanctioned between July and September are accessible in the read-only audit partition.",
+      },
+    ],
+  },
+];
+
+// ============================================================================
+// 2. Threaded Comments System with @mentions
+// ============================================================================
+
+export interface CommentReply {
+  id: string;
+  author: {
+    name: string;
+    role: string;
+    avatar?: string;
+  };
+  timestamp: string;
+  text: string;
+  mentions?: string[];
+}
+
+export interface CommentItem {
+  id: string;
+  recordType: "application" | "document" | "task" | "visit" | "scheme" | "rule";
+  recordId: string;
+  author: {
+    name: string;
+    role: string;
+    department?: string;
+    avatar?: string;
+  };
+  timestamp: string;
+  text: string;
+  mentions?: string[];
+  replies: CommentReply[];
+  isResolved?: boolean;
+}
+
+export const SEED_COMMENTS: CommentItem[] = [
+  {
+    id: "COM-01",
+    recordType: "application",
+    recordId: "APP-2026-000318",
+    author: {
+      name: "Neha Verma",
+      role: "verifier",
+      department: "Verification Cell",
+    },
+    timestamp: "2026-10-22 11:20",
+    text: "Income certificate declared ₹1,40,000, but electricity billing indicates urban tariff connection. @Ravi please check dwelling type during field visit.",
+    mentions: ["Ravi"],
+    isResolved: false,
+    replies: [
+      {
+        id: "REP-01-1",
+        author: {
+          name: "Ravi Kumar",
+          role: "officer",
+        },
+        timestamp: "2026-10-22 13:40",
+        text: "Understood @Neha. I have added a physical inspection check for meter installation at House 42, Ward 7.",
+        mentions: ["Neha"],
+      },
+    ],
+  },
+  {
+    id: "COM-02",
+    recordType: "application",
+    recordId: "APP-2026-000318",
+    author: {
+      name: "Ananya Sharma",
+      role: "citizen",
+    },
+    timestamp: "2026-10-22 15:05",
+    text: "I have uploaded the renewed Tahsildar income certificate with clear official stamp. Please review.",
+    mentions: ["Neha"],
+    isResolved: true,
+    replies: [
+      {
+        id: "REP-02-1",
+        author: {
+          name: "Neha Verma",
+          role: "verifier",
+        },
+        timestamp: "2026-10-22 16:10",
+        text: "Document received and authenticated. Thank you Ananya ji.",
+      },
+    ],
+  },
+  {
+    id: "COM-03",
+    recordType: "rule",
+    recordId: "rural-housing",
+    author: {
+      name: "Arjun Mehta",
+      role: "admin",
+      department: "Directorate",
+    },
+    timestamp: "2026-10-15 10:00",
+    text: "Rule version 3.2 raises household annual threshold from ₹1,20,000 to ₹1,50,000 per Cabinet Order 2026/SW-941. @Priya audit note updated.",
+    mentions: ["Priya"],
+    isResolved: true,
+    replies: [],
+  },
+];
+
+// ============================================================================
+// 3. Field Official Visits & Operational Workflow
+// ============================================================================
+
+export interface FieldVisitChecklistItem {
+  id: string;
+  label: string;
+  checked: boolean;
+  notes?: string;
+}
+
+export interface FieldVisit {
+  id: string;
+  applicationId: string;
+  citizenName: string;
+  citizenPhone: string;
+  address: string;
+  ward: string;
+  scheduledDate: string;
+  scheduledTime: string;
+  status: "Today" | "Upcoming" | "Completed" | "Escalated";
+  purpose: string;
+  schemeName: string;
+  dwellingType: "Kutcha" | "Semi-Pucca" | "Pucca";
+  checklist: FieldVisitChecklistItem[];
+  officerNotes: string;
+  evidencePhotos: string[];
+  citizenConfirmation: {
+    confirmed: boolean;
+    signedBy?: string;
+    timestamp?: string;
+  };
+}
+
+export const SEED_FIELD_VISITS: FieldVisit[] = [
+  {
+    id: "FV-2026-0041",
+    applicationId: "APP-2026-000318",
+    citizenName: "Ananya Sharma",
+    citizenPhone: "+91 98765 43210",
+    address: "House No. 42, Ward 7, Rampur, Sadar Tehsil",
+    ward: "Ward 7",
+    scheduledDate: "2026-10-23",
+    scheduledTime: "10:30 AM",
+    status: "Today",
+    purpose: "Dwelling condition and household co-residence inspection",
+    schemeName: "Rural Housing Assistance Scheme",
+    dwellingType: "Kutcha",
+    checklist: [
+      { id: "c1", label: "Verify physical co-residence of all 5 household members", checked: true },
+      { id: "c2", label: "Confirm absence of pucca RCC roof dwelling on plot", checked: true },
+      { id: "c3", label: "Inspect electricity meter and domestic load (< 1 kW)", checked: false },
+      { id: "c4", label: "Verify Khasra land title boundary with neighbouring plots", checked: true },
+    ],
+    officerNotes: "Household resides in ancestral thatched/mud dwelling. Family members present. High priority for pucca housing sanction under state guidelines.",
+    evidencePhotos: ["/hero/civic-1.jpg", "/hero/civic-2.jpg"],
+    citizenConfirmation: {
+      confirmed: true,
+      signedBy: "Ananya Sharma",
+      timestamp: "2026-10-23 11:15",
+    },
+  },
+  {
+    id: "FV-2026-0042",
+    applicationId: "APP-2026-000402",
+    citizenName: "Geeta Yadav",
+    citizenPhone: "+91 98111 22334",
+    address: "Plot 302, Rampur Khurd, Near Water Tank",
+    ward: "Ward 3",
+    scheduledDate: "2026-10-24",
+    scheduledTime: "02:00 PM",
+    status: "Upcoming",
+    purpose: "Boundary demarcation and land ownership survey",
+    schemeName: "Rural Housing Assistance Scheme",
+    dwellingType: "Semi-Pucca",
+    checklist: [
+      { id: "c1", label: "Inspect Khasra 302 boundary stones", checked: false },
+      { id: "c2", label: "Verify neighbor partition declaration", checked: false },
+      { id: "c3", label: "Check prior benefit receipt from Nagar Panchayat", checked: false },
+    ],
+    officerNotes: "Cross-check plot overlap alert DA-2026-0088 with adjacent household application.",
+    evidencePhotos: [],
+    citizenConfirmation: { confirmed: false },
+  },
+  {
+    id: "FV-2026-0039",
+    applicationId: "APP-2026-000391",
+    citizenName: "Mohan Lal",
+    citizenPhone: "+91 94555 67890",
+    address: "House 18, Ward 4, Old Tehsil Colony",
+    ward: "Ward 4",
+    scheduledDate: "2026-10-18",
+    scheduledTime: "11:00 AM",
+    status: "Completed",
+    purpose: "Senior Citizen Age and Caregiver Independence Verification",
+    schemeName: "National Old Age Pension",
+    dwellingType: "Pucca",
+    checklist: [
+      { id: "c1", label: "Inspect civil hospital age certificate", checked: true },
+      { id: "c2", label: "Confirm bank account linkage with Aadhaar", checked: true },
+    ],
+    officerNotes: "Applicant is 68 years old. Living with dependent spouse. Bank DBT details verified.",
+    evidencePhotos: ["/hero/civic-3.jpg"],
+    citizenConfirmation: {
+      confirmed: true,
+      signedBy: "Mohan Lal",
+      timestamp: "2026-10-18 11:45",
+    },
+  },
+];
+
+// ============================================================================
+// 4. Files Explorer & Versioning System
+// ============================================================================
+
+export interface FileVersionEntry {
+  versionNumber: number;
+  filename: string;
+  sizeBytes: number;
+  uploadedBy: string;
+  uploadedAt: string;
+  reason: string;
+}
+
+export interface FileRecord {
+  id: string;
+  name: string;
+  category: "My Files" | "Application Files" | "Household Files" | "Evidence" | "Shared With Me" | "Requested Documents" | "Archived";
+  type: string;
+  mimeType: string;
+  sizeBytes: number;
+  uploadedBy: string;
+  uploadedRole: string;
+  uploadedDate: string;
+  verificationStatus: "Verified" | "Pending Review" | "Action Required" | "Mismatch Detected";
+  relatedRecordId?: string;
+  currentVersion: number;
+  versions: FileVersionEntry[];
+}
+
+export const SEED_FILES: FileRecord[] = [
+  {
+    id: "FIL-01",
+    name: "Aadhaar_Card_Rajesh_Sharma.pdf",
+    category: "Household Files",
+    type: "Aadhaar Card",
+    mimeType: "application/pdf",
+    sizeBytes: 348160,
+    uploadedBy: "Ananya Sharma",
+    uploadedRole: "citizen",
+    uploadedDate: "2026-01-15",
+    verificationStatus: "Verified",
+    relatedRecordId: "MIRA-FAM-10482",
+    currentVersion: 1,
+    versions: [
+      {
+        versionNumber: 1,
+        filename: "Aadhaar_Card_Rajesh_Sharma.pdf",
+        sizeBytes: 348160,
+        uploadedBy: "Ananya Sharma",
+        uploadedAt: "2026-01-15 10:20",
+        reason: "Initial identity verification during citizen onboarding",
+      },
+    ],
+  },
+  {
+    id: "FIL-02",
+    name: "Income_Certificate_2026_Attested.pdf",
+    category: "Application Files",
+    type: "Income Certificate",
+    mimeType: "application/pdf",
+    sizeBytes: 292864,
+    uploadedBy: "Ananya Sharma",
+    uploadedRole: "citizen",
+    uploadedDate: "2026-10-22",
+    verificationStatus: "Verified",
+    relatedRecordId: "APP-2026-000318",
+    currentVersion: 2,
+    versions: [
+      {
+        versionNumber: 2,
+        filename: "Income_Certificate_2026_Attested.pdf",
+        sizeBytes: 292864,
+        uploadedBy: "Ananya Sharma",
+        uploadedAt: "2026-10-22 15:00",
+        reason: "Uploaded high-resolution attested copy per Officer Neha Verma request",
+      },
+      {
+        versionNumber: 1,
+        filename: "Income_Certificate_2026_Scan.pdf",
+        sizeBytes: 286720,
+        uploadedBy: "Ananya Sharma",
+        uploadedAt: "2026-09-04 11:30",
+        reason: "Original draft upload (seal partially obscured)",
+      },
+    ],
+  },
+  {
+    id: "FIL-03",
+    name: "Field_Inspection_Dwelling_Photos.zip",
+    category: "Evidence",
+    type: "Field Evidence Photos",
+    mimeType: "application/zip",
+    sizeBytes: 1945600,
+    uploadedBy: "Ravi Kumar",
+    uploadedRole: "officer",
+    uploadedDate: "2026-10-23",
+    verificationStatus: "Verified",
+    relatedRecordId: "FV-2026-0041",
+    currentVersion: 1,
+    versions: [
+      {
+        versionNumber: 1,
+        filename: "Field_Inspection_Dwelling_Photos.zip",
+        sizeBytes: 1945600,
+        uploadedBy: "Ravi Kumar",
+        uploadedAt: "2026-10-23 11:30",
+        reason: "Geotagged physical inspection photographic evidence",
+      },
+    ],
+  },
+  {
+    id: "FIL-04",
+    name: "Land_Record_Khatauni_214.pdf",
+    category: "Application Files",
+    type: "Land Records / Title",
+    mimeType: "application/pdf",
+    sizeBytes: 925696,
+    uploadedBy: "Ananya Sharma",
+    uploadedRole: "citizen",
+    uploadedDate: "2026-09-04",
+    verificationStatus: "Verified",
+    relatedRecordId: "APP-2026-000318",
+    currentVersion: 1,
+    versions: [
+      {
+        versionNumber: 1,
+        filename: "Land_Record_Khatauni_214.pdf",
+        sizeBytes: 925696,
+        uploadedBy: "Ananya Sharma",
+        uploadedAt: "2026-09-04 11:45",
+        reason: "Tehsil certified copy of Khasra land parcel 214",
+      },
+    ],
+  },
+];
+
+// ============================================================================
+// 5. Auditor Forensic Decision Records
+// ============================================================================
+
+export interface DecisionRecord {
+  id: string;
+  applicationId: string;
+  schemeName: string;
+  applicantName: string;
+  decision: "APPROVED" | "REJECTED" | "EVIDENCE_REQUESTED" | "ESCALATED";
+  decidedBy: string;
+  officerRole: string;
+  decidedAt: string;
+  justification: string;
+  statutoryRuleRef: string;
+  benefitAmount?: number;
+  auditHash: string;
+}
+
+export const SEED_DECISIONS: DecisionRecord[] = [
+  {
+    id: "DEC-2026-0091",
+    applicationId: "APP-2026-000391",
+    schemeName: "National Old Age Pension",
+    applicantName: "Mohan Lal",
+    decision: "APPROVED",
+    decidedBy: "Sunita Verma (Scheme Officer)",
+    officerRole: "SCHEME_OFFICER",
+    decidedAt: "2026-10-18 16:30",
+    justification: "Applicant meets age criterion (>65 years) and BPL priority household threshold. Aadhaar biometric authentication attested.",
+    statutoryRuleRef: "NOAPS Guidelines Section 3(a)",
+    benefitAmount: 1000,
+    auditHash: "SHA256:7f9a2b8c4d1e3f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a",
+  },
+  {
+    id: "DEC-2026-0089",
+    applicationId: "APP-2026-000318",
+    schemeName: "Rural Housing Assistance Scheme",
+    applicantName: "Ananya Sharma",
+    decision: "EVIDENCE_REQUESTED",
+    decidedBy: "Neha Verma (Verification Officer)",
+    officerRole: "VERIFICATION_OFFICER",
+    decidedAt: "2026-10-22 14:35",
+    justification: "Income certificate stamp partially obscured. Clarification required before second-stage approval per Verification Cell protocol.",
+    statutoryRuleRef: "Verification Manual Circular 42/2025",
+    auditHash: "SHA256:4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b",
+  },
+  {
+    id: "DEC-2026-0074",
+    applicationId: "APP-2026-000214",
+    schemeName: "National Health Protection (PM-JAY)",
+    applicantName: "Sanjay Gupta",
+    decision: "REJECTED",
+    decidedBy: "Sunita Verma (Scheme Officer)",
+    officerRole: "SCHEME_OFFICER",
+    decidedAt: "2026-10-14 11:20",
+    justification: "Household declared income exceeds SECC 2011 deprivation criteria. Non-qualifying household under state health rules.",
+    statutoryRuleRef: "PM-JAY Deprivation Criteria D1-D7 Exclusion",
+    auditHash: "SHA256:1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+  },
+];
+
+// ============================================================================
+// 6. Believable Demo Personas for All 5 Roles
+// ============================================================================
+
+export interface DemoProfile {
+  name: string;
+  email: string;
+  role: string;
+  title: string;
+  department: string;
+  location: string;
+  phone: string;
+  householdId?: string;
+  badge: string;
+  avatarSeed: string;
+  description: string;
+  accessScope: string;
+}
+
+export const DEMO_PROFILES: Record<string, DemoProfile> = {
+  citizen: {
+    name: "Ananya Sharma",
+    email: "citizen@mira.local",
+    role: "citizen",
+    title: "Primary Applicant / Citizen",
+    department: "Citizen Services",
+    location: "Lucknow, Uttar Pradesh",
+    phone: "+91 98765 43210",
+    householdId: "SH-HH-10482",
+    badge: "Verified Citizen",
+    avatarSeed: "Ananya",
+    description: "Citizen managing household family tree, housing grant applications, and benefit tracking.",
+    accessScope: "Personal Household Record (SH-HH-10482) & Self Applications",
+  },
+  officer: {
+    name: "Ravi Kumar",
+    email: "officer@mira.local",
+    role: "officer",
+    title: "Field Verification Official",
+    department: "District Welfare Office (Lucknow Urban Zone 3)",
+    location: "Sadar Tehsil, Lucknow",
+    phone: "+91 94150 11223",
+    badge: "Field Official",
+    avatarSeed: "Ravi",
+    description: "Conducts on-site dwelling inspections, household member checks, and GPS evidence logging.",
+    accessScope: "Assigned Field Verification Workstation (Lucknow Urban Zone 3)",
+  },
+  verifier: {
+    name: "Neha Verma",
+    email: "verifier@mira.local",
+    role: "verifier",
+    title: "Verification Officer",
+    department: "Social Welfare Verification Cell",
+    location: "State Secretariat, Lucknow",
+    phone: "+91 94520 33445",
+    badge: "Verification Cell",
+    avatarSeed: "Neha",
+    description: "Examines OCR extracted certificates, verifies family lineage, and resolves mismatch signals.",
+    accessScope: "State Intake Queue, OCR Extractor & Document Intelligence Workstation",
+  },
+  admin: {
+    name: "Arjun Mehta",
+    email: "admin@mira.local",
+    role: "admin",
+    title: "Department Administrator",
+    department: "Directorate of Social Welfare & Public Benefits",
+    location: "Lucknow, Uttar Pradesh",
+    phone: "+91 94151 55667",
+    badge: "System Authority",
+    avatarSeed: "Arjun",
+    description: "Configures welfare schemes, manages eligibility rules and workflow routing, monitors queues.",
+    accessScope: "Department-Wide Scheme Master, Rule Engine & Operational Configuration",
+  },
+  auditor: {
+    name: "Priya Nair",
+    email: "auditor@mira.local",
+    role: "auditor",
+    title: "Senior Audit Officer",
+    department: "Office of the Principal Accountant General",
+    location: "Audit Bhavan, Lucknow",
+    phone: "+91 94152 77889",
+    badge: "Read-Only Compliance",
+    avatarSeed: "Priya",
+    description: "Inspects immutable audit trails, historical decisions, rule versions, and officer actions.",
+    accessScope: "STRICTLY READ-ONLY: All Historical Decisional Timelines & Audit Ledgers",
+  },
+};
+
 export const inr = (n: number) => "₹" + n.toLocaleString("en-IN");

@@ -109,31 +109,52 @@ pub async fn demo_login_handler(
         return Err(AppError::NotFound("Demo access is unavailable.".to_string()));
     }
 
-    let (email, expected_role) = match payload.role.as_str() {
-        "citizen" => ("citizen@mira.local", "CITIZEN"),
-        "officer" => ("officer@mira.local", "FIELD_OFFICIAL"),
-        "verifier" => ("verifier@mira.local", "VERIFICATION_OFFICER"),
-        "admin" => ("admin@mira.local", "DEPARTMENT_ADMIN"),
-        "auditor" => ("auditor@mira.local", "AUDITOR"),
+    let (primary_email, fallback_email, expected_roles): (&str, Option<&str>, &[&str]) = match payload.role.as_str() {
+        "citizen" => ("demo.citizen@mira.demo", Some("citizen@mira.local"), &["CITIZEN"]),
+        "verifier" => ("demo.verifier@mira.demo", Some("verifier@mira.local"), &["VERIFICATION_OFFICER"]),
+        "scheme" => ("demo.scheme@mira.demo", Some("officer@mira.local"), &["SCHEME_OFFICER", "FIELD_OFFICIAL"]),
+        "supervisor" => ("demo.supervisor@mira.demo", Some("admin@mira.local"), &["SUPERVISOR", "DEPARTMENT_ADMIN"]),
+        "auditor" => ("demo.auditor@mira.demo", Some("auditor@mira.local"), &["AUDITOR"]),
+        "admin" => ("demo.admin@mira.demo", Some("admin@mira.local"), &["DEPARTMENT_ADMIN", "SUPER_ADMIN"]),
+        "officer" => ("officer@mira.local", Some("demo.scheme@mira.demo"), &["FIELD_OFFICIAL", "SCHEME_OFFICER"]),
         _ => return Err(AppError::Validation("Choose a valid demo account.".to_string())),
     };
 
     let request_id = get_request_id(&headers);
     let client_ip = get_client_ip(&headers);
-    // Reuse the normal password verifier, role loading, audit trail and JWT issuance.
-    let response = AuthService::login(
+
+    // Attempt primary email first, then fallback email
+    let login_attempt = AuthService::login(
         &state.pool,
         &state.config,
         LoginRequest {
-            email: email.to_string(),
+            email: primary_email.to_string(),
             password: crate::database::DEMO_PASSWORD.to_string(),
         },
         &request_id,
-        client_ip,
+        client_ip.clone(),
     )
-    .await?;
+    .await;
 
-    if !response.user.is_demo || !response.user.roles.iter().any(|role| role == expected_role) {
+    let response = match login_attempt {
+        Ok(res) => res,
+        Err(_) if fallback_email.is_some() => {
+            AuthService::login(
+                &state.pool,
+                &state.config,
+                LoginRequest {
+                    email: fallback_email.unwrap().to_string(),
+                    password: crate::database::DEMO_PASSWORD.to_string(),
+                },
+                &request_id,
+                client_ip,
+            )
+            .await?
+        }
+        Err(e) => return Err(e),
+    };
+
+    if !response.user.is_demo || !response.user.roles.iter().any(|role| expected_roles.contains(&role.as_str())) {
         return Err(AppError::Forbidden("This account is not configured for the selected demo role.".to_string()));
     }
 
@@ -184,6 +205,41 @@ pub async fn update_preferences_handler(
     let request_id = get_request_id(&headers);
     let profile = ProfileService::update_preferences(&state.pool, user.id, payload, &request_id).await?;
     Ok((StatusCode::OK, Json(ApiResponse { data: profile })))
+}
+
+pub async fn get_my_family_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    let family = ProfileService::get_family_for_user(&state.pool, &user).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: family })))
+}
+
+pub async fn add_my_family_member_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Json(payload): Json<crate::domain::AddFamilyMemberRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let member = ProfileService::add_family_member(&state.pool, payload, &user).await?;
+    Ok((StatusCode::CREATED, Json(ApiResponse { data: member })))
+}
+
+pub async fn report_my_family_event_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Json(payload): Json<crate::domain::ReportLifeEventRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let event = ProfileService::report_life_event(&state.pool, payload, &user).await?;
+    Ok((StatusCode::CREATED, Json(ApiResponse { data: event })))
+}
+
+pub async fn raise_my_family_dispute_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+    Json(payload): Json<crate::domain::RaiseDisputeRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    let dispute = ProfileService::raise_dispute(&state.pool, payload, &user).await?;
+    Ok((StatusCode::CREATED, Json(ApiResponse { data: dispute })))
 }
 
 #[derive(Deserialize)]
@@ -1503,6 +1559,10 @@ pub fn create_router(state: AppState) -> Router {
 
         // User Profile & Isolation
         .route("/api/v1/profile", get(profile_handler))
+        .route("/api/v1/profile/family", get(get_my_family_handler))
+        .route("/api/v1/profile/family/members", post(add_my_family_member_handler))
+        .route("/api/v1/profile/family/events", post(report_my_family_event_handler))
+        .route("/api/v1/profile/family/disputes", post(raise_my_family_dispute_handler))
         .route("/api/v1/profile/:id", get(profile_by_id_handler))
         .route("/api/v1/profile/preferences", put(update_preferences_handler))
 
@@ -1593,6 +1653,9 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/v1/cases/:id/evidence-pack", get(get_case_evidence_pack_handler))
         .route("/api/v1/cases/:id/document-consistency", get(get_case_consistency_handler))
         .route("/api/v1/cases/:id/evidence-report", get(get_case_evidence_report_handler))
+        
+        // Mira AI Secure Assistant (Groq-powered & Role-authorized)
+        .route("/api/v1/ai/chat", post(crate::ai::ai_chat_handler))
 
         .layer(axum::Extension(state.config.clone()))
         .layer(DefaultBodyLimit::max(72 * 1024 * 1024))

@@ -9,6 +9,8 @@ pub struct AppConfig {
     pub app_env: String,
     pub demo_mode: bool,
     pub cors_origins: Vec<String>,
+    pub groq_api_key: Option<String>,
+    pub groq_model: String,
 }
 
 impl AppConfig {
@@ -41,11 +43,19 @@ impl AppConfig {
                 .unwrap_or(true);
 
         let cors_origins = env::var("CORS_ORIGINS")
-            .unwrap_or_else(|_| "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000".to_string())
+            .unwrap_or_else(|_| "http://localhost:5173,http://127.0.0.1:5173,http://localhost:3000,http://localhost:8080".to_string())
             .split(',')
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty())
             .collect();
+
+        let groq_api_key = env::var("GROQ_API_KEY")
+            .ok()
+            .map(|s| s.trim().to_string())
+            .filter(|s| !s.is_empty());
+
+        let groq_model = env::var("GROQ_MODEL")
+            .unwrap_or_else(|_| "llama-3.3-70b-versatile".to_string());
 
         Self {
             database_url,
@@ -55,6 +65,8 @@ impl AppConfig {
             app_env,
             demo_mode,
             cors_origins,
+            groq_api_key,
+            groq_model,
         }
     }
 }

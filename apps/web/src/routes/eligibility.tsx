@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/select";
 import { Empty, PageContainer, PageHeader, Panel } from "@/components/gov/ui";
 import { EligibilityResult } from "@/components/gov/EligibilityResult";
+import { MiraCard } from "@/components/mira/MiraPrimitives";
 import { useApp } from "@/lib/app-state";
 
 export const Route = createFileRoute("/eligibility")({
@@ -152,15 +153,15 @@ function Eligibility() {
       </ol>
 
       {step < 3 ? (
-        <Panel className="overflow-hidden">
-          <div className="border-b border-slate-100 px-5 py-4 sm:px-7">
-            <p className="text-xs font-medium text-slate-500">
+        <MiraCard variant="elevated" className="overflow-hidden p-0 rounded-2xl">
+          <div className="border-b border-border/60 px-5 py-4 sm:px-7 bg-muted/20">
+            <p className="text-xs font-medium text-muted-foreground">
               Step 0{step + 1} of 04
             </p>
-            <h2 className="mt-1 text-lg font-semibold text-slate-950">
+            <h2 className="mt-1 text-lg font-semibold tracking-tight text-foreground">
               {FLOW[step]}
             </h2>
-            <p className="mt-1 text-sm text-slate-600">
+            <p className="mt-1 text-xs text-muted-foreground">
               Your answers are used for this check; they won't update your
               citizen record.
             </p>
@@ -416,60 +417,61 @@ function Eligibility() {
               </div>
             )}
           </div>
-          <div className="flex flex-col-reverse gap-2 border-t border-slate-100 bg-stone-50/70 px-5 py-4 sm:flex-row sm:justify-between sm:px-7">
+          <div className="flex flex-col-reverse gap-2 border-t border-border/60 bg-muted/30 px-5 py-4 sm:flex-row sm:justify-between sm:px-7">
             {step > 0 ? (
-              <Button variant="outline" onClick={back}>
-                <ArrowLeft className="h-4 w-4" />
+              <Button variant="outline" onClick={back} className="tactile-btn">
+                <ArrowLeft className="h-4 w-4 mr-1.5" />
                 Back
               </Button>
             ) : (
               <span />
             )}
             {step === 2 ? (
-              <Button onClick={next} disabled={!selected}>
+              <Button onClick={next} disabled={!selected} className="tactile-btn">
                 Check Eligibility
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             ) : (
-              <Button onClick={next}>
+              <Button onClick={next} className="tactile-btn">
                 Continue
-                <ArrowRight className="h-4 w-4" />
+                <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
             )}
           </div>
-        </Panel>
+        </MiraCard>
       ) : result && selected ? (
         <div className="space-y-5">
-          <Panel>
+          <MiraCard variant="elevated" className="p-6 rounded-2xl">
             <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
               <div>
-                <p className="text-xs font-semibold uppercase tracking-[0.13em] text-blue-700">
+                <p className="text-xs font-semibold uppercase tracking-[0.13em] text-primary">
                   Eligibility result
                 </p>
-                <h2 className="mt-1 text-xl font-semibold text-slate-950">
+                <h2 className="mt-1 text-xl font-semibold tracking-tight text-foreground">
                   {result.outcome === "Likely Eligible"
                     ? "You may be eligible"
                     : result.outcome === "Verification Required"
                       ? "More information is needed"
                       : "Not currently eligible"}
                 </h2>
-                <p className="mt-1 text-sm text-slate-600">{selected.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground">{selected.name}</p>
               </div>
               <Button
                 variant="outline"
+                className="tactile-btn"
                 onClick={() => {
                   setStep(0);
                   setChecked(false);
                 }}
               >
-                <RotateCcw className="h-4 w-4" />
+                <RotateCcw className="h-3.5 w-3.5 mr-1.5" />
                 Edit answers
               </Button>
             </div>
             <div className="mt-5">
               <EligibilityResult {...result} />
             </div>
-          </Panel>
+          </MiraCard>
           <div className="flex flex-col gap-3 sm:flex-row">
             {result.outcome === "Currently Not Eligible" ? (
               <Button disabled>Apply for this scheme</Button>

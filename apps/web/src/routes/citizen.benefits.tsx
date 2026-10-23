@@ -27,6 +27,7 @@ import {
   PageHeader,
   Panel,
 } from "@/components/gov/ui";
+import { MiraCard } from "@/components/mira/MiraPrimitives";
 
 export const Route = createFileRoute("/citizen/benefits")({
   head: () => ({
@@ -184,19 +185,19 @@ function Benefits() {
                 className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
               >
                 {summary.map(({ label, value, icon: Icon }) => (
-                  <Panel key={label} className="shadow-none">
+                  <MiraCard key={label} variant="elevated" className="p-4 rounded-xl">
                     <div className="flex items-center gap-3">
-                      <span className="flex h-9 w-9 items-center justify-center rounded-md bg-stone-100 text-slate-700">
-                        <Icon className="h-4 w-4" />
+                      <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60 text-foreground border border-border/50">
+                        <Icon className="h-4.5 w-4.5" />
                       </span>
-                      <div>
-                        <p className="text-2xl font-semibold tracking-tight text-slate-950">
+                      <div className="min-w-0">
+                        <p className="text-2xl font-bold tracking-tight text-foreground">
                           {value}
                         </p>
-                        <p className="text-xs text-slate-600">{label}</p>
+                        <p className="text-xs text-muted-foreground truncate">{label}</p>
                       </div>
                     </div>
-                  </Panel>
+                  </MiraCard>
                 ))}
               </section>
               <div className="mb-5 flex flex-col gap-4 sm:flex-row sm:items-end sm:justify-between">
@@ -304,47 +305,47 @@ function Benefits() {
                 <ul className="space-y-3">
                   {filtered.map((benefit) => (
                     <li key={benefit.ref}>
-                      <article className="rounded-xl border border-slate-200 bg-white p-4 shadow-[0_1px_3px_rgba(15,23,42,0.04)] sm:p-5">
+                      <MiraCard variant="elevated" className="p-5 rounded-2xl">
                         <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between">
                           <div className="min-w-0">
-                            <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-blue-700">
+                            <p className="text-[11px] font-semibold uppercase tracking-[0.13em] text-primary">
                               {benefit.type} benefit
                             </p>
-                            <h3 className="mt-1 text-base font-semibold text-slate-950">
+                            <h3 className="mt-1 text-base font-semibold tracking-tight text-foreground">
                               {benefit.scheme}
                             </h3>
                             {benefit.department && (
-                              <p className="mt-1 text-sm text-slate-600">
+                              <p className="mt-0.5 text-xs text-muted-foreground">
                                 {benefit.department}
                               </p>
                             )}
                           </div>
                           <span
-                            className={`w-fit border px-2 py-1 text-xs font-medium ${statusStyle[benefit.status] || statusStyle.Pending}`}
+                            className={`w-fit rounded-full border px-2.5 py-0.5 text-xs font-medium ${statusStyle[benefit.status] || statusStyle.Pending}`}
                           >
                             {benefit.status}
                           </span>
                         </div>
-                        <dl className="mt-4 grid gap-x-6 gap-y-3 border-t border-slate-100 pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
+                        <dl className="mt-4 grid gap-x-6 gap-y-3 border-t border-border/60 pt-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
                           <div>
-                            <dt className="text-xs text-slate-500">
+                            <dt className="text-xs text-muted-foreground">
                               Beneficiary
                             </dt>
-                            <dd className="mt-1 font-medium text-slate-800">
+                            <dd className="mt-1 font-medium text-foreground">
                               {benefit.beneficiary}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-xs text-slate-500">Approved</dt>
-                            <dd className="mt-1 text-slate-800">
+                            <dt className="text-xs text-muted-foreground">Approved</dt>
+                            <dd className="mt-1 font-medium text-foreground">
                               {asDate(benefit.approvedOn)}
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-xs text-slate-500">
+                            <dt className="text-xs text-muted-foreground">
                               Reference
                             </dt>
-                            <dd className="mt-1 break-all font-mono text-xs text-slate-700">
+                            <dd className="mt-1 break-all font-mono text-xs text-muted-foreground">
                               {benefit.ref}
                             </dd>
                           </div>
@@ -392,7 +393,7 @@ function Benefits() {
                             </Button>
                           </div>
                         )}
-                      </article>
+                      </MiraCard>
                     </li>
                   ))}
                 </ul>

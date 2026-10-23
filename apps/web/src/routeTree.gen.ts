@@ -10,6 +10,7 @@
 
 import { Route as rootRouteImport } from './routes/__root'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as AuditorRouteImport } from './routes/auditor'
 import { Route as CitizenRouteImport } from './routes/citizen'
 import { Route as DepartmentRouteImport } from './routes/department'
 import { Route as EligibilityRouteImport } from './routes/eligibility'
@@ -17,22 +18,45 @@ import { Route as HelpRouteImport } from './routes/help'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as OfficerRouteImport } from './routes/officer'
 import { Route as TrackRouteImport } from './routes/track'
+import { Route as VerifierRouteImport } from './routes/verifier'
+import { Route as AuditorApplicationsRouteImport } from './routes/auditor.applications'
+import { Route as AuditorAuditRouteImport } from './routes/auditor.audit'
+import { Route as AuditorDashboardRouteImport } from './routes/auditor.dashboard'
+import { Route as AuditorDecisionsRouteImport } from './routes/auditor.decisions'
+import { Route as AuditorEvidenceRouteImport } from './routes/auditor.evidence'
+import { Route as AuditorExportRouteImport } from './routes/auditor.export'
+import { Route as AuditorInboxRouteImport } from './routes/auditor.inbox'
+import { Route as AuditorOfficersRouteImport } from './routes/auditor.officers'
+import { Route as AuditorReportsRouteImport } from './routes/auditor.reports'
+import { Route as AuditorRulesRouteImport } from './routes/auditor.rules'
+import { Route as AuditorSettingsRouteImport } from './routes/auditor.settings'
 import { Route as CitizenBenefitsRouteImport } from './routes/citizen.benefits'
 import { Route as CitizenDashboardRouteImport } from './routes/citizen.dashboard'
 import { Route as CitizenDocumentsRouteImport } from './routes/citizen.documents'
 import { Route as CitizenFamilyRouteImport } from './routes/citizen.family'
 import { Route as CitizenGrievancesRouteImport } from './routes/citizen.grievances'
+import { Route as CitizenInboxRouteImport } from './routes/citizen.inbox'
 import { Route as CitizenNotificationsRouteImport } from './routes/citizen.notifications'
 import { Route as CitizenSettingsRouteImport } from './routes/citizen.settings'
+import { Route as DepartmentApplicationsRouteImport } from './routes/department.applications'
 import { Route as DepartmentAuditRouteImport } from './routes/department.audit'
 import { Route as DepartmentDashboardRouteImport } from './routes/department.dashboard'
+import { Route as DepartmentDepartmentsRouteImport } from './routes/department.departments'
+import { Route as DepartmentInboxRouteImport } from './routes/department.inbox'
 import { Route as DepartmentIntegrationsRouteImport } from './routes/department.integrations'
+import { Route as DepartmentNotificationsRouteImport } from './routes/department.notifications'
+import { Route as DepartmentOperationsRouteImport } from './routes/department.operations'
 import { Route as DepartmentReportsRouteImport } from './routes/department.reports'
 import { Route as DepartmentRulesRouteImport } from './routes/department.rules'
+import { Route as DepartmentSettingsRouteImport } from './routes/department.settings'
+import { Route as DepartmentWorkflowRouteImport } from './routes/department.workflow'
 import { Route as OfficerAuditRouteImport } from './routes/officer.audit'
 import { Route as OfficerDashboardRouteImport } from './routes/officer.dashboard'
 import { Route as OfficerDocumentsRouteImport } from './routes/officer.documents'
 import { Route as OfficerDuplicatesRouteImport } from './routes/officer.duplicates'
+import { Route as OfficerEvidenceRouteImport } from './routes/officer.evidence'
+import { Route as OfficerFieldVisitsRouteImport } from './routes/officer.field-visits'
+import { Route as OfficerInboxRouteImport } from './routes/officer.inbox'
 import { Route as OfficerNotificationsRouteImport } from './routes/officer.notifications'
 import { Route as OfficerReportsRouteImport } from './routes/officer.reports'
 import { Route as OfficerSettingsRouteImport } from './routes/officer.settings'
@@ -40,6 +64,15 @@ import { Route as OfficerVerificationRouteImport } from './routes/officer.verifi
 import { Route as OfficerLoginRouteImport } from './routes/officer_.login'
 import { Route as SchemesIndexRouteImport } from './routes/schemes.index'
 import { Route as SchemesIdRouteImport } from './routes/schemes.$id'
+import { Route as VerifierAuditRouteImport } from './routes/verifier.audit'
+import { Route as VerifierDashboardRouteImport } from './routes/verifier.dashboard'
+import { Route as VerifierDocumentsRouteImport } from './routes/verifier.documents'
+import { Route as VerifierEscalationsRouteImport } from './routes/verifier.escalations'
+import { Route as VerifierEvidenceRouteImport } from './routes/verifier.evidence'
+import { Route as VerifierInboxRouteImport } from './routes/verifier.inbox'
+import { Route as VerifierMismatchesRouteImport } from './routes/verifier.mismatches'
+import { Route as VerifierQueueRouteImport } from './routes/verifier.queue'
+import { Route as VerifierSettingsRouteImport } from './routes/verifier.settings'
 import { Route as CitizenApplicationsIndexRouteImport } from './routes/citizen.applications.index'
 import { Route as CitizenApplicationsIdRouteImport } from './routes/citizen.applications.$id'
 import { Route as CitizenApplySchemeIdRouteImport } from './routes/citizen.apply.$schemeId'
@@ -49,10 +82,16 @@ import { Route as OfficerApplicationsIndexRouteImport } from './routes/officer.a
 import { Route as OfficerApplicationsIdRouteImport } from './routes/officer.applications.$id'
 import { Route as OfficerCitizensIdRouteImport } from './routes/officer.citizens.$id'
 import { Route as OfficerFamiliesIdRouteImport } from './routes/officer.families.$id'
+import { Route as VerifierApplicationsIdRouteImport } from './routes/verifier.applications.$id'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
   path: '/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditorRoute = AuditorRouteImport.update({
+  id: '/auditor',
+  path: '/auditor',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CitizenRoute = CitizenRouteImport.update({
@@ -90,6 +129,66 @@ const TrackRoute = TrackRouteImport.update({
   path: '/track',
   getParentRoute: () => rootRouteImport,
 } as any)
+const VerifierRoute = VerifierRouteImport.update({
+  id: '/verifier',
+  path: '/verifier',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const AuditorApplicationsRoute = AuditorApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorAuditRoute = AuditorAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorDashboardRoute = AuditorDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorDecisionsRoute = AuditorDecisionsRouteImport.update({
+  id: '/decisions',
+  path: '/decisions',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorEvidenceRoute = AuditorEvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorExportRoute = AuditorExportRouteImport.update({
+  id: '/export',
+  path: '/export',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorInboxRoute = AuditorInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorOfficersRoute = AuditorOfficersRouteImport.update({
+  id: '/officers',
+  path: '/officers',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorReportsRoute = AuditorReportsRouteImport.update({
+  id: '/reports',
+  path: '/reports',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorRulesRoute = AuditorRulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorSettingsRoute = AuditorSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => AuditorRoute,
+} as any)
 const CitizenBenefitsRoute = CitizenBenefitsRouteImport.update({
   id: '/benefits',
   path: '/benefits',
@@ -115,6 +214,11 @@ const CitizenGrievancesRoute = CitizenGrievancesRouteImport.update({
   path: '/grievances',
   getParentRoute: () => CitizenRoute,
 } as any)
+const CitizenInboxRoute = CitizenInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => CitizenRoute,
+} as any)
 const CitizenNotificationsRoute = CitizenNotificationsRouteImport.update({
   id: '/notifications',
   path: '/notifications',
@@ -124,6 +228,11 @@ const CitizenSettingsRoute = CitizenSettingsRouteImport.update({
   id: '/settings',
   path: '/settings',
   getParentRoute: () => CitizenRoute,
+} as any)
+const DepartmentApplicationsRoute = DepartmentApplicationsRouteImport.update({
+  id: '/applications',
+  path: '/applications',
+  getParentRoute: () => DepartmentRoute,
 } as any)
 const DepartmentAuditRoute = DepartmentAuditRouteImport.update({
   id: '/audit',
@@ -135,9 +244,29 @@ const DepartmentDashboardRoute = DepartmentDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => DepartmentRoute,
 } as any)
+const DepartmentDepartmentsRoute = DepartmentDepartmentsRouteImport.update({
+  id: '/departments',
+  path: '/departments',
+  getParentRoute: () => DepartmentRoute,
+} as any)
+const DepartmentInboxRoute = DepartmentInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => DepartmentRoute,
+} as any)
 const DepartmentIntegrationsRoute = DepartmentIntegrationsRouteImport.update({
   id: '/integrations',
   path: '/integrations',
+  getParentRoute: () => DepartmentRoute,
+} as any)
+const DepartmentNotificationsRoute = DepartmentNotificationsRouteImport.update({
+  id: '/notifications',
+  path: '/notifications',
+  getParentRoute: () => DepartmentRoute,
+} as any)
+const DepartmentOperationsRoute = DepartmentOperationsRouteImport.update({
+  id: '/operations',
+  path: '/operations',
   getParentRoute: () => DepartmentRoute,
 } as any)
 const DepartmentReportsRoute = DepartmentReportsRouteImport.update({
@@ -148,6 +277,16 @@ const DepartmentReportsRoute = DepartmentReportsRouteImport.update({
 const DepartmentRulesRoute = DepartmentRulesRouteImport.update({
   id: '/rules',
   path: '/rules',
+  getParentRoute: () => DepartmentRoute,
+} as any)
+const DepartmentSettingsRoute = DepartmentSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => DepartmentRoute,
+} as any)
+const DepartmentWorkflowRoute = DepartmentWorkflowRouteImport.update({
+  id: '/workflow',
+  path: '/workflow',
   getParentRoute: () => DepartmentRoute,
 } as any)
 const OfficerAuditRoute = OfficerAuditRouteImport.update({
@@ -168,6 +307,21 @@ const OfficerDocumentsRoute = OfficerDocumentsRouteImport.update({
 const OfficerDuplicatesRoute = OfficerDuplicatesRouteImport.update({
   id: '/duplicates',
   path: '/duplicates',
+  getParentRoute: () => OfficerRoute,
+} as any)
+const OfficerEvidenceRoute = OfficerEvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => OfficerRoute,
+} as any)
+const OfficerFieldVisitsRoute = OfficerFieldVisitsRouteImport.update({
+  id: '/field-visits',
+  path: '/field-visits',
+  getParentRoute: () => OfficerRoute,
+} as any)
+const OfficerInboxRoute = OfficerInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
   getParentRoute: () => OfficerRoute,
 } as any)
 const OfficerNotificationsRoute = OfficerNotificationsRouteImport.update({
@@ -204,6 +358,51 @@ const SchemesIdRoute = SchemesIdRouteImport.update({
   id: '/schemes/$id',
   path: '/schemes/$id',
   getParentRoute: () => rootRouteImport,
+} as any)
+const VerifierAuditRoute = VerifierAuditRouteImport.update({
+  id: '/audit',
+  path: '/audit',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierDashboardRoute = VerifierDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierDocumentsRoute = VerifierDocumentsRouteImport.update({
+  id: '/documents',
+  path: '/documents',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierEscalationsRoute = VerifierEscalationsRouteImport.update({
+  id: '/escalations',
+  path: '/escalations',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierEvidenceRoute = VerifierEvidenceRouteImport.update({
+  id: '/evidence',
+  path: '/evidence',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierInboxRoute = VerifierInboxRouteImport.update({
+  id: '/inbox',
+  path: '/inbox',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierMismatchesRoute = VerifierMismatchesRouteImport.update({
+  id: '/mismatches',
+  path: '/mismatches',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierQueueRoute = VerifierQueueRouteImport.update({
+  id: '/queue',
+  path: '/queue',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierSettingsRoute = VerifierSettingsRouteImport.update({
+  id: '/settings',
+  path: '/settings',
+  getParentRoute: () => VerifierRoute,
 } as any)
 const CitizenApplicationsIndexRoute =
   CitizenApplicationsIndexRouteImport.update({
@@ -252,9 +451,15 @@ const OfficerFamiliesIdRoute = OfficerFamiliesIdRouteImport.update({
   path: '/families/$id',
   getParentRoute: () => OfficerRoute,
 } as any)
+const VerifierApplicationsIdRoute = VerifierApplicationsIdRouteImport.update({
+  id: '/applications/$id',
+  path: '/applications/$id',
+  getParentRoute: () => VerifierRoute,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
+  '/auditor': typeof AuditorRouteWithChildren
   '/citizen': typeof CitizenRouteWithChildren
   '/department': typeof DepartmentRouteWithChildren
   '/eligibility': typeof EligibilityRoute
@@ -262,28 +467,60 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/officer': typeof OfficerRouteWithChildren
   '/track': typeof TrackRoute
+  '/verifier': typeof VerifierRouteWithChildren
+  '/auditor/applications': typeof AuditorApplicationsRoute
+  '/auditor/audit': typeof AuditorAuditRoute
+  '/auditor/dashboard': typeof AuditorDashboardRoute
+  '/auditor/decisions': typeof AuditorDecisionsRoute
+  '/auditor/evidence': typeof AuditorEvidenceRoute
+  '/auditor/export': typeof AuditorExportRoute
+  '/auditor/inbox': typeof AuditorInboxRoute
+  '/auditor/officers': typeof AuditorOfficersRoute
+  '/auditor/reports': typeof AuditorReportsRoute
+  '/auditor/rules': typeof AuditorRulesRoute
+  '/auditor/settings': typeof AuditorSettingsRoute
   '/citizen/benefits': typeof CitizenBenefitsRoute
   '/citizen/dashboard': typeof CitizenDashboardRoute
   '/citizen/documents': typeof CitizenDocumentsRoute
   '/citizen/family': typeof CitizenFamilyRoute
   '/citizen/grievances': typeof CitizenGrievancesRoute
+  '/citizen/inbox': typeof CitizenInboxRoute
   '/citizen/notifications': typeof CitizenNotificationsRoute
   '/citizen/settings': typeof CitizenSettingsRoute
+  '/department/applications': typeof DepartmentApplicationsRoute
   '/department/audit': typeof DepartmentAuditRoute
   '/department/dashboard': typeof DepartmentDashboardRoute
+  '/department/departments': typeof DepartmentDepartmentsRoute
+  '/department/inbox': typeof DepartmentInboxRoute
   '/department/integrations': typeof DepartmentIntegrationsRoute
+  '/department/notifications': typeof DepartmentNotificationsRoute
+  '/department/operations': typeof DepartmentOperationsRoute
   '/department/reports': typeof DepartmentReportsRoute
   '/department/rules': typeof DepartmentRulesRoute
+  '/department/settings': typeof DepartmentSettingsRoute
+  '/department/workflow': typeof DepartmentWorkflowRoute
   '/officer/audit': typeof OfficerAuditRoute
   '/officer/dashboard': typeof OfficerDashboardRoute
   '/officer/documents': typeof OfficerDocumentsRoute
   '/officer/duplicates': typeof OfficerDuplicatesRoute
+  '/officer/evidence': typeof OfficerEvidenceRoute
+  '/officer/field-visits': typeof OfficerFieldVisitsRoute
+  '/officer/inbox': typeof OfficerInboxRoute
   '/officer/notifications': typeof OfficerNotificationsRoute
   '/officer/reports': typeof OfficerReportsRoute
   '/officer/settings': typeof OfficerSettingsRoute
   '/officer/verification': typeof OfficerVerificationRoute
   '/officer/login': typeof OfficerLoginRoute
   '/schemes/$id': typeof SchemesIdRoute
+  '/verifier/audit': typeof VerifierAuditRoute
+  '/verifier/dashboard': typeof VerifierDashboardRoute
+  '/verifier/documents': typeof VerifierDocumentsRoute
+  '/verifier/escalations': typeof VerifierEscalationsRoute
+  '/verifier/evidence': typeof VerifierEvidenceRoute
+  '/verifier/inbox': typeof VerifierInboxRoute
+  '/verifier/mismatches': typeof VerifierMismatchesRoute
+  '/verifier/queue': typeof VerifierQueueRoute
+  '/verifier/settings': typeof VerifierSettingsRoute
   '/schemes/': typeof SchemesIndexRoute
   '/citizen/applications/$id': typeof CitizenApplicationsIdRoute
   '/citizen/apply/$schemeId': typeof CitizenApplySchemeIdRoute
@@ -291,12 +528,14 @@ export interface FileRoutesByFullPath {
   '/officer/applications/$id': typeof OfficerApplicationsIdRoute
   '/officer/citizens/$id': typeof OfficerCitizensIdRoute
   '/officer/families/$id': typeof OfficerFamiliesIdRoute
+  '/verifier/applications/$id': typeof VerifierApplicationsIdRoute
   '/citizen/applications/': typeof CitizenApplicationsIndexRoute
   '/department/schemes/': typeof DepartmentSchemesIndexRoute
   '/officer/applications/': typeof OfficerApplicationsIndexRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
+  '/auditor': typeof AuditorRouteWithChildren
   '/citizen': typeof CitizenRouteWithChildren
   '/department': typeof DepartmentRouteWithChildren
   '/eligibility': typeof EligibilityRoute
@@ -304,28 +543,60 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/officer': typeof OfficerRouteWithChildren
   '/track': typeof TrackRoute
+  '/verifier': typeof VerifierRouteWithChildren
+  '/auditor/applications': typeof AuditorApplicationsRoute
+  '/auditor/audit': typeof AuditorAuditRoute
+  '/auditor/dashboard': typeof AuditorDashboardRoute
+  '/auditor/decisions': typeof AuditorDecisionsRoute
+  '/auditor/evidence': typeof AuditorEvidenceRoute
+  '/auditor/export': typeof AuditorExportRoute
+  '/auditor/inbox': typeof AuditorInboxRoute
+  '/auditor/officers': typeof AuditorOfficersRoute
+  '/auditor/reports': typeof AuditorReportsRoute
+  '/auditor/rules': typeof AuditorRulesRoute
+  '/auditor/settings': typeof AuditorSettingsRoute
   '/citizen/benefits': typeof CitizenBenefitsRoute
   '/citizen/dashboard': typeof CitizenDashboardRoute
   '/citizen/documents': typeof CitizenDocumentsRoute
   '/citizen/family': typeof CitizenFamilyRoute
   '/citizen/grievances': typeof CitizenGrievancesRoute
+  '/citizen/inbox': typeof CitizenInboxRoute
   '/citizen/notifications': typeof CitizenNotificationsRoute
   '/citizen/settings': typeof CitizenSettingsRoute
+  '/department/applications': typeof DepartmentApplicationsRoute
   '/department/audit': typeof DepartmentAuditRoute
   '/department/dashboard': typeof DepartmentDashboardRoute
+  '/department/departments': typeof DepartmentDepartmentsRoute
+  '/department/inbox': typeof DepartmentInboxRoute
   '/department/integrations': typeof DepartmentIntegrationsRoute
+  '/department/notifications': typeof DepartmentNotificationsRoute
+  '/department/operations': typeof DepartmentOperationsRoute
   '/department/reports': typeof DepartmentReportsRoute
   '/department/rules': typeof DepartmentRulesRoute
+  '/department/settings': typeof DepartmentSettingsRoute
+  '/department/workflow': typeof DepartmentWorkflowRoute
   '/officer/audit': typeof OfficerAuditRoute
   '/officer/dashboard': typeof OfficerDashboardRoute
   '/officer/documents': typeof OfficerDocumentsRoute
   '/officer/duplicates': typeof OfficerDuplicatesRoute
+  '/officer/evidence': typeof OfficerEvidenceRoute
+  '/officer/field-visits': typeof OfficerFieldVisitsRoute
+  '/officer/inbox': typeof OfficerInboxRoute
   '/officer/notifications': typeof OfficerNotificationsRoute
   '/officer/reports': typeof OfficerReportsRoute
   '/officer/settings': typeof OfficerSettingsRoute
   '/officer/verification': typeof OfficerVerificationRoute
   '/officer/login': typeof OfficerLoginRoute
   '/schemes/$id': typeof SchemesIdRoute
+  '/verifier/audit': typeof VerifierAuditRoute
+  '/verifier/dashboard': typeof VerifierDashboardRoute
+  '/verifier/documents': typeof VerifierDocumentsRoute
+  '/verifier/escalations': typeof VerifierEscalationsRoute
+  '/verifier/evidence': typeof VerifierEvidenceRoute
+  '/verifier/inbox': typeof VerifierInboxRoute
+  '/verifier/mismatches': typeof VerifierMismatchesRoute
+  '/verifier/queue': typeof VerifierQueueRoute
+  '/verifier/settings': typeof VerifierSettingsRoute
   '/schemes': typeof SchemesIndexRoute
   '/citizen/applications/$id': typeof CitizenApplicationsIdRoute
   '/citizen/apply/$schemeId': typeof CitizenApplySchemeIdRoute
@@ -333,6 +604,7 @@ export interface FileRoutesByTo {
   '/officer/applications/$id': typeof OfficerApplicationsIdRoute
   '/officer/citizens/$id': typeof OfficerCitizensIdRoute
   '/officer/families/$id': typeof OfficerFamiliesIdRoute
+  '/verifier/applications/$id': typeof VerifierApplicationsIdRoute
   '/citizen/applications': typeof CitizenApplicationsIndexRoute
   '/department/schemes': typeof DepartmentSchemesIndexRoute
   '/officer/applications': typeof OfficerApplicationsIndexRoute
@@ -340,6 +612,7 @@ export interface FileRoutesByTo {
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
+  '/auditor': typeof AuditorRouteWithChildren
   '/citizen': typeof CitizenRouteWithChildren
   '/department': typeof DepartmentRouteWithChildren
   '/eligibility': typeof EligibilityRoute
@@ -347,28 +620,60 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/officer': typeof OfficerRouteWithChildren
   '/track': typeof TrackRoute
+  '/verifier': typeof VerifierRouteWithChildren
+  '/auditor/applications': typeof AuditorApplicationsRoute
+  '/auditor/audit': typeof AuditorAuditRoute
+  '/auditor/dashboard': typeof AuditorDashboardRoute
+  '/auditor/decisions': typeof AuditorDecisionsRoute
+  '/auditor/evidence': typeof AuditorEvidenceRoute
+  '/auditor/export': typeof AuditorExportRoute
+  '/auditor/inbox': typeof AuditorInboxRoute
+  '/auditor/officers': typeof AuditorOfficersRoute
+  '/auditor/reports': typeof AuditorReportsRoute
+  '/auditor/rules': typeof AuditorRulesRoute
+  '/auditor/settings': typeof AuditorSettingsRoute
   '/citizen/benefits': typeof CitizenBenefitsRoute
   '/citizen/dashboard': typeof CitizenDashboardRoute
   '/citizen/documents': typeof CitizenDocumentsRoute
   '/citizen/family': typeof CitizenFamilyRoute
   '/citizen/grievances': typeof CitizenGrievancesRoute
+  '/citizen/inbox': typeof CitizenInboxRoute
   '/citizen/notifications': typeof CitizenNotificationsRoute
   '/citizen/settings': typeof CitizenSettingsRoute
+  '/department/applications': typeof DepartmentApplicationsRoute
   '/department/audit': typeof DepartmentAuditRoute
   '/department/dashboard': typeof DepartmentDashboardRoute
+  '/department/departments': typeof DepartmentDepartmentsRoute
+  '/department/inbox': typeof DepartmentInboxRoute
   '/department/integrations': typeof DepartmentIntegrationsRoute
+  '/department/notifications': typeof DepartmentNotificationsRoute
+  '/department/operations': typeof DepartmentOperationsRoute
   '/department/reports': typeof DepartmentReportsRoute
   '/department/rules': typeof DepartmentRulesRoute
+  '/department/settings': typeof DepartmentSettingsRoute
+  '/department/workflow': typeof DepartmentWorkflowRoute
   '/officer/audit': typeof OfficerAuditRoute
   '/officer/dashboard': typeof OfficerDashboardRoute
   '/officer/documents': typeof OfficerDocumentsRoute
   '/officer/duplicates': typeof OfficerDuplicatesRoute
+  '/officer/evidence': typeof OfficerEvidenceRoute
+  '/officer/field-visits': typeof OfficerFieldVisitsRoute
+  '/officer/inbox': typeof OfficerInboxRoute
   '/officer/notifications': typeof OfficerNotificationsRoute
   '/officer/reports': typeof OfficerReportsRoute
   '/officer/settings': typeof OfficerSettingsRoute
   '/officer/verification': typeof OfficerVerificationRoute
   '/officer_/login': typeof OfficerLoginRoute
   '/schemes/$id': typeof SchemesIdRoute
+  '/verifier/audit': typeof VerifierAuditRoute
+  '/verifier/dashboard': typeof VerifierDashboardRoute
+  '/verifier/documents': typeof VerifierDocumentsRoute
+  '/verifier/escalations': typeof VerifierEscalationsRoute
+  '/verifier/evidence': typeof VerifierEvidenceRoute
+  '/verifier/inbox': typeof VerifierInboxRoute
+  '/verifier/mismatches': typeof VerifierMismatchesRoute
+  '/verifier/queue': typeof VerifierQueueRoute
+  '/verifier/settings': typeof VerifierSettingsRoute
   '/schemes/': typeof SchemesIndexRoute
   '/citizen/applications/$id': typeof CitizenApplicationsIdRoute
   '/citizen/apply/$schemeId': typeof CitizenApplySchemeIdRoute
@@ -376,6 +681,7 @@ export interface FileRoutesById {
   '/officer/applications/$id': typeof OfficerApplicationsIdRoute
   '/officer/citizens/$id': typeof OfficerCitizensIdRoute
   '/officer/families/$id': typeof OfficerFamiliesIdRoute
+  '/verifier/applications/$id': typeof VerifierApplicationsIdRoute
   '/citizen/applications/': typeof CitizenApplicationsIndexRoute
   '/department/schemes/': typeof DepartmentSchemesIndexRoute
   '/officer/applications/': typeof OfficerApplicationsIndexRoute
@@ -384,6 +690,7 @@ export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
   fullPaths:
     | '/'
+    | '/auditor'
     | '/citizen'
     | '/department'
     | '/eligibility'
@@ -391,28 +698,60 @@ export interface FileRouteTypes {
     | '/login'
     | '/officer'
     | '/track'
+    | '/verifier'
+    | '/auditor/applications'
+    | '/auditor/audit'
+    | '/auditor/dashboard'
+    | '/auditor/decisions'
+    | '/auditor/evidence'
+    | '/auditor/export'
+    | '/auditor/inbox'
+    | '/auditor/officers'
+    | '/auditor/reports'
+    | '/auditor/rules'
+    | '/auditor/settings'
     | '/citizen/benefits'
     | '/citizen/dashboard'
     | '/citizen/documents'
     | '/citizen/family'
     | '/citizen/grievances'
+    | '/citizen/inbox'
     | '/citizen/notifications'
     | '/citizen/settings'
+    | '/department/applications'
     | '/department/audit'
     | '/department/dashboard'
+    | '/department/departments'
+    | '/department/inbox'
     | '/department/integrations'
+    | '/department/notifications'
+    | '/department/operations'
     | '/department/reports'
     | '/department/rules'
+    | '/department/settings'
+    | '/department/workflow'
     | '/officer/audit'
     | '/officer/dashboard'
     | '/officer/documents'
     | '/officer/duplicates'
+    | '/officer/evidence'
+    | '/officer/field-visits'
+    | '/officer/inbox'
     | '/officer/notifications'
     | '/officer/reports'
     | '/officer/settings'
     | '/officer/verification'
     | '/officer/login'
     | '/schemes/$id'
+    | '/verifier/audit'
+    | '/verifier/dashboard'
+    | '/verifier/documents'
+    | '/verifier/escalations'
+    | '/verifier/evidence'
+    | '/verifier/inbox'
+    | '/verifier/mismatches'
+    | '/verifier/queue'
+    | '/verifier/settings'
     | '/schemes/'
     | '/citizen/applications/$id'
     | '/citizen/apply/$schemeId'
@@ -420,12 +759,14 @@ export interface FileRouteTypes {
     | '/officer/applications/$id'
     | '/officer/citizens/$id'
     | '/officer/families/$id'
+    | '/verifier/applications/$id'
     | '/citizen/applications/'
     | '/department/schemes/'
     | '/officer/applications/'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
+    | '/auditor'
     | '/citizen'
     | '/department'
     | '/eligibility'
@@ -433,28 +774,60 @@ export interface FileRouteTypes {
     | '/login'
     | '/officer'
     | '/track'
+    | '/verifier'
+    | '/auditor/applications'
+    | '/auditor/audit'
+    | '/auditor/dashboard'
+    | '/auditor/decisions'
+    | '/auditor/evidence'
+    | '/auditor/export'
+    | '/auditor/inbox'
+    | '/auditor/officers'
+    | '/auditor/reports'
+    | '/auditor/rules'
+    | '/auditor/settings'
     | '/citizen/benefits'
     | '/citizen/dashboard'
     | '/citizen/documents'
     | '/citizen/family'
     | '/citizen/grievances'
+    | '/citizen/inbox'
     | '/citizen/notifications'
     | '/citizen/settings'
+    | '/department/applications'
     | '/department/audit'
     | '/department/dashboard'
+    | '/department/departments'
+    | '/department/inbox'
     | '/department/integrations'
+    | '/department/notifications'
+    | '/department/operations'
     | '/department/reports'
     | '/department/rules'
+    | '/department/settings'
+    | '/department/workflow'
     | '/officer/audit'
     | '/officer/dashboard'
     | '/officer/documents'
     | '/officer/duplicates'
+    | '/officer/evidence'
+    | '/officer/field-visits'
+    | '/officer/inbox'
     | '/officer/notifications'
     | '/officer/reports'
     | '/officer/settings'
     | '/officer/verification'
     | '/officer/login'
     | '/schemes/$id'
+    | '/verifier/audit'
+    | '/verifier/dashboard'
+    | '/verifier/documents'
+    | '/verifier/escalations'
+    | '/verifier/evidence'
+    | '/verifier/inbox'
+    | '/verifier/mismatches'
+    | '/verifier/queue'
+    | '/verifier/settings'
     | '/schemes'
     | '/citizen/applications/$id'
     | '/citizen/apply/$schemeId'
@@ -462,12 +835,14 @@ export interface FileRouteTypes {
     | '/officer/applications/$id'
     | '/officer/citizens/$id'
     | '/officer/families/$id'
+    | '/verifier/applications/$id'
     | '/citizen/applications'
     | '/department/schemes'
     | '/officer/applications'
   id:
     | '__root__'
     | '/'
+    | '/auditor'
     | '/citizen'
     | '/department'
     | '/eligibility'
@@ -475,28 +850,60 @@ export interface FileRouteTypes {
     | '/login'
     | '/officer'
     | '/track'
+    | '/verifier'
+    | '/auditor/applications'
+    | '/auditor/audit'
+    | '/auditor/dashboard'
+    | '/auditor/decisions'
+    | '/auditor/evidence'
+    | '/auditor/export'
+    | '/auditor/inbox'
+    | '/auditor/officers'
+    | '/auditor/reports'
+    | '/auditor/rules'
+    | '/auditor/settings'
     | '/citizen/benefits'
     | '/citizen/dashboard'
     | '/citizen/documents'
     | '/citizen/family'
     | '/citizen/grievances'
+    | '/citizen/inbox'
     | '/citizen/notifications'
     | '/citizen/settings'
+    | '/department/applications'
     | '/department/audit'
     | '/department/dashboard'
+    | '/department/departments'
+    | '/department/inbox'
     | '/department/integrations'
+    | '/department/notifications'
+    | '/department/operations'
     | '/department/reports'
     | '/department/rules'
+    | '/department/settings'
+    | '/department/workflow'
     | '/officer/audit'
     | '/officer/dashboard'
     | '/officer/documents'
     | '/officer/duplicates'
+    | '/officer/evidence'
+    | '/officer/field-visits'
+    | '/officer/inbox'
     | '/officer/notifications'
     | '/officer/reports'
     | '/officer/settings'
     | '/officer/verification'
     | '/officer_/login'
     | '/schemes/$id'
+    | '/verifier/audit'
+    | '/verifier/dashboard'
+    | '/verifier/documents'
+    | '/verifier/escalations'
+    | '/verifier/evidence'
+    | '/verifier/inbox'
+    | '/verifier/mismatches'
+    | '/verifier/queue'
+    | '/verifier/settings'
     | '/schemes/'
     | '/citizen/applications/$id'
     | '/citizen/apply/$schemeId'
@@ -504,6 +911,7 @@ export interface FileRouteTypes {
     | '/officer/applications/$id'
     | '/officer/citizens/$id'
     | '/officer/families/$id'
+    | '/verifier/applications/$id'
     | '/citizen/applications/'
     | '/department/schemes/'
     | '/officer/applications/'
@@ -511,6 +919,7 @@ export interface FileRouteTypes {
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
+  AuditorRoute: typeof AuditorRouteWithChildren
   CitizenRoute: typeof CitizenRouteWithChildren
   DepartmentRoute: typeof DepartmentRouteWithChildren
   EligibilityRoute: typeof EligibilityRoute
@@ -518,6 +927,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   OfficerRoute: typeof OfficerRouteWithChildren
   TrackRoute: typeof TrackRoute
+  VerifierRoute: typeof VerifierRouteWithChildren
   OfficerLoginRoute: typeof OfficerLoginRoute
   SchemesIdRoute: typeof SchemesIdRoute
   SchemesIndexRoute: typeof SchemesIndexRoute
@@ -530,6 +940,13 @@ declare module '@tanstack/react-router' {
       path: '/'
       fullPath: '/'
       preLoaderRoute: typeof IndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditor': {
+      id: '/auditor'
+      path: '/auditor'
+      fullPath: '/auditor'
+      preLoaderRoute: typeof AuditorRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/citizen': {
@@ -581,6 +998,90 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof TrackRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/verifier': {
+      id: '/verifier'
+      path: '/verifier'
+      fullPath: '/verifier'
+      preLoaderRoute: typeof VerifierRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/auditor/applications': {
+      id: '/auditor/applications'
+      path: '/applications'
+      fullPath: '/auditor/applications'
+      preLoaderRoute: typeof AuditorApplicationsRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/audit': {
+      id: '/auditor/audit'
+      path: '/audit'
+      fullPath: '/auditor/audit'
+      preLoaderRoute: typeof AuditorAuditRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/dashboard': {
+      id: '/auditor/dashboard'
+      path: '/dashboard'
+      fullPath: '/auditor/dashboard'
+      preLoaderRoute: typeof AuditorDashboardRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/decisions': {
+      id: '/auditor/decisions'
+      path: '/decisions'
+      fullPath: '/auditor/decisions'
+      preLoaderRoute: typeof AuditorDecisionsRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/evidence': {
+      id: '/auditor/evidence'
+      path: '/evidence'
+      fullPath: '/auditor/evidence'
+      preLoaderRoute: typeof AuditorEvidenceRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/export': {
+      id: '/auditor/export'
+      path: '/export'
+      fullPath: '/auditor/export'
+      preLoaderRoute: typeof AuditorExportRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/inbox': {
+      id: '/auditor/inbox'
+      path: '/inbox'
+      fullPath: '/auditor/inbox'
+      preLoaderRoute: typeof AuditorInboxRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/officers': {
+      id: '/auditor/officers'
+      path: '/officers'
+      fullPath: '/auditor/officers'
+      preLoaderRoute: typeof AuditorOfficersRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/reports': {
+      id: '/auditor/reports'
+      path: '/reports'
+      fullPath: '/auditor/reports'
+      preLoaderRoute: typeof AuditorReportsRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/rules': {
+      id: '/auditor/rules'
+      path: '/rules'
+      fullPath: '/auditor/rules'
+      preLoaderRoute: typeof AuditorRulesRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/settings': {
+      id: '/auditor/settings'
+      path: '/settings'
+      fullPath: '/auditor/settings'
+      preLoaderRoute: typeof AuditorSettingsRouteImport
+      parentRoute: typeof AuditorRoute
+    }
     '/citizen/benefits': {
       id: '/citizen/benefits'
       path: '/benefits'
@@ -616,6 +1117,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CitizenGrievancesRouteImport
       parentRoute: typeof CitizenRoute
     }
+    '/citizen/inbox': {
+      id: '/citizen/inbox'
+      path: '/inbox'
+      fullPath: '/citizen/inbox'
+      preLoaderRoute: typeof CitizenInboxRouteImport
+      parentRoute: typeof CitizenRoute
+    }
     '/citizen/notifications': {
       id: '/citizen/notifications'
       path: '/notifications'
@@ -629,6 +1137,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/citizen/settings'
       preLoaderRoute: typeof CitizenSettingsRouteImport
       parentRoute: typeof CitizenRoute
+    }
+    '/department/applications': {
+      id: '/department/applications'
+      path: '/applications'
+      fullPath: '/department/applications'
+      preLoaderRoute: typeof DepartmentApplicationsRouteImport
+      parentRoute: typeof DepartmentRoute
     }
     '/department/audit': {
       id: '/department/audit'
@@ -644,11 +1159,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof DepartmentDashboardRouteImport
       parentRoute: typeof DepartmentRoute
     }
+    '/department/departments': {
+      id: '/department/departments'
+      path: '/departments'
+      fullPath: '/department/departments'
+      preLoaderRoute: typeof DepartmentDepartmentsRouteImport
+      parentRoute: typeof DepartmentRoute
+    }
+    '/department/inbox': {
+      id: '/department/inbox'
+      path: '/inbox'
+      fullPath: '/department/inbox'
+      preLoaderRoute: typeof DepartmentInboxRouteImport
+      parentRoute: typeof DepartmentRoute
+    }
     '/department/integrations': {
       id: '/department/integrations'
       path: '/integrations'
       fullPath: '/department/integrations'
       preLoaderRoute: typeof DepartmentIntegrationsRouteImport
+      parentRoute: typeof DepartmentRoute
+    }
+    '/department/notifications': {
+      id: '/department/notifications'
+      path: '/notifications'
+      fullPath: '/department/notifications'
+      preLoaderRoute: typeof DepartmentNotificationsRouteImport
+      parentRoute: typeof DepartmentRoute
+    }
+    '/department/operations': {
+      id: '/department/operations'
+      path: '/operations'
+      fullPath: '/department/operations'
+      preLoaderRoute: typeof DepartmentOperationsRouteImport
       parentRoute: typeof DepartmentRoute
     }
     '/department/reports': {
@@ -663,6 +1206,20 @@ declare module '@tanstack/react-router' {
       path: '/rules'
       fullPath: '/department/rules'
       preLoaderRoute: typeof DepartmentRulesRouteImport
+      parentRoute: typeof DepartmentRoute
+    }
+    '/department/settings': {
+      id: '/department/settings'
+      path: '/settings'
+      fullPath: '/department/settings'
+      preLoaderRoute: typeof DepartmentSettingsRouteImport
+      parentRoute: typeof DepartmentRoute
+    }
+    '/department/workflow': {
+      id: '/department/workflow'
+      path: '/workflow'
+      fullPath: '/department/workflow'
+      preLoaderRoute: typeof DepartmentWorkflowRouteImport
       parentRoute: typeof DepartmentRoute
     }
     '/officer/audit': {
@@ -691,6 +1248,27 @@ declare module '@tanstack/react-router' {
       path: '/duplicates'
       fullPath: '/officer/duplicates'
       preLoaderRoute: typeof OfficerDuplicatesRouteImport
+      parentRoute: typeof OfficerRoute
+    }
+    '/officer/evidence': {
+      id: '/officer/evidence'
+      path: '/evidence'
+      fullPath: '/officer/evidence'
+      preLoaderRoute: typeof OfficerEvidenceRouteImport
+      parentRoute: typeof OfficerRoute
+    }
+    '/officer/field-visits': {
+      id: '/officer/field-visits'
+      path: '/field-visits'
+      fullPath: '/officer/field-visits'
+      preLoaderRoute: typeof OfficerFieldVisitsRouteImport
+      parentRoute: typeof OfficerRoute
+    }
+    '/officer/inbox': {
+      id: '/officer/inbox'
+      path: '/inbox'
+      fullPath: '/officer/inbox'
+      preLoaderRoute: typeof OfficerInboxRouteImport
       parentRoute: typeof OfficerRoute
     }
     '/officer/notifications': {
@@ -741,6 +1319,69 @@ declare module '@tanstack/react-router' {
       fullPath: '/schemes/$id'
       preLoaderRoute: typeof SchemesIdRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/verifier/audit': {
+      id: '/verifier/audit'
+      path: '/audit'
+      fullPath: '/verifier/audit'
+      preLoaderRoute: typeof VerifierAuditRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/dashboard': {
+      id: '/verifier/dashboard'
+      path: '/dashboard'
+      fullPath: '/verifier/dashboard'
+      preLoaderRoute: typeof VerifierDashboardRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/documents': {
+      id: '/verifier/documents'
+      path: '/documents'
+      fullPath: '/verifier/documents'
+      preLoaderRoute: typeof VerifierDocumentsRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/escalations': {
+      id: '/verifier/escalations'
+      path: '/escalations'
+      fullPath: '/verifier/escalations'
+      preLoaderRoute: typeof VerifierEscalationsRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/evidence': {
+      id: '/verifier/evidence'
+      path: '/evidence'
+      fullPath: '/verifier/evidence'
+      preLoaderRoute: typeof VerifierEvidenceRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/inbox': {
+      id: '/verifier/inbox'
+      path: '/inbox'
+      fullPath: '/verifier/inbox'
+      preLoaderRoute: typeof VerifierInboxRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/mismatches': {
+      id: '/verifier/mismatches'
+      path: '/mismatches'
+      fullPath: '/verifier/mismatches'
+      preLoaderRoute: typeof VerifierMismatchesRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/queue': {
+      id: '/verifier/queue'
+      path: '/queue'
+      fullPath: '/verifier/queue'
+      preLoaderRoute: typeof VerifierQueueRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/settings': {
+      id: '/verifier/settings'
+      path: '/settings'
+      fullPath: '/verifier/settings'
+      preLoaderRoute: typeof VerifierSettingsRouteImport
+      parentRoute: typeof VerifierRoute
     }
     '/citizen/applications/': {
       id: '/citizen/applications/'
@@ -805,8 +1446,46 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OfficerFamiliesIdRouteImport
       parentRoute: typeof OfficerRoute
     }
+    '/verifier/applications/$id': {
+      id: '/verifier/applications/$id'
+      path: '/applications/$id'
+      fullPath: '/verifier/applications/$id'
+      preLoaderRoute: typeof VerifierApplicationsIdRouteImport
+      parentRoute: typeof VerifierRoute
+    }
   }
 }
+
+interface AuditorRouteChildren {
+  AuditorApplicationsRoute: typeof AuditorApplicationsRoute
+  AuditorAuditRoute: typeof AuditorAuditRoute
+  AuditorDashboardRoute: typeof AuditorDashboardRoute
+  AuditorDecisionsRoute: typeof AuditorDecisionsRoute
+  AuditorEvidenceRoute: typeof AuditorEvidenceRoute
+  AuditorExportRoute: typeof AuditorExportRoute
+  AuditorInboxRoute: typeof AuditorInboxRoute
+  AuditorOfficersRoute: typeof AuditorOfficersRoute
+  AuditorReportsRoute: typeof AuditorReportsRoute
+  AuditorRulesRoute: typeof AuditorRulesRoute
+  AuditorSettingsRoute: typeof AuditorSettingsRoute
+}
+
+const AuditorRouteChildren: AuditorRouteChildren = {
+  AuditorApplicationsRoute: AuditorApplicationsRoute,
+  AuditorAuditRoute: AuditorAuditRoute,
+  AuditorDashboardRoute: AuditorDashboardRoute,
+  AuditorDecisionsRoute: AuditorDecisionsRoute,
+  AuditorEvidenceRoute: AuditorEvidenceRoute,
+  AuditorExportRoute: AuditorExportRoute,
+  AuditorInboxRoute: AuditorInboxRoute,
+  AuditorOfficersRoute: AuditorOfficersRoute,
+  AuditorReportsRoute: AuditorReportsRoute,
+  AuditorRulesRoute: AuditorRulesRoute,
+  AuditorSettingsRoute: AuditorSettingsRoute,
+}
+
+const AuditorRouteWithChildren =
+  AuditorRoute._addFileChildren(AuditorRouteChildren)
 
 interface CitizenRouteChildren {
   CitizenBenefitsRoute: typeof CitizenBenefitsRoute
@@ -814,6 +1493,7 @@ interface CitizenRouteChildren {
   CitizenDocumentsRoute: typeof CitizenDocumentsRoute
   CitizenFamilyRoute: typeof CitizenFamilyRoute
   CitizenGrievancesRoute: typeof CitizenGrievancesRoute
+  CitizenInboxRoute: typeof CitizenInboxRoute
   CitizenNotificationsRoute: typeof CitizenNotificationsRoute
   CitizenSettingsRoute: typeof CitizenSettingsRoute
   CitizenApplicationsIdRoute: typeof CitizenApplicationsIdRoute
@@ -827,6 +1507,7 @@ const CitizenRouteChildren: CitizenRouteChildren = {
   CitizenDocumentsRoute: CitizenDocumentsRoute,
   CitizenFamilyRoute: CitizenFamilyRoute,
   CitizenGrievancesRoute: CitizenGrievancesRoute,
+  CitizenInboxRoute: CitizenInboxRoute,
   CitizenNotificationsRoute: CitizenNotificationsRoute,
   CitizenSettingsRoute: CitizenSettingsRoute,
   CitizenApplicationsIdRoute: CitizenApplicationsIdRoute,
@@ -838,21 +1519,35 @@ const CitizenRouteWithChildren =
   CitizenRoute._addFileChildren(CitizenRouteChildren)
 
 interface DepartmentRouteChildren {
+  DepartmentApplicationsRoute: typeof DepartmentApplicationsRoute
   DepartmentAuditRoute: typeof DepartmentAuditRoute
   DepartmentDashboardRoute: typeof DepartmentDashboardRoute
+  DepartmentDepartmentsRoute: typeof DepartmentDepartmentsRoute
+  DepartmentInboxRoute: typeof DepartmentInboxRoute
   DepartmentIntegrationsRoute: typeof DepartmentIntegrationsRoute
+  DepartmentNotificationsRoute: typeof DepartmentNotificationsRoute
+  DepartmentOperationsRoute: typeof DepartmentOperationsRoute
   DepartmentReportsRoute: typeof DepartmentReportsRoute
   DepartmentRulesRoute: typeof DepartmentRulesRoute
+  DepartmentSettingsRoute: typeof DepartmentSettingsRoute
+  DepartmentWorkflowRoute: typeof DepartmentWorkflowRoute
   DepartmentSchemesIdRoute: typeof DepartmentSchemesIdRoute
   DepartmentSchemesIndexRoute: typeof DepartmentSchemesIndexRoute
 }
 
 const DepartmentRouteChildren: DepartmentRouteChildren = {
+  DepartmentApplicationsRoute: DepartmentApplicationsRoute,
   DepartmentAuditRoute: DepartmentAuditRoute,
   DepartmentDashboardRoute: DepartmentDashboardRoute,
+  DepartmentDepartmentsRoute: DepartmentDepartmentsRoute,
+  DepartmentInboxRoute: DepartmentInboxRoute,
   DepartmentIntegrationsRoute: DepartmentIntegrationsRoute,
+  DepartmentNotificationsRoute: DepartmentNotificationsRoute,
+  DepartmentOperationsRoute: DepartmentOperationsRoute,
   DepartmentReportsRoute: DepartmentReportsRoute,
   DepartmentRulesRoute: DepartmentRulesRoute,
+  DepartmentSettingsRoute: DepartmentSettingsRoute,
+  DepartmentWorkflowRoute: DepartmentWorkflowRoute,
   DepartmentSchemesIdRoute: DepartmentSchemesIdRoute,
   DepartmentSchemesIndexRoute: DepartmentSchemesIndexRoute,
 }
@@ -866,6 +1561,9 @@ interface OfficerRouteChildren {
   OfficerDashboardRoute: typeof OfficerDashboardRoute
   OfficerDocumentsRoute: typeof OfficerDocumentsRoute
   OfficerDuplicatesRoute: typeof OfficerDuplicatesRoute
+  OfficerEvidenceRoute: typeof OfficerEvidenceRoute
+  OfficerFieldVisitsRoute: typeof OfficerFieldVisitsRoute
+  OfficerInboxRoute: typeof OfficerInboxRoute
   OfficerNotificationsRoute: typeof OfficerNotificationsRoute
   OfficerReportsRoute: typeof OfficerReportsRoute
   OfficerSettingsRoute: typeof OfficerSettingsRoute
@@ -881,6 +1579,9 @@ const OfficerRouteChildren: OfficerRouteChildren = {
   OfficerDashboardRoute: OfficerDashboardRoute,
   OfficerDocumentsRoute: OfficerDocumentsRoute,
   OfficerDuplicatesRoute: OfficerDuplicatesRoute,
+  OfficerEvidenceRoute: OfficerEvidenceRoute,
+  OfficerFieldVisitsRoute: OfficerFieldVisitsRoute,
+  OfficerInboxRoute: OfficerInboxRoute,
   OfficerNotificationsRoute: OfficerNotificationsRoute,
   OfficerReportsRoute: OfficerReportsRoute,
   OfficerSettingsRoute: OfficerSettingsRoute,
@@ -894,8 +1595,39 @@ const OfficerRouteChildren: OfficerRouteChildren = {
 const OfficerRouteWithChildren =
   OfficerRoute._addFileChildren(OfficerRouteChildren)
 
+interface VerifierRouteChildren {
+  VerifierAuditRoute: typeof VerifierAuditRoute
+  VerifierDashboardRoute: typeof VerifierDashboardRoute
+  VerifierDocumentsRoute: typeof VerifierDocumentsRoute
+  VerifierEscalationsRoute: typeof VerifierEscalationsRoute
+  VerifierEvidenceRoute: typeof VerifierEvidenceRoute
+  VerifierInboxRoute: typeof VerifierInboxRoute
+  VerifierMismatchesRoute: typeof VerifierMismatchesRoute
+  VerifierQueueRoute: typeof VerifierQueueRoute
+  VerifierSettingsRoute: typeof VerifierSettingsRoute
+  VerifierApplicationsIdRoute: typeof VerifierApplicationsIdRoute
+}
+
+const VerifierRouteChildren: VerifierRouteChildren = {
+  VerifierAuditRoute: VerifierAuditRoute,
+  VerifierDashboardRoute: VerifierDashboardRoute,
+  VerifierDocumentsRoute: VerifierDocumentsRoute,
+  VerifierEscalationsRoute: VerifierEscalationsRoute,
+  VerifierEvidenceRoute: VerifierEvidenceRoute,
+  VerifierInboxRoute: VerifierInboxRoute,
+  VerifierMismatchesRoute: VerifierMismatchesRoute,
+  VerifierQueueRoute: VerifierQueueRoute,
+  VerifierSettingsRoute: VerifierSettingsRoute,
+  VerifierApplicationsIdRoute: VerifierApplicationsIdRoute,
+}
+
+const VerifierRouteWithChildren = VerifierRoute._addFileChildren(
+  VerifierRouteChildren,
+)
+
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
+  AuditorRoute: AuditorRouteWithChildren,
   CitizenRoute: CitizenRouteWithChildren,
   DepartmentRoute: DepartmentRouteWithChildren,
   EligibilityRoute: EligibilityRoute,
@@ -903,6 +1635,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   OfficerRoute: OfficerRouteWithChildren,
   TrackRoute: TrackRoute,
+  VerifierRoute: VerifierRouteWithChildren,
   OfficerLoginRoute: OfficerLoginRoute,
   SchemesIdRoute: SchemesIdRoute,
   SchemesIndexRoute: SchemesIndexRoute,

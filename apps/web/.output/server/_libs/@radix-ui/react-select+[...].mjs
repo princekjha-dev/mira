@@ -1,14 +1,19 @@
 import { n as __toESM } from "../../_runtime.mjs";
 import { l as require_react_dom, u as require_react } from "../@floating-ui/react-dom+[...].mjs";
-import { _ as useComposedRefs, c as Presence, d as useControllableState, f as useId, g as createSlot, l as Primitive, m as createContextScope, o as useDirection, p as useLayoutEffect2, s as createCollection, v as require_jsx_runtime } from "./react-accordion+[...].mjs";
+import { c as useDirection, f as useControllableState, g as createSlot, l as createCollection, m as createContextScope, o as Presence, p as useLayoutEffect2, s as useId, u as Primitive, v as useComposedRefs, y as require_jsx_runtime } from "./react-accordion+[...].mjs";
 import { t as composeEventHandlers } from "../radix-ui__primitive.mjs";
-import { E as useCallbackRef, T as DismissableLayer, _ as hideOthers, b as Portal, v as ReactRemoveScroll, x as FocusScope, y as useFocusGuards } from "./react-alert-dialog+[...].mjs";
-import { t as clamp } from "../radix-ui__number.mjs";
+import { E as useCallbackRef, T as DismissableLayer, _ as ReactRemoveScroll, b as FocusScope, v as hideOthers, w as useFocusGuards, y as Portal } from "./react-alert-dialog+[...].mjs";
 import { _ as PopperAnchor, g as Popper, v as PopperContent, y as createPopperScope } from "./react-dropdown-menu+[...].mjs";
+import { t as clamp } from "../radix-ui__number.mjs";
 //#region node_modules/@radix-ui/react-visually-hidden/dist/index.mjs
 var import_react_dom = /* @__PURE__ */ __toESM(require_react_dom(), 1);
 var import_react = /* @__PURE__ */ __toESM(require_react(), 1);
 var import_jsx_runtime = require_jsx_runtime();
+var __defProp$1 = Object.defineProperty;
+var __name$1 = (target, value) => __defProp$1(target, "name", {
+	value,
+	configurable: true
+});
 var VISUALLY_HIDDEN_STYLES = Object.freeze({
 	position: "absolute",
 	border: 0,
@@ -21,6 +26,16 @@ var VISUALLY_HIDDEN_STYLES = Object.freeze({
 	whiteSpace: "nowrap",
 	wordWrap: "normal"
 });
+var VisuallyHidden = /* @__PURE__ */ import_react.forwardRef(/* @__PURE__ */ __name$1(function VisuallyHidden2(props, forwardedRef) {
+	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Primitive.span, {
+		...props,
+		ref: forwardedRef,
+		style: {
+			...VISUALLY_HIDDEN_STYLES,
+			...props.style
+		}
+	});
+}, "VisuallyHidden"));
 //#endregion
 //#region node_modules/@radix-ui/react-select/dist/index.mjs
 var __defProp = Object.defineProperty;
@@ -1040,4 +1055,4 @@ function wrapArray(array, startIndex) {
 }
 __name(wrapArray, "wrapArray");
 //#endregion
-export { SelectItemIndicator as a, SelectPortal as c, SelectSeparator as d, SelectTrigger as f, SelectItem as i, SelectScrollDownButton as l, SelectViewport as m, SelectContent as n, SelectItemText as o, SelectValue as p, SelectIcon as r, SelectLabel as s, Select as t, SelectScrollUpButton as u };
+export { SelectItemIndicator as a, SelectPortal as c, SelectSeparator as d, SelectTrigger as f, VisuallyHidden as h, SelectItem as i, SelectScrollDownButton as l, SelectViewport as m, SelectContent as n, SelectItemText as o, SelectValue as p, SelectIcon as r, SelectLabel as s, Select as t, SelectScrollUpButton as u };
