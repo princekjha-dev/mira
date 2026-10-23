@@ -936,3 +936,170 @@ export async function sendMiraAiChat(
     },
   );
 }
+
+// ============================================================================
+// FAMILY 360, GRAPH & PERSON 360 APIs
+// ============================================================================
+
+export interface ApiGraphNode {
+  id: string;
+  node_type: string;
+  label: string;
+  sublabel?: string | null;
+  data: Record<string, any>;
+}
+
+export interface ApiGraphEdge {
+  id: string;
+  source: string;
+  target: string;
+  edge_type: string;
+  label: string;
+  verification_status: string;
+  confidence: number;
+}
+
+export interface ApiGraphData {
+  query_date: string;
+  nodes: ApiGraphNode[];
+  edges: ApiGraphEdge[];
+}
+
+export interface ApiPerson360Person {
+  id: string;
+  public_id: string;
+  first_name: string;
+  last_name: string;
+  name: string;
+  dob: string;
+  gender: string;
+  age: number;
+  masked_id: string;
+  status: string;
+  verification_status: string;
+  membership_role: string;
+  household_id: string;
+  household_public_id: string;
+  household_name: string;
+}
+
+export interface ApiPerson360Relationship {
+  id: string;
+  related_person_id: string;
+  related_person_public_id: string;
+  related_person_name: string;
+  relationship_type: string;
+  verification_status: string;
+  confidence: number;
+}
+
+export interface ApiPerson360Document {
+  id: string;
+  public_id: string;
+  document_type: string;
+  title: string;
+  status: string;
+  verification_status: string;
+  created_at: string;
+}
+
+export interface ApiPerson360Application {
+  id: string;
+  reference_number: string;
+  scheme_name: string;
+  status: string;
+  submitted_at: string;
+}
+
+export interface ApiPerson360Benefit {
+  id: string;
+  scheme_name: string;
+  disbursement_amount: string;
+  status: string;
+  disbursed_at: string;
+}
+
+export interface ApiPerson360Timeline {
+  id: string;
+  event_type: string;
+  effective_date: string;
+  description: string;
+  verification_status: string;
+}
+
+export interface ApiPerson360Scheme {
+  scheme_id: string;
+  name: string;
+  code: string;
+  eligibility_status: string;
+  explanation: string;
+  satisfied_conditions: string[];
+  unmet_conditions: string[];
+}
+
+export interface ApiPerson360Data {
+  person: ApiPerson360Person;
+  relationships: ApiPerson360Relationship[];
+  documents: ApiPerson360Document[];
+  applications: ApiPerson360Application[];
+  benefits: ApiPerson360Benefit[];
+  timeline: ApiPerson360Timeline[];
+  schemes: ApiPerson360Scheme[];
+}
+
+export interface ApiMyAuditEvent {
+  id: string;
+  event_type: string;
+  user_id?: string | null;
+  organization_id?: string | null;
+  request_id?: string | null;
+  ip_address?: string | null;
+  details: Record<string, any>;
+  created_at: string;
+}
+
+export async function fetchHouseholdFamily(
+  sessionOrToken: Session | string | null,
+  householdId: string,
+): Promise<ApiFamilyResponse> {
+  const res = await apiRequest<ApiEnvelope<ApiFamilyResponse>>(
+    sessionOrToken,
+    `/api/v1/households/${encodeURIComponent(householdId)}/family`,
+  );
+  return res.data;
+}
+
+export async function fetchHouseholdGraph(
+  sessionOrToken: Session | string | null,
+  householdId: string,
+  temporalDate?: string,
+): Promise<ApiGraphData> {
+  const query = temporalDate ? `?date=${encodeURIComponent(temporalDate)}` : "";
+  const res = await apiRequest<ApiEnvelope<ApiGraphData>>(
+    sessionOrToken,
+    `/api/v1/households/${encodeURIComponent(householdId)}/graph${query}`,
+  );
+  return res.data;
+}
+
+export async function fetchPerson360(
+  sessionOrToken: Session | string | null,
+  personId: string,
+): Promise<ApiPerson360Data> {
+  const res = await apiRequest<ApiEnvelope<ApiPerson360Data>>(
+    sessionOrToken,
+    `/api/v1/persons/${encodeURIComponent(personId)}/360`,
+  );
+  return res.data;
+}
+
+export async function fetchMyAuditActivity(
+  sessionOrToken: Session | string | null,
+): Promise<ApiMyAuditEvent[]> {
+  const res = await apiRequest<ApiEnvelope<ApiMyAuditEvent[]>>(
+    sessionOrToken,
+    "/api/v1/audit/my-activity",
+  );
+  return res.data;
+}
+

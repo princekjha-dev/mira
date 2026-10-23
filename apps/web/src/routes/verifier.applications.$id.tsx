@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ShieldCheck,
   XCircle,
@@ -14,17 +14,20 @@ import {
   Building,
   History,
   Lock,
+  Eye,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-state";
 import { getScheme, fmtDate } from "@/lib/data";
-import { PageHeader, StatusBadge, Timeline, Empty } from "@/components/gov/ui";
+import { PageHeader, StatusBadge, Timeline, Empty, Pill } from "@/components/gov/ui";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { CommentsThread } from "@/components/gov/CommentsThread";
+import { DocumentViewer } from "@/components/gov/DocumentViewer";
+import { apiRequest, type ApiDocument } from "@/lib/api";
 
 export const Route = createFileRoute("/verifier/applications/$id")({
   head: ({ params }) => ({
@@ -43,6 +46,35 @@ function VerifierAppDetailWorkbench() {
 
   const [decisionDlg, setDecisionDlg] = useState<null | "approve" | "reject" | "evidence" | "escalate">(null);
   const [reason, setReason] = useState("");
+  const [submittedDocs, setSubmittedDocs] = useState<ApiDocument[]>([]);
+  const [activeDoc, setActiveDoc] = useState<ApiDocument | null>(null);
+
+  const loadDocuments = () => {
+    if (!state.session?.apiToken) return;
+    const targetId = (a as any)?.rawId || a?.id;
+    if (!targetId) return;
+    apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/applications/${targetId}/documents`)
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setSubmittedDocs(res.data);
+        } else {
+          apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/documents`)
+            .then((all) => setSubmittedDocs(all.data || []))
+            .catch(() => setSubmittedDocs([]));
+        }
+      })
+      .catch(() => {
+        apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/documents`)
+          .then((all) => setSubmittedDocs(all.data || []))
+          .catch(() => setSubmittedDocs([]));
+      });
+  };
+
+  useEffect(() => {
+    if (a) {
+      loadDocuments();
+    }
+  }, [a?.id, (a as any)?.rawId, state.session?.apiToken]);
 
   if (!a) {
     return (
@@ -273,6 +305,92 @@ function VerifierAppDetailWorkbench() {
             </CardContent>
           </Card>
 
+          {/* Submitted Evidence & Document Intelligence */}
+          <Card className="border-border/80 shadow-xs">
+            <CardHeader className="p-4 pb-2">
+              <div className="flex items-center justify-between">
+                <div>
+                  <CardTitle className="text-sm font-semibold flex items-center gap-1.5">
+                    <FileText className="h-4 w-4 text-blue-600" />
+                    Submitted Documents & Evidence
+                  </CardTitle>
+                  <CardDescription className="text-xs">
+                    Certificates attached to this application with OCR extracted intelligence
+                  </CardDescription>
+                </div>
+                <Badge variant="outline" className="text-[10px]">
+                  {submittedDocs.length} Documents
+                </Badge>
+              </div>
+            </CardHeader>
+            <CardContent className="p-4 pt-1 space-y-2 text-xs">
+              {submittedDocs.length > 0 ? (
+                <div className="divide-y rounded-md border bg-slate-50/50">
+                  {submittedDocs.map((doc) => {
+                    const isConflicting =
+                      doc.verification_status === "ACTION_REQUIRED" ||
+                      doc.verification_status === "MISMATCH";
+                    return (
+                      <div
+                        key={doc.id}
+                        className="flex flex-wrap items-center justify-between p-3 gap-2"
+                      >
+                        <div className="flex items-center gap-2.5 min-w-0">
+                          <FileText
+                            className={`h-4 w-4 shrink-0 ${
+                              isConflicting
+                                ? "text-amber-600"
+                                : doc.verification_status === "VERIFIED"
+                                ? "text-emerald-600"
+                                : "text-slate-500"
+                            }`}
+                          />
+                          <div className="min-w-0">
+                            <p className="font-semibold text-slate-900 truncate">
+                              {doc.original_filename}
+                            </p>
+                            <p className="text-[11px] text-muted-foreground">
+                              {doc.document_type} · v{doc.version_number || 1}
+                            </p>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <span
+                            className={`rounded px-2 py-0.5 text-[10px] font-semibold border ${
+                              doc.verification_status === "VERIFIED"
+                                ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                                : isConflicting
+                                ? "border-amber-300 bg-amber-50 text-amber-900"
+                                : doc.verification_status === "REJECTED"
+                                ? "border-red-300 bg-red-50 text-red-800"
+                                : "border-slate-300 bg-slate-100 text-slate-700"
+                            }`}
+                          >
+                            {doc.verification_status}
+                          </span>
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setActiveDoc(doc)}
+                            className="h-7 text-xs px-2.5 gap-1 text-blue-700 border-blue-200 hover:bg-blue-50"
+                          >
+                            <Eye className="h-3.5 w-3.5" />
+                            View Document
+                          </Button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              ) : (
+                <div className="rounded border border-dashed p-4 text-center text-xs text-muted-foreground">
+                  No submitted documents loaded.
+                </div>
+              )}
+            </CardContent>
+          </Card>
+
           {/* Scheme Criteria Checklist */}
           <Card className="border-border/80 shadow-xs">
             <CardHeader className="p-4 pb-2">
@@ -282,27 +400,27 @@ function VerifierAppDetailWorkbench() {
             <CardContent className="p-4 pt-1 space-y-2 text-xs">
               <div className="flex items-center justify-between border-b pb-2">
                 <div>
-                  <span className="font-medium text-foreground">Annual Household Income &lt; ₹ 1,80,000</span>
+                  <span className="font-medium text-foreground">Annual Household Income &lt; ₹ 2,00,000</span>
                   <p className="text-[11px] text-muted-foreground">Verified against Tehsildar & State Revenue Registry</p>
                 </div>
                 <Badge variant="outline" className="border-teal-400 bg-teal-500/10 text-teal-700 text-[10px]">
-                  Pass (₹ 1,20,000)
+                  Pass (₹ 1,72,000)
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between border-b pb-2">
                 <div>
                   <span className="font-medium text-foreground">Rural Residence & Land Holding</span>
-                  <p className="text-[11px] text-muted-foreground">Plot 412/1 recorded in UP Bhulekh Khatauni</p>
+                  <p className="text-[11px] text-muted-foreground">Plot 42/Ward 7 recorded in UP Bhulekh Khatauni</p>
                 </div>
                 <Badge variant="outline" className="border-teal-400 bg-teal-500/10 text-teal-700 text-[10px]">
-                  Pass (0.24 Ha)
+                  Pass (0.18 Ha)
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between pb-1">
                 <div>
-                  <span className="font-medium text-foreground">No Prior Pucca Dwelling Benefit in 5 Years</span>
+                  <span className="font-medium text-foreground">No Prior Disqualifying Benefit in 5 Years</span>
                   <p className="text-[11px] text-muted-foreground">Household split authenticated by Gram Panchayat</p>
                 </div>
                 <Badge variant="outline" className="border-blue-400 bg-blue-500/10 text-blue-700 text-[10px]">
@@ -338,15 +456,31 @@ function VerifierAppDetailWorkbench() {
               </div>
               <div className="flex justify-between border-b pb-1.5">
                 <span className="text-muted-foreground">Members Registered:</span>
-                <span className="font-medium">5 Members</span>
+                <span className="font-medium font-semibold text-blue-900 dark:text-blue-200">
+                  {a.householdId?.includes("10482") ? "35 Members (Multi-Gen)" : "5 Members"}
+                </span>
               </div>
               <div className="flex justify-between border-b pb-1.5">
-                <span className="text-muted-foreground">Bifurcation Date:</span>
-                <span className="font-medium">March 2021</span>
+                <span className="text-muted-foreground">Registration Date:</span>
+                <span className="font-medium">February 2010</span>
               </div>
               <div className="flex justify-between pb-1">
                 <span className="text-muted-foreground">Jurisdiction:</span>
-                <span className="font-medium">Chandauli Rural</span>
+                <span className="font-medium">Civil Lines, Demo District</span>
+              </div>
+              <div className="pt-2">
+                <Button
+                  asChild
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs font-semibold gap-1.5 border-gov/30 text-gov hover:bg-gov/5"
+                >
+                  <Link to="/verifier/family360">
+                    <Users className="h-3.5 w-3.5" />
+                    <span>Inspect in Family360 Graph</span>
+                    <ExternalLink className="h-3 w-3 ml-auto" />
+                  </Link>
+                </Button>
               </div>
             </CardContent>
           </Card>
@@ -417,6 +551,17 @@ function VerifierAppDetailWorkbench() {
             </DialogFooter>
           </DialogContent>
         </Dialog>
+      )}
+
+      {activeDoc && state.session && (
+        <DocumentViewer
+          document={activeDoc}
+          session={state.session}
+          onClose={() => setActiveDoc(null)}
+          onChanged={() => {
+            loadDocuments();
+          }}
+        />
       )}
     </div>
   );

@@ -53,6 +53,7 @@ import {
 } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { PageHeader, Panel, Pill } from "@/components/gov/ui";
+import { Family360 } from "@/components/gov/Family360";
 
 export const Route = createFileRoute("/citizen/family")({
   head: () => ({
@@ -404,13 +405,24 @@ export function FamilyPage() {
         </div>
       </div>
 
-      {/* Main Tabs: Family Tree, Member Directory, Timeline */}
-      <Tabs defaultValue="tree" className="w-full">
-        <TabsList className="grid w-full grid-cols-3 max-w-md">
-          <TabsTrigger value="tree">Family Tree</TabsTrigger>
+      {/* Main Tabs: Family360 Graph, Family Tree, Member Directory, Timeline */}
+      <Tabs defaultValue="family360" className="w-full">
+        <TabsList className="grid w-full grid-cols-4 max-w-xl">
+          <TabsTrigger value="family360" className="font-semibold text-gov">
+            Family360 Graph
+          </TabsTrigger>
+          <TabsTrigger value="tree">Tiered Tree</TabsTrigger>
           <TabsTrigger value="members">Members ({members.length})</TabsTrigger>
           <TabsTrigger value="timeline">Timeline ({timeline.length})</TabsTrigger>
         </TabsList>
+
+        {/* TAB 0: FAMILY360 MULTI-GENERATIONAL GRAPH */}
+        <TabsContent value="family360" className="space-y-4 pt-4">
+          <Family360
+            householdId={familyData?.household_public_id || "MIRA-FAM-10482"}
+            role="citizen"
+          />
+        </TabsContent>
 
         {/* TAB 1: DATA-DRIVEN FAMILY TREE */}
         <TabsContent value="tree" className="space-y-6 pt-4">

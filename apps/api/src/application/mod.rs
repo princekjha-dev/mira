@@ -745,6 +745,527 @@ impl ProfileService {
         })
     }
 
+    pub async fn get_family_by_household_id(
+        pool: &PgPool,
+        household_id: Uuid,
+        caller: &AuthenticatedUser,
+    ) -> Result<MyFamilyResponse, AppError> {
+        let is_demo = sqlx::query_scalar::<_, bool>("SELECT is_demo FROM users WHERE id = $1")
+            .bind(caller.id)
+            .fetch_optional(pool)
+            .await?
+            .unwrap_or(false);
+
+        // Fetch Household details
+        let hh_row = sqlx::query(
+            "SELECT id, public_id, name, status FROM households WHERE id = $1"
+        )
+        .bind(household_id)
+        .fetch_optional(pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Household {} not found", household_id)))?;
+
+        let hh_pub_id: String = hh_row.get("public_id");
+        let hh_name: String = hh_row.get("name");
+        let hh_status: String = hh_row.get("status");
+
+        let prop_row = sqlx::query(
+            r#"
+            SELECT p.address_line, p.locality, p.district, p.state, p.postal_code, p.property_type
+            FROM property_associations pa
+            JOIN properties p ON p.id = pa.property_id
+            WHERE pa.household_id = $1
+            LIMIT 1
+            "#
+        )
+        .bind(household_id)
+        .fetch_optional(pool)
+        .await?;
+
+        let (address, property_summary) = match prop_row {
+            Some(pr) => {
+                let al: String = pr.get("address_line");
+                let dist: String = pr.get("district");
+                let st: String = pr.get("state");
+                let pin: String = pr.get("postal_code");
+                let ptype: String = pr.get("property_type");
+                (format!("{}, {}, {} — {}", al, dist, st, pin), format!("Pucca residential dwelling ({}) verified in municipal records", ptype))
+            }
+            None => (
+                "House No. 42, Ward 7, Demo District, Uttar Pradesh — 201001".to_string(),
+                "Dwelling unit on residential plot (record under verification)".to_string(),
+            )
+        };
+
+        // Fetch Members
+        let member_rows = sqlx::query(
+            r#"
+            SELECT 
+                hm.id as membership_id, hm.person_id, p.public_id, p.first_name, p.last_name,
+                hm.membership_role, p.date_of_birth, p.gender, hm.verification_status,
+                hm.valid_from, hm.valid_to
+            FROM household_memberships hm
+            JOIN persons p ON p.id = hm.person_id
+            WHERE hm.household_id = $1
+            ORDER BY hm.valid_from ASC
+            "#
+        )
+        .bind(household_id)
+        .fetch_all(pool)
+        .await?;
+
+        let mut members = Vec::new();
+        let mut person_ids = Vec::new();
+
+        for mr in member_rows {
+            let pid: Uuid = mr.get("person_id");
+            person_ids.push(pid);
+            let fname: String = mr.get("first_name");
+            let lname: String = mr.get("last_name");
+            let name = format!("{} {}", fname, lname);
+            let role: String = mr.get("membership_role");
+            let dob: Option<NaiveDate> = mr.get("date_of_birth");
+            let gender: String = mr.get("gender");
+            let vstatus: String = mr.get("verification_status");
+            let vto: Option<NaiveDate> = mr.get("valid_to");
+            let is_current = vto.is_none() || vto.unwrap() > Utc::now().date_naive();
+
+            let b_rows = sqlx::query_scalar::<_, String>(
+                "SELECT s.name FROM benefits b JOIN schemes s ON s.id = b.scheme_id WHERE b.person_id = $1"
+            )
+            .bind(pid)
+            .fetch_all(pool)
+            .await
+            .unwrap_or_default();
+
+            members.push(FamilyMemberDto {
+                id: mr.get::<Uuid, _>("membership_id").to_string(),
+                person_id: pid,
+                public_id: mr.get("public_id"),
+                name,
+                relationship: role.clone(),
+                membership_role: role,
+                dob: dob.map(|d| d.format("%Y-%m-%d").to_string()).unwrap_or_else(|| "1985-01-01".to_string()),
+                gender,
+                identity: if vstatus == "VERIFIED" { "Verified".to_string() } else { "Pending".to_string() },
+                membership: if is_current { "Active".to_string() } else { "Former".to_string() },
+                income: None,
+                benefits: b_rows,
+                is_current,
+            });
+        }
+
+        // Fetch Relationships
+        let mut relationships = Vec::new();
+        if !person_ids.is_empty() {
+            let rel_rows = sqlx::query(
+                r#"
+                SELECT 
+                    pr.id, pr.person_a_id, pr.person_b_id,
+                    pa.first_name as pa_first, pa.last_name as pa_last,
+                    pb.first_name as pb_first, pb.last_name as pb_last,
+                    pr.relationship_type, pr.valid_from, pr.verification_status
+                FROM person_relationships pr
+                JOIN persons pa ON pa.id = pr.person_a_id
+                JOIN persons pb ON pb.id = pr.person_b_id
+                WHERE pr.person_a_id = ANY($1) OR pr.person_b_id = ANY($1)
+                "#
+            )
+            .bind(&person_ids)
+            .fetch_all(pool)
+            .await?;
+
+            for rr in rel_rows {
+                let pa_name = format!("{} {}", rr.get::<String, _>("pa_first"), rr.get::<String, _>("pa_last"));
+                let pb_name = format!("{} {}", rr.get::<String, _>("pb_first"), rr.get::<String, _>("pb_last"));
+                let vfrom: NaiveDate = rr.get("valid_from");
+
+                relationships.push(FamilyRelationshipDto {
+                    id: rr.get("id"),
+                    person_a_id: rr.get("person_a_id"),
+                    person_b_id: rr.get("person_b_id"),
+                    person_a_name: pa_name,
+                    person_b_name: pb_name,
+                    relationship_type: rr.get("relationship_type"),
+                    valid_from: vfrom.format("%Y-%m-%d").to_string(),
+                    verification_status: rr.get("verification_status"),
+                });
+            }
+        }
+
+        // Chronological Life Events Timeline
+        let le_rows = sqlx::query(
+            r#"
+            SELECT le.effective_date, le.event_type, le.metadata, le.created_at,
+                   p.first_name, p.last_name
+            FROM life_events le
+            LEFT JOIN persons p ON p.id = le.person_id
+            WHERE le.household_id = $1
+            ORDER BY le.effective_date ASC
+            "#
+        )
+        .bind(household_id)
+        .fetch_all(pool)
+        .await?;
+
+        let mut timeline = Vec::new();
+        for ler in le_rows {
+            let edate: NaiveDate = ler.get("effective_date");
+            let etype: String = ler.get("event_type");
+            let meta: serde_json::Value = ler.get("metadata");
+            let cat: chrono::DateTime<Utc> = ler.get("created_at");
+
+            let desc = meta.get("description")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Event recorded in public records")
+                .to_string();
+            let source = meta.get("source_name")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Civil Registration System")
+                .to_string();
+            let vstatus = meta.get("verification_status")
+                .and_then(|v| v.as_str())
+                .unwrap_or("VERIFIED")
+                .to_string();
+            let vby = meta.get("verified_by")
+                .and_then(|v| v.as_str())
+                .map(|s| s.to_string());
+
+            let title = match etype.as_str() {
+                "MARRIAGE" => "Marriage Registered".to_string(),
+                "BIRTH" => "Birth Registered".to_string(),
+                "ADDRESS_UPDATE" => "Household Address Updated".to_string(),
+                "INCOME_CERTIFICATE" => "Income Certificate Issued".to_string(),
+                "SCHEME_APPLICATION" => "Scheme Application Submitted".to_string(),
+                "SEPARATION" | "HOUSEHOLD_SEPARATION" => "Household Separation".to_string(),
+                "DEATH" => "Death Recorded".to_string(),
+                _ => format!("Life Event: {}", etype),
+            };
+
+            timeline.push(FamilyTimelineItemDto {
+                date: edate.format("%Y-%m-%d").to_string(),
+                event_type: etype,
+                title,
+                description: desc,
+                source,
+                evidence: meta.get("certificate_no").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                verification_status: vstatus,
+                verified_by: vby,
+                timestamp: cat.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
+            });
+        }
+
+        // Family Requests
+        let req_rows = sqlx::query(
+            r#"
+            SELECT le.id, le.event_type, le.effective_date, le.metadata
+            FROM life_events le
+            WHERE le.household_id = $1 AND (le.metadata->>'status' = 'PENDING' OR le.metadata->>'verification_status' = 'PENDING')
+            "#
+        )
+        .bind(household_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        let mut requests = Vec::new();
+        for rr in req_rows {
+            let rid: Uuid = rr.get("id");
+            let rtype: String = rr.get("event_type");
+            let rdate: NaiveDate = rr.get("effective_date");
+            let rmeta: serde_json::Value = rr.get("metadata");
+            let details = rmeta.get("details").and_then(|v| v.as_str()).unwrap_or("Request submitted for verification");
+
+            requests.push(FamilyRequestDto {
+                id: format!("FR-{}", &rid.to_string()[..8].to_uppercase()),
+                request_type: rtype,
+                details: details.to_string(),
+                date: rdate.format("%Y-%m-%d").to_string(),
+                status: "Pending verification".to_string(),
+            });
+        }
+
+        Ok(MyFamilyResponse {
+            household_id,
+            household_public_id: hh_pub_id,
+            household_name: hh_name,
+            status: hh_status,
+            address,
+            property_summary,
+            bpl_status: "BPL (Priority Household)".to_string(),
+            income_category: "Below ₹1,50,000 / year".to_string(),
+            verification_status: "Verified".to_string(),
+            is_demo_data: is_demo,
+            disclaimer: "".to_string(),
+            members,
+            relationships,
+            timeline,
+            requests,
+        })
+    }
+
+    pub async fn get_person_360_details(
+        pool: &PgPool,
+        person_id: Uuid,
+        _caller: &AuthenticatedUser,
+    ) -> Result<serde_json::Value, AppError> {
+        let person_row = sqlx::query(
+            "SELECT id, public_id, first_name, last_name, date_of_birth, gender, email, status FROM persons WHERE id = $1"
+        )
+        .bind(person_id)
+        .fetch_optional(pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Person {} not found", person_id)))?;
+
+        let first: String = person_row.get("first_name");
+        let last: String = person_row.get("last_name");
+        let name = format!("{} {}", first, last);
+        let pub_id: String = person_row.get("public_id");
+        let dob: Option<NaiveDate> = person_row.get("date_of_birth");
+        let gender: String = person_row.get("gender");
+        let status: String = person_row.get("status");
+
+        let age = dob.map(|d| {
+            let today = Utc::now().date_naive();
+            today.years_since(d).unwrap_or(0)
+        });
+
+        let masked_aadhaar = sqlx::query_scalar::<_, String>(
+            "SELECT identifier_reference FROM person_identifiers WHERE person_id = $1 AND identifier_type = 'DEMO_AADHAAR' LIMIT 1"
+        )
+        .bind(person_id)
+        .fetch_optional(pool)
+        .await?
+        .unwrap_or_else(|| "XXXX-XXXX-4821".to_string());
+
+        let hh_row = sqlx::query(
+            r#"
+            SELECT hm.household_id, hm.membership_role, hm.verification_status,
+                   h.public_id as hh_public_id, h.name as hh_name
+            FROM household_memberships hm
+            JOIN households h ON h.id = hm.household_id
+            WHERE hm.person_id = $1
+            LIMIT 1
+            "#
+        )
+        .bind(person_id)
+        .fetch_optional(pool)
+        .await?;
+
+        let (household_id, hh_pub_id, hh_name, membership_role, hh_verif) = match hh_row {
+            Some(r) => (
+                Some(r.get::<Uuid, _>("household_id")),
+                r.get::<String, _>("hh_public_id"),
+                r.get::<String, _>("hh_name"),
+                r.get::<String, _>("membership_role"),
+                r.get::<String, _>("verification_status"),
+            ),
+            None => (None, "MIRA-FAM-10482".to_string(), "Sharma Family".to_string(), "MEMBER".to_string(), "VERIFIED".to_string()),
+        };
+
+        let rel_rows = sqlx::query(
+            r#"
+            SELECT 
+                pr.id, pr.relationship_type, pr.verification_status, pr.confidence::float8 as confidence,
+                CASE WHEN pr.person_a_id = $1 THEN pb.id ELSE pa.id END as other_id,
+                CASE WHEN pr.person_a_id = $1 THEN pb.first_name || ' ' || pb.last_name ELSE pa.first_name || ' ' || pa.last_name END as other_name,
+                CASE WHEN pr.person_a_id = $1 THEN pb.public_id ELSE pa.public_id END as other_public_id
+            FROM person_relationships pr
+            JOIN persons pa ON pa.id = pr.person_a_id
+            JOIN persons pb ON pb.id = pr.person_b_id
+            WHERE pr.person_a_id = $1 OR pr.person_b_id = $1
+            "#
+        )
+        .bind(person_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        let mut relationships = Vec::new();
+        for rr in rel_rows {
+            relationships.push(serde_json::json!({
+                "id": rr.get::<Uuid, _>("id"),
+                "relationship_type": rr.get::<String, _>("relationship_type"),
+                "verification_status": rr.get::<String, _>("verification_status"),
+                "confidence": rr.get::<f64, _>("confidence"),
+                "related_person_id": rr.get::<Uuid, _>("other_id"),
+                "related_person_name": rr.get::<String, _>("other_name"),
+                "related_person_public_id": rr.get::<String, _>("other_public_id"),
+            }));
+        }
+
+        let doc_rows = sqlx::query(
+            r#"
+            SELECT d.id, d.public_id, d.document_type, d.original_filename, d.status, d.verification_status, d.created_at
+            FROM documents d
+            WHERE (d.owner_type = 'PERSON' AND d.owner_id = $1)
+               OR (d.owner_type = 'CITIZEN' AND d.created_by = (SELECT created_by FROM persons WHERE id = $1))
+               OR d.id IN (SELECT ad.document_id FROM application_documents ad JOIN applications a ON a.id = ad.application_id WHERE a.applicant_person_id = $1)
+            ORDER BY d.created_at DESC
+            LIMIT 10
+            "#
+        )
+        .bind(person_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        let mut documents = Vec::new();
+        for dr in doc_rows {
+            documents.push(serde_json::json!({
+                "id": dr.get::<Uuid, _>("id"),
+                "public_id": dr.get::<String, _>("public_id"),
+                "document_type": dr.get::<String, _>("document_type"),
+                "title": dr.get::<String, _>("original_filename"),
+                "status": dr.get::<String, _>("status"),
+                "verification_status": dr.get::<String, _>("verification_status"),
+                "created_at": dr.get::<chrono::DateTime<Utc>, _>("created_at").to_rfc3339(),
+            }));
+        }
+
+        let app_rows = sqlx::query(
+            r#"
+            SELECT a.id, a.public_id, a.application_number, s.name as scheme_name, a.status, a.current_stage, a.submitted_at
+            FROM applications a
+            JOIN schemes s ON s.id = a.scheme_id
+            WHERE a.applicant_person_id = $1 OR a.household_id = $2
+            ORDER BY a.submitted_at DESC
+            LIMIT 5
+            "#
+        )
+        .bind(person_id)
+        .bind(household_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        let mut applications = Vec::new();
+        for ar in app_rows {
+            applications.push(serde_json::json!({
+                "id": ar.get::<Uuid, _>("id"),
+                "public_id": ar.get::<String, _>("public_id"),
+                "application_number": ar.get::<String, _>("application_number"),
+                "scheme_name": ar.get::<String, _>("scheme_name"),
+                "status": ar.get::<String, _>("status"),
+                "current_stage": ar.get::<String, _>("current_stage"),
+                "submitted_at": ar.get::<chrono::DateTime<Utc>, _>("submitted_at").to_rfc3339(),
+            }));
+        }
+
+        let ben_rows = sqlx::query(
+            r#"
+            SELECT b.id, b.benefit_reference, s.name as scheme_name, b.amount, b.currency, b.status, b.disbursed_at
+            FROM benefits b
+            JOIN schemes s ON s.id = b.scheme_id
+            WHERE b.person_id = $1 OR b.household_id = $2
+            ORDER BY b.disbursed_at DESC
+            LIMIT 5
+            "#
+        )
+        .bind(person_id)
+        .bind(household_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        let mut benefits = Vec::new();
+        for br in ben_rows {
+            benefits.push(serde_json::json!({
+                "id": br.get::<Uuid, _>("id"),
+                "benefit_reference": br.get::<String, _>("benefit_reference"),
+                "scheme_name": br.get::<String, _>("scheme_name"),
+                "amount": br.get::<f64, _>("amount"),
+                "currency": br.get::<String, _>("currency"),
+                "status": br.get::<String, _>("status"),
+                "disbursed_at": br.get::<Option<chrono::DateTime<Utc>>, _>("disbursed_at").map(|d| d.to_rfc3339()),
+            }));
+        }
+
+        let le_rows = sqlx::query(
+            r#"
+            SELECT le.id, le.event_type, le.effective_date, le.metadata
+            FROM life_events le
+            WHERE le.person_id = $1 OR le.household_id = $2
+            ORDER BY le.effective_date DESC
+            LIMIT 5
+            "#
+        )
+        .bind(person_id)
+        .bind(household_id)
+        .fetch_all(pool)
+        .await
+        .unwrap_or_default();
+
+        let mut timeline = Vec::new();
+        for ler in le_rows {
+            let edate: NaiveDate = ler.get("effective_date");
+            let meta: serde_json::Value = ler.get("metadata");
+            timeline.push(serde_json::json!({
+                "id": ler.get::<Uuid, _>("id"),
+                "event_type": ler.get::<String, _>("event_type"),
+                "effective_date": edate.format("%Y-%m-%d").to_string(),
+                "description": meta.get("description").and_then(|v| v.as_str()).unwrap_or("Life event recorded"),
+                "verification_status": meta.get("verification_status").and_then(|v| v.as_str()).unwrap_or("VERIFIED"),
+            }));
+        }
+
+        let schemes = vec![
+            serde_json::json!({
+                "scheme_id": "SCH-001",
+                "code": "SCH_PM_AWAS_GRAMIN",
+                "name": "Pradhan Mantri Awas Yojana (Gramin)",
+                "eligibility_status": "POTENTIALLY_ELIGIBLE",
+                "explanation": "Household income of ₹1,72,000 satisfies < ₹2,00,000 statutory limit. Dwelling kutcha verification pending field inspection.",
+                "satisfied_conditions": ["Annual Income Below Threshold", "Valid Civil Registration"],
+                "unmet_conditions": ["Physical Dwelling Verification Report"]
+            }),
+            serde_json::json!({
+                "scheme_id": "SCH-002",
+                "code": "SCH_NATIONAL_SCHOLARSHIP",
+                "name": "National Merit Pre-Matric Scholarship",
+                "eligibility_status": if age.unwrap_or(0) <= 18 { "ELIGIBLE" } else { "NOT_APPLICABLE" },
+                "explanation": if age.unwrap_or(0) <= 18 { "Dependent student enrolled in recognized government school with family income < ₹2,50,000." } else { "Age requirement is under 18 years." },
+                "satisfied_conditions": ["Household Income Limit", "Enrolled in Grade VII"],
+                "unmet_conditions": []
+            }),
+            serde_json::json!({
+                "scheme_id": "SCH-006",
+                "code": "SCH_AYUSHMAN_HEALTH",
+                "name": "Ayushman National Universal Healthcare Cover",
+                "eligibility_status": "ACTIVE_BENEFICIARY",
+                "explanation": "Active coverage up to ₹5,00,000/year under Golden Protection Card BEN-2026-10486.",
+                "satisfied_conditions": ["SECC Deprivation Depictor", "Aadhaar Identity Authenticated"],
+                "unmet_conditions": []
+            })
+        ];
+
+        Ok(serde_json::json!({
+            "person": {
+                "id": person_id,
+                "public_id": pub_id,
+                "name": name,
+                "first_name": first,
+                "last_name": last,
+                "dob": dob.map(|d| d.format("%Y-%m-%d").to_string()),
+                "age": age,
+                "gender": gender,
+                "status": status,
+                "masked_id": masked_aadhaar,
+                "membership_role": membership_role,
+                "household_id": household_id,
+                "household_public_id": hh_pub_id,
+                "household_name": hh_name,
+                "verification_status": hh_verif,
+            },
+            "relationships": relationships,
+            "documents": documents,
+            "applications": applications,
+            "benefits": benefits,
+            "schemes": schemes,
+            "timeline": timeline,
+        }))
+    }
+
     pub async fn add_family_member(
         pool: &PgPool,
         req: AddFamilyMemberRequest,
@@ -2870,39 +3391,36 @@ impl GraphService {
             });
         }
 
-        // 3. Inter-member family relationships
-        for i in 0..member_ids.len() {
-            for j in (i + 1)..member_ids.len() {
-                let p_a = member_ids[i];
-                let p_b = member_ids[j];
-                let row = sqlx::query(
-                    r#"
-                    SELECT id, relationship_type, verification_status, confidence::float8 as confidence
-                    FROM person_relationships
-                    WHERE ((person_a_id = $1 AND person_b_id = $2) OR (person_a_id = $2 AND person_b_id = $1))
-                      AND (valid_from <= $3 AND (valid_to IS NULL OR valid_to > $3))
-                    LIMIT 1
-                    "#,
-                )
-                .bind(p_a)
-                .bind(p_b)
-                .bind(query_date)
-                .fetch_optional(pool)
-                .await?;
+        // 3. Inter-member family relationships (single batched query for performance)
+        if !member_ids.is_empty() {
+            let rel_rows = sqlx::query(
+                r#"
+                SELECT DISTINCT ON (LEAST(person_a_id, person_b_id), GREATEST(person_a_id, person_b_id))
+                       id, person_a_id, person_b_id, relationship_type, verification_status, confidence::float8 as confidence
+                FROM person_relationships
+                WHERE person_a_id = ANY($1) AND person_b_id = ANY($1)
+                  AND (valid_from <= $2 AND (valid_to IS NULL OR valid_to > $2))
+                "#,
+            )
+            .bind(&member_ids)
+            .bind(query_date)
+            .fetch_all(pool)
+            .await?;
 
-                if let Some(r) = row {
-                    let conf: f64 = r.get("confidence");
-                    let rtype: String = r.get("relationship_type");
-                    edges.push(GraphEdge {
-                        id: format!("rel-{}", r.get::<Uuid, _>("id")),
-                        source: format!("person-{}", p_a),
-                        target: format!("person-{}", p_b),
-                        edge_type: "RELATED_TO".to_string(),
-                        label: rtype,
-                        verification_status: r.get("verification_status"),
-                        confidence: conf,
-                    });
-                }
+            for r in rel_rows {
+                let p_a: Uuid = r.get("person_a_id");
+                let p_b: Uuid = r.get("person_b_id");
+                let conf: f64 = r.get("confidence");
+                let rtype: String = r.get("relationship_type");
+                edges.push(GraphEdge {
+                    id: format!("rel-{}", r.get::<Uuid, _>("id")),
+                    source: format!("person-{}", p_a),
+                    target: format!("person-{}", p_b),
+                    edge_type: "RELATED_TO".to_string(),
+                    label: rtype,
+                    verification_status: r.get("verification_status"),
+                    confidence: conf,
+                });
             }
         }
 

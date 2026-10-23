@@ -270,6 +270,21 @@ var AtSign = createLucideIcon("at-sign", [["circle", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Award = createLucideIcon("award", [["path", {
+	d: "m15.477 12.89 1.515 8.526a.5.5 0 0 1-.81.47l-3.58-2.687a1 1 0 0 0-1.197 0l-3.586 2.686a.5.5 0 0 1-.81-.469l1.514-8.526",
+	key: "1yiouv"
+}], ["circle", {
+	cx: "12",
+	cy: "8",
+	r: "6",
+	key: "1vp47v"
+}]]);
+/**
+* @license lucide-react v0.575.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Baby = createLucideIcon("baby", [
 	["path", {
 		d: "M10 16c.5.3 1.2.5 2 .5s1.5-.2 2-.5",
@@ -2063,6 +2078,30 @@ var MapPin = createLucideIcon("map-pin", [["path", {
 * This source code is licensed under the ISC license.
 * See the LICENSE file in the root directory of this source tree.
 */
+var Maximize2 = createLucideIcon("maximize-2", [
+	["path", {
+		d: "M15 3h6v6",
+		key: "1q9fwt"
+	}],
+	["path", {
+		d: "m21 3-7 7",
+		key: "1l2asr"
+	}],
+	["path", {
+		d: "m3 21 7-7",
+		key: "tjx5ai"
+	}],
+	["path", {
+		d: "M9 21H3v-6",
+		key: "wtvkvv"
+	}]
+]);
+/**
+* @license lucide-react v0.575.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
 var Menu = createLucideIcon("menu", [
 	["path", {
 		d: "M4 5h16",
@@ -2107,6 +2146,30 @@ var MessageSquare = createLucideIcon("message-square", [["path", {
 	d: "M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z",
 	key: "18887p"
 }]]);
+/**
+* @license lucide-react v0.575.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Minimize2 = createLucideIcon("minimize-2", [
+	["path", {
+		d: "m14 10 7-7",
+		key: "oa77jy"
+	}],
+	["path", {
+		d: "M20 10h-6V4",
+		key: "mjg0md"
+	}],
+	["path", {
+		d: "m3 21 7-7",
+		key: "tjx5ai"
+	}],
+	["path", {
+		d: "M4 14h6v6",
+		key: "rmj7iw"
+	}]
+]);
 /**
 * @license lucide-react v0.575.0 - ISC
 *
@@ -2331,6 +2394,30 @@ var RotateCw = createLucideIcon("rotate-cw", [["path", {
 	d: "M21 3v5h-5",
 	key: "1q7to0"
 }]]);
+/**
+* @license lucide-react v0.575.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var Route = createLucideIcon("route", [
+	["circle", {
+		cx: "6",
+		cy: "19",
+		r: "3",
+		key: "1kj8tv"
+	}],
+	["path", {
+		d: "M9 19h8.5a3.5 3.5 0 0 0 0-7h-11a3.5 3.5 0 0 1 0-7H15",
+		key: "1d8sl"
+	}],
+	["circle", {
+		cx: "18",
+		cy: "5",
+		r: "3",
+		key: "gq8acd"
+	}]
+]);
 /**
 * @license lucide-react v0.575.0 - ISC
 *
@@ -3053,5 +3140,68 @@ var Zap = createLucideIcon("zap", [["path", {
 	d: "M4 14a1 1 0 0 1-.78-1.63l9.9-10.2a.5.5 0 0 1 .86.46l-1.92 6.02A1 1 0 0 0 13 10h7a1 1 0 0 1 .78 1.63l-9.9 10.2a.5.5 0 0 1-.86-.46l1.92-6.02A1 1 0 0 0 11 14z",
 	key: "1xq2db"
 }]]);
+/**
+* @license lucide-react v0.575.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var ZoomIn = createLucideIcon("zoom-in", [
+	["circle", {
+		cx: "11",
+		cy: "11",
+		r: "8",
+		key: "4ej97u"
+	}],
+	["line", {
+		x1: "21",
+		x2: "16.65",
+		y1: "21",
+		y2: "16.65",
+		key: "13gj7c"
+	}],
+	["line", {
+		x1: "11",
+		x2: "11",
+		y1: "8",
+		y2: "14",
+		key: "1vmskp"
+	}],
+	["line", {
+		x1: "8",
+		x2: "14",
+		y1: "11",
+		y2: "11",
+		key: "durymu"
+	}]
+]);
+/**
+* @license lucide-react v0.575.0 - ISC
+*
+* This source code is licensed under the ISC license.
+* See the LICENSE file in the root directory of this source tree.
+*/
+var ZoomOut = createLucideIcon("zoom-out", [
+	["circle", {
+		cx: "11",
+		cy: "11",
+		r: "8",
+		key: "4ej97u"
+	}],
+	["line", {
+		x1: "21",
+		x2: "16.65",
+		y1: "21",
+		y2: "16.65",
+		key: "13gj7c"
+	}],
+	["line", {
+		x1: "8",
+		x2: "14",
+		y1: "11",
+		y2: "11",
+		key: "durymu"
+	}]
+]);
 //#endregion
-export { Mail as $, CloudDownload as $t, Send as A, ArrowDown as An, Flag as At, Phone as B, FileCode as Bt, Sprout as C, Banknote as Cn, GraduationCap as Ct, ShieldCheck as D, ArrowUpDown as Dn, FolderOpen as Dt, SlidersHorizontal as E, ArrowUpRight as En, Funnel as Et, Save as F, FileSearch as Ft, OctagonAlert as G, Expand as Gt, Paperclip as H, FileCheckCorner as Ht, RotateCw as I, FilePlusCorner as It, Minus as J, CreditCard as Jt, Network as K, EllipsisVertical as Kt, RotateCcw as L, FileLock as Lt, SearchX as M, Activity as Mn, FileText as Mt, ScrollText as N, Accessibility as Nn, FileStack as Nt, ShieldAlert as O, ArrowRight as On, FolderArchive as Ot, Scale as P, FileSpreadsheet as Pt, MapPin as Q, Compass as Qt, RefreshCw as R, FileImage as Rt, SquareCheckBig as S, Bell as Sn, HandHeart as St, SlidersVertical as T, AtSign as Tn, Gift as Tt, PanelLeftOpen as U, Eye as Ut, Pencil as V, FileCheck as Vt, PanelLeftClose as W, ExternalLink as Wt, MessageSquareWarning as X, CornerDownRight as Xt, MessageSquare as Y, Cpu as Yt, Menu as Z, Copy as Zt, Trash2 as _, Calendar as _n, ImageUp as _t, Waves as a, CircleX as an, LoaderCircle as at, Square as b, Building2 as bn, HeartPulse as bt, UsersRound as c, CircleCheck as cn, Link2 as ct, UserPlus as d, ChevronRight as dn, Laptop as dt, Clock as en, MailCheck as et, UserPen as f, ChevronDown as fn, Landmark as ft, Trees as g, Camera as gn, Inbox as gt, TriangleAlert as h, ChartColumn as hn, Info as ht, Workflow as i, Circle as in, LockKeyhole as it, Search as j, Archive as jn, FileUp as jt, Settings as k, ArrowLeft as kn, FlaskConical as kt, User as l, CircleAlert as ln, LayoutDashboard as lt, Upload as m, CheckCheck as mn, KeyRound as mt, X as n, ClipboardList as nn, LogIn as nt, WalletCards as o, CircleQuestionMark as on, ListTree as ot, UserCheck as p, Check as pn, Key as pt, Navigation as q, Download as qt, Wrench as r, ClipboardCheck as rn, Lock as rt, Users as s, CircleDollarSign as sn, ListChecks as st, Zap as t, Clock3 as tn, LogOut as tt, UserRound as u, ChevronUp as un, Layers as ut, Terminal as v, CalendarDays as vn, House as vt, Sparkles as w, Baby as wn, Globe as wt, SquarePen as x, Briefcase as xn, HardDrive as xt, Star as y, Building as yn, History as yt, Plus as z, FileDown as zt };
+export { MessageSquare as $, CreditCard as $t, ShieldAlert as A, Award as An, Gift as At, RotateCcw as B, FileSearch as Bt, SquarePen as C, CalendarDays as Cn, House as Ct, SlidersVertical as D, Bell as Dn, HandHeart as Dt, Sparkles as E, Briefcase as En, HardDrive as Et, ScrollText as F, ArrowLeft as Fn, Flag as Ft, Paperclip as G, FileCode as Gt, Plus as H, FileLock as Ht, Scale as I, ArrowDown as In, FileUp as It, OctagonAlert as J, Eye as Jt, PanelLeftOpen as K, FileCheck as Kt, Save as L, Archive as Ln, FileText as Lt, Send as M, ArrowUpRight as Mn, FolderOpen as Mt, Search as N, ArrowUpDown as Nn, FolderArchive as Nt, SlidersHorizontal as O, Banknote as On, GraduationCap as Ot, SearchX as P, ArrowRight as Pn, FlaskConical as Pt, Minimize2 as Q, Download as Qt, Route as R, Activity as Rn, FileStack as Rt, Square as S, Calendar as Sn, ImageUp as St, Sprout as T, Building2 as Tn, HeartPulse as Tt, Phone as U, FileImage as Ut, RefreshCw as V, FilePlusCorner as Vt, Pencil as W, FileDown as Wt, Navigation as X, Expand as Xt, Network as Y, ExternalLink as Yt, Minus as Z, EllipsisVertical as Zt, TriangleAlert as _, ChevronDown as _n, Landmark as _t, Wrench as a, Clock as an, MailCheck as at, Terminal as b, ChartColumn as bn, Info as bt, WalletCards as c, ClipboardCheck as cn, Lock as ct, User as d, CircleQuestionMark as dn, ListTree as dt, Cpu as en, MessageSquareWarning as et, UserRound as f, CircleDollarSign as fn, ListChecks as ft, Upload as g, ChevronRight as gn, Laptop as gt, UserCheck as h, ChevronUp as hn, Layers as ht, X as i, CloudDownload as in, Mail as it, Settings as j, AtSign as jn, Funnel as jt, ShieldCheck as k, Baby as kn, Globe as kt, Users as l, Circle as ln, LockKeyhole as lt, UserPen as m, CircleAlert as mn, LayoutDashboard as mt, ZoomIn as n, Copy as nn, Maximize2 as nt, Workflow as o, Clock3 as on, LogOut as ot, UserPlus as p, CircleCheck as pn, Link2 as pt, PanelLeftClose as q, FileCheckCorner as qt, Zap as r, Compass as rn, MapPin as rt, Waves as s, ClipboardList as sn, LogIn as st, ZoomOut as t, CornerDownRight as tn, Menu as tt, UsersRound as u, CircleX as un, LoaderCircle as ut, Trees as v, Check as vn, Key as vt, SquareCheckBig as w, Building as wn, History as wt, Star as x, Camera as xn, Inbox as xt, Trash2 as y, CheckCheck as yn, KeyRound as yt, RotateCw as z, Accessibility as zn, FileSpreadsheet as zt };

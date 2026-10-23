@@ -25,6 +25,7 @@ import { Route as AuditorDashboardRouteImport } from './routes/auditor.dashboard
 import { Route as AuditorDecisionsRouteImport } from './routes/auditor.decisions'
 import { Route as AuditorEvidenceRouteImport } from './routes/auditor.evidence'
 import { Route as AuditorExportRouteImport } from './routes/auditor.export'
+import { Route as AuditorFamily360RouteImport } from './routes/auditor.family360'
 import { Route as AuditorInboxRouteImport } from './routes/auditor.inbox'
 import { Route as AuditorOfficersRouteImport } from './routes/auditor.officers'
 import { Route as AuditorReportsRouteImport } from './routes/auditor.reports'
@@ -55,6 +56,7 @@ import { Route as OfficerDashboardRouteImport } from './routes/officer.dashboard
 import { Route as OfficerDocumentsRouteImport } from './routes/officer.documents'
 import { Route as OfficerDuplicatesRouteImport } from './routes/officer.duplicates'
 import { Route as OfficerEvidenceRouteImport } from './routes/officer.evidence'
+import { Route as OfficerFamily360RouteImport } from './routes/officer.family360'
 import { Route as OfficerFieldVisitsRouteImport } from './routes/officer.field-visits'
 import { Route as OfficerInboxRouteImport } from './routes/officer.inbox'
 import { Route as OfficerNotificationsRouteImport } from './routes/officer.notifications'
@@ -69,6 +71,7 @@ import { Route as VerifierDashboardRouteImport } from './routes/verifier.dashboa
 import { Route as VerifierDocumentsRouteImport } from './routes/verifier.documents'
 import { Route as VerifierEscalationsRouteImport } from './routes/verifier.escalations'
 import { Route as VerifierEvidenceRouteImport } from './routes/verifier.evidence'
+import { Route as VerifierFamily360RouteImport } from './routes/verifier.family360'
 import { Route as VerifierInboxRouteImport } from './routes/verifier.inbox'
 import { Route as VerifierMismatchesRouteImport } from './routes/verifier.mismatches'
 import { Route as VerifierQueueRouteImport } from './routes/verifier.queue'
@@ -162,6 +165,11 @@ const AuditorEvidenceRoute = AuditorEvidenceRouteImport.update({
 const AuditorExportRoute = AuditorExportRouteImport.update({
   id: '/export',
   path: '/export',
+  getParentRoute: () => AuditorRoute,
+} as any)
+const AuditorFamily360Route = AuditorFamily360RouteImport.update({
+  id: '/family360',
+  path: '/family360',
   getParentRoute: () => AuditorRoute,
 } as any)
 const AuditorInboxRoute = AuditorInboxRouteImport.update({
@@ -314,6 +322,11 @@ const OfficerEvidenceRoute = OfficerEvidenceRouteImport.update({
   path: '/evidence',
   getParentRoute: () => OfficerRoute,
 } as any)
+const OfficerFamily360Route = OfficerFamily360RouteImport.update({
+  id: '/family360',
+  path: '/family360',
+  getParentRoute: () => OfficerRoute,
+} as any)
 const OfficerFieldVisitsRoute = OfficerFieldVisitsRouteImport.update({
   id: '/field-visits',
   path: '/field-visits',
@@ -382,6 +395,11 @@ const VerifierEscalationsRoute = VerifierEscalationsRouteImport.update({
 const VerifierEvidenceRoute = VerifierEvidenceRouteImport.update({
   id: '/evidence',
   path: '/evidence',
+  getParentRoute: () => VerifierRoute,
+} as any)
+const VerifierFamily360Route = VerifierFamily360RouteImport.update({
+  id: '/family360',
+  path: '/family360',
   getParentRoute: () => VerifierRoute,
 } as any)
 const VerifierInboxRoute = VerifierInboxRouteImport.update({
@@ -474,6 +492,7 @@ export interface FileRoutesByFullPath {
   '/auditor/decisions': typeof AuditorDecisionsRoute
   '/auditor/evidence': typeof AuditorEvidenceRoute
   '/auditor/export': typeof AuditorExportRoute
+  '/auditor/family360': typeof AuditorFamily360Route
   '/auditor/inbox': typeof AuditorInboxRoute
   '/auditor/officers': typeof AuditorOfficersRoute
   '/auditor/reports': typeof AuditorReportsRoute
@@ -504,6 +523,7 @@ export interface FileRoutesByFullPath {
   '/officer/documents': typeof OfficerDocumentsRoute
   '/officer/duplicates': typeof OfficerDuplicatesRoute
   '/officer/evidence': typeof OfficerEvidenceRoute
+  '/officer/family360': typeof OfficerFamily360Route
   '/officer/field-visits': typeof OfficerFieldVisitsRoute
   '/officer/inbox': typeof OfficerInboxRoute
   '/officer/notifications': typeof OfficerNotificationsRoute
@@ -517,6 +537,7 @@ export interface FileRoutesByFullPath {
   '/verifier/documents': typeof VerifierDocumentsRoute
   '/verifier/escalations': typeof VerifierEscalationsRoute
   '/verifier/evidence': typeof VerifierEvidenceRoute
+  '/verifier/family360': typeof VerifierFamily360Route
   '/verifier/inbox': typeof VerifierInboxRoute
   '/verifier/mismatches': typeof VerifierMismatchesRoute
   '/verifier/queue': typeof VerifierQueueRoute
@@ -550,6 +571,7 @@ export interface FileRoutesByTo {
   '/auditor/decisions': typeof AuditorDecisionsRoute
   '/auditor/evidence': typeof AuditorEvidenceRoute
   '/auditor/export': typeof AuditorExportRoute
+  '/auditor/family360': typeof AuditorFamily360Route
   '/auditor/inbox': typeof AuditorInboxRoute
   '/auditor/officers': typeof AuditorOfficersRoute
   '/auditor/reports': typeof AuditorReportsRoute
@@ -580,6 +602,7 @@ export interface FileRoutesByTo {
   '/officer/documents': typeof OfficerDocumentsRoute
   '/officer/duplicates': typeof OfficerDuplicatesRoute
   '/officer/evidence': typeof OfficerEvidenceRoute
+  '/officer/family360': typeof OfficerFamily360Route
   '/officer/field-visits': typeof OfficerFieldVisitsRoute
   '/officer/inbox': typeof OfficerInboxRoute
   '/officer/notifications': typeof OfficerNotificationsRoute
@@ -593,6 +616,7 @@ export interface FileRoutesByTo {
   '/verifier/documents': typeof VerifierDocumentsRoute
   '/verifier/escalations': typeof VerifierEscalationsRoute
   '/verifier/evidence': typeof VerifierEvidenceRoute
+  '/verifier/family360': typeof VerifierFamily360Route
   '/verifier/inbox': typeof VerifierInboxRoute
   '/verifier/mismatches': typeof VerifierMismatchesRoute
   '/verifier/queue': typeof VerifierQueueRoute
@@ -627,6 +651,7 @@ export interface FileRoutesById {
   '/auditor/decisions': typeof AuditorDecisionsRoute
   '/auditor/evidence': typeof AuditorEvidenceRoute
   '/auditor/export': typeof AuditorExportRoute
+  '/auditor/family360': typeof AuditorFamily360Route
   '/auditor/inbox': typeof AuditorInboxRoute
   '/auditor/officers': typeof AuditorOfficersRoute
   '/auditor/reports': typeof AuditorReportsRoute
@@ -657,6 +682,7 @@ export interface FileRoutesById {
   '/officer/documents': typeof OfficerDocumentsRoute
   '/officer/duplicates': typeof OfficerDuplicatesRoute
   '/officer/evidence': typeof OfficerEvidenceRoute
+  '/officer/family360': typeof OfficerFamily360Route
   '/officer/field-visits': typeof OfficerFieldVisitsRoute
   '/officer/inbox': typeof OfficerInboxRoute
   '/officer/notifications': typeof OfficerNotificationsRoute
@@ -670,6 +696,7 @@ export interface FileRoutesById {
   '/verifier/documents': typeof VerifierDocumentsRoute
   '/verifier/escalations': typeof VerifierEscalationsRoute
   '/verifier/evidence': typeof VerifierEvidenceRoute
+  '/verifier/family360': typeof VerifierFamily360Route
   '/verifier/inbox': typeof VerifierInboxRoute
   '/verifier/mismatches': typeof VerifierMismatchesRoute
   '/verifier/queue': typeof VerifierQueueRoute
@@ -705,6 +732,7 @@ export interface FileRouteTypes {
     | '/auditor/decisions'
     | '/auditor/evidence'
     | '/auditor/export'
+    | '/auditor/family360'
     | '/auditor/inbox'
     | '/auditor/officers'
     | '/auditor/reports'
@@ -735,6 +763,7 @@ export interface FileRouteTypes {
     | '/officer/documents'
     | '/officer/duplicates'
     | '/officer/evidence'
+    | '/officer/family360'
     | '/officer/field-visits'
     | '/officer/inbox'
     | '/officer/notifications'
@@ -748,6 +777,7 @@ export interface FileRouteTypes {
     | '/verifier/documents'
     | '/verifier/escalations'
     | '/verifier/evidence'
+    | '/verifier/family360'
     | '/verifier/inbox'
     | '/verifier/mismatches'
     | '/verifier/queue'
@@ -781,6 +811,7 @@ export interface FileRouteTypes {
     | '/auditor/decisions'
     | '/auditor/evidence'
     | '/auditor/export'
+    | '/auditor/family360'
     | '/auditor/inbox'
     | '/auditor/officers'
     | '/auditor/reports'
@@ -811,6 +842,7 @@ export interface FileRouteTypes {
     | '/officer/documents'
     | '/officer/duplicates'
     | '/officer/evidence'
+    | '/officer/family360'
     | '/officer/field-visits'
     | '/officer/inbox'
     | '/officer/notifications'
@@ -824,6 +856,7 @@ export interface FileRouteTypes {
     | '/verifier/documents'
     | '/verifier/escalations'
     | '/verifier/evidence'
+    | '/verifier/family360'
     | '/verifier/inbox'
     | '/verifier/mismatches'
     | '/verifier/queue'
@@ -857,6 +890,7 @@ export interface FileRouteTypes {
     | '/auditor/decisions'
     | '/auditor/evidence'
     | '/auditor/export'
+    | '/auditor/family360'
     | '/auditor/inbox'
     | '/auditor/officers'
     | '/auditor/reports'
@@ -887,6 +921,7 @@ export interface FileRouteTypes {
     | '/officer/documents'
     | '/officer/duplicates'
     | '/officer/evidence'
+    | '/officer/family360'
     | '/officer/field-visits'
     | '/officer/inbox'
     | '/officer/notifications'
@@ -900,6 +935,7 @@ export interface FileRouteTypes {
     | '/verifier/documents'
     | '/verifier/escalations'
     | '/verifier/evidence'
+    | '/verifier/family360'
     | '/verifier/inbox'
     | '/verifier/mismatches'
     | '/verifier/queue'
@@ -1045,6 +1081,13 @@ declare module '@tanstack/react-router' {
       path: '/export'
       fullPath: '/auditor/export'
       preLoaderRoute: typeof AuditorExportRouteImport
+      parentRoute: typeof AuditorRoute
+    }
+    '/auditor/family360': {
+      id: '/auditor/family360'
+      path: '/family360'
+      fullPath: '/auditor/family360'
+      preLoaderRoute: typeof AuditorFamily360RouteImport
       parentRoute: typeof AuditorRoute
     }
     '/auditor/inbox': {
@@ -1257,6 +1300,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof OfficerEvidenceRouteImport
       parentRoute: typeof OfficerRoute
     }
+    '/officer/family360': {
+      id: '/officer/family360'
+      path: '/family360'
+      fullPath: '/officer/family360'
+      preLoaderRoute: typeof OfficerFamily360RouteImport
+      parentRoute: typeof OfficerRoute
+    }
     '/officer/field-visits': {
       id: '/officer/field-visits'
       path: '/field-visits'
@@ -1353,6 +1403,13 @@ declare module '@tanstack/react-router' {
       path: '/evidence'
       fullPath: '/verifier/evidence'
       preLoaderRoute: typeof VerifierEvidenceRouteImport
+      parentRoute: typeof VerifierRoute
+    }
+    '/verifier/family360': {
+      id: '/verifier/family360'
+      path: '/family360'
+      fullPath: '/verifier/family360'
+      preLoaderRoute: typeof VerifierFamily360RouteImport
       parentRoute: typeof VerifierRoute
     }
     '/verifier/inbox': {
@@ -1463,6 +1520,7 @@ interface AuditorRouteChildren {
   AuditorDecisionsRoute: typeof AuditorDecisionsRoute
   AuditorEvidenceRoute: typeof AuditorEvidenceRoute
   AuditorExportRoute: typeof AuditorExportRoute
+  AuditorFamily360Route: typeof AuditorFamily360Route
   AuditorInboxRoute: typeof AuditorInboxRoute
   AuditorOfficersRoute: typeof AuditorOfficersRoute
   AuditorReportsRoute: typeof AuditorReportsRoute
@@ -1477,6 +1535,7 @@ const AuditorRouteChildren: AuditorRouteChildren = {
   AuditorDecisionsRoute: AuditorDecisionsRoute,
   AuditorEvidenceRoute: AuditorEvidenceRoute,
   AuditorExportRoute: AuditorExportRoute,
+  AuditorFamily360Route: AuditorFamily360Route,
   AuditorInboxRoute: AuditorInboxRoute,
   AuditorOfficersRoute: AuditorOfficersRoute,
   AuditorReportsRoute: AuditorReportsRoute,
@@ -1562,6 +1621,7 @@ interface OfficerRouteChildren {
   OfficerDocumentsRoute: typeof OfficerDocumentsRoute
   OfficerDuplicatesRoute: typeof OfficerDuplicatesRoute
   OfficerEvidenceRoute: typeof OfficerEvidenceRoute
+  OfficerFamily360Route: typeof OfficerFamily360Route
   OfficerFieldVisitsRoute: typeof OfficerFieldVisitsRoute
   OfficerInboxRoute: typeof OfficerInboxRoute
   OfficerNotificationsRoute: typeof OfficerNotificationsRoute
@@ -1580,6 +1640,7 @@ const OfficerRouteChildren: OfficerRouteChildren = {
   OfficerDocumentsRoute: OfficerDocumentsRoute,
   OfficerDuplicatesRoute: OfficerDuplicatesRoute,
   OfficerEvidenceRoute: OfficerEvidenceRoute,
+  OfficerFamily360Route: OfficerFamily360Route,
   OfficerFieldVisitsRoute: OfficerFieldVisitsRoute,
   OfficerInboxRoute: OfficerInboxRoute,
   OfficerNotificationsRoute: OfficerNotificationsRoute,
@@ -1601,6 +1662,7 @@ interface VerifierRouteChildren {
   VerifierDocumentsRoute: typeof VerifierDocumentsRoute
   VerifierEscalationsRoute: typeof VerifierEscalationsRoute
   VerifierEvidenceRoute: typeof VerifierEvidenceRoute
+  VerifierFamily360Route: typeof VerifierFamily360Route
   VerifierInboxRoute: typeof VerifierInboxRoute
   VerifierMismatchesRoute: typeof VerifierMismatchesRoute
   VerifierQueueRoute: typeof VerifierQueueRoute
@@ -1614,6 +1676,7 @@ const VerifierRouteChildren: VerifierRouteChildren = {
   VerifierDocumentsRoute: VerifierDocumentsRoute,
   VerifierEscalationsRoute: VerifierEscalationsRoute,
   VerifierEvidenceRoute: VerifierEvidenceRoute,
+  VerifierFamily360Route: VerifierFamily360Route,
   VerifierInboxRoute: VerifierInboxRoute,
   VerifierMismatchesRoute: VerifierMismatchesRoute,
   VerifierQueueRoute: VerifierQueueRoute,

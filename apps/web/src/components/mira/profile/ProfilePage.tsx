@@ -1,5 +1,6 @@
 import { useState, type ReactNode } from "react";
-import { useNavigate } from "@tanstack/react-router";
+import { useNavigate, Link } from "@tanstack/react-router";
+import { useQuery } from "@tanstack/react-query";
 import {
   User,
   Mail,
@@ -18,12 +19,16 @@ import {
   ExternalLink,
   Layers,
   Sparkles,
+  History,
+  Clock,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-state";
 import { getRoleConfig } from "@/lib/role-config";
 import { LANGUAGES } from "@/lib/i18n";
 import { CITIZEN } from "@/lib/data";
+import { fetchMyAuditActivity, type ApiMyAuditEvent } from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Switch } from "@/components/ui/switch";
 import { ProfileSection } from "./ProfileSection";
@@ -76,6 +81,14 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
     toast.success("Signed out successfully");
     nav({ to: "/" });
   };
+
+  // Fetch Personal Audit Activity from PostgreSQL
+  const { data: myAuditEvents = [], isLoading: isLoadingAudit } = useQuery<ApiMyAuditEvent[]>({
+    queryKey: ["my-audit-activity", state.session?.apiUserId],
+    queryFn: () => fetchMyAuditActivity(state.session),
+    enabled: !!state.session,
+    staleTime: 1000 * 30,
+  });
 
   return (
     <div className="mx-auto max-w-4xl space-y-6 pb-12">
@@ -303,6 +316,84 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
           }
           isLast
         />
+      </ProfileSection>
+
+      {/* Section: My Audit Activity */}
+      <ProfileSection
+        title="My Audit Activity"
+        description="Immutable record of authentication, profile access, and transaction history"
+      >
+        <div className="p-4 sm:p-5">
+          {isLoadingAudit ? (
+            <div className="flex items-center gap-2 py-4 text-xs text-muted-foreground">
+              <div className="h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent dark:border-slate-100" />
+              <span>Loading personal audit trail...</span>
+            </div>
+          ) : myAuditEvents.length === 0 ? (
+            <p className="text-xs text-muted-foreground py-2">
+              No recent audit events recorded for this session.
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <div className="divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-slate-50/50 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/50">
+                {myAuditEvents.slice(0, 6).map((ev) => (
+                  <div
+                    key={ev.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 text-xs"
+                  >
+                    <div className="flex items-center gap-2.5">
+                      <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-white shadow-2xs dark:bg-slate-800 text-slate-700 dark:text-slate-300">
+                        <History className="h-3.5 w-3.5" />
+                      </div>
+                      <div>
+                        <span className="font-semibold text-slate-900 dark:text-slate-100 font-mono text-[11px]">
+                          {ev.event_type}
+                        </span>
+                        <p className="text-[10px] text-muted-foreground">
+                          Request: {ev.request_id ? `${ev.request_id.slice(0, 8)}...` : "System-anchored"}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="flex items-center gap-2 text-[11px] font-mono text-muted-foreground">
+                      <Clock className="h-3 w-3" />
+                      <span>{new Date(ev.created_at).toLocaleString()}</span>
+                    </div>
+                  </div>
+                ))}
+              </div>
+
+              {/* Privilege Escalation / Dedicated Ledger link for authorized roles */}
+              {role !== "citizen" ? (
+                <div className="mt-2 flex items-center justify-between rounded-lg bg-gov/5 p-3 border border-gov/15 text-xs">
+                  <div className="flex items-center gap-2">
+                    <ShieldCheck className="h-4 w-4 text-gov" />
+                    <span className="font-medium text-slate-900 dark:text-slate-100">
+                      Authorized Operational Access: Full Audit Ledger Available
+                    </span>
+                  </div>
+                  <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-1 font-semibold">
+                    <Link
+                      to={
+                        role === "auditor"
+                          ? "/auditor/audit"
+                          : role === "verifier"
+                            ? "/verifier/audit"
+                            : "/officer/audit"
+                      }
+                    >
+                      <span>Open Ledger</span>
+                      <ArrowRight className="h-3 w-3" />
+                    </Link>
+                  </Button>
+                </div>
+              ) : (
+                <p className="text-[11px] text-muted-foreground pt-1">
+                  Showing authenticated personal operations. Institutional system audit records are restricted under Section 8 of the Welfare Information Act.
+                </p>
+              )}
+            </div>
+          )}
+        </div>
       </ProfileSection>
 
       {/* Danger Zone */}

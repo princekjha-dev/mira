@@ -1,197 +1,245 @@
-# Mira — Unified Digital Platform for Accessible Public Documentation
+# Mira
 
-> **V1 Foundation — PS 7: Unified Digital Platform for Accessible Public Documentation**  
-> A privacy-first, explainable civic platform built with **React/TypeScript**, **Rust/Axum**, and **PostgreSQL**.
+Mira is a government and public-service welfare platform connecting citizens, households, family records, documents, schemes, eligibility, applications, verification, benefits and audit history. It keeps these records connected across a welfare workflow instead of treating every application, document and family record as an isolated process.
 
----
+> **Implementation status:** This repository contains a working web application and API with synthetic demo data. Some screens and assistant responses are demo-driven; this is not connected to live government registries or payment systems.
 
-## 1. Product Overview
+## Overview
 
-**Mira** is designed to solve the challenges of fragmented government records, household relationships, welfare benefits, and duplicate household-level claims.
+The repository is a two-application workspace. The browser application provides citizen, field, verification, scheme, supervisor, auditor and department workspaces. A Rust API authenticates requests, applies role and record checks, and persists domain data in PostgreSQL. SQL migrations define the schema; the API runs them and seeds the synthetic dataset on startup.
 
-### V1 Scope Discipline
-This release is strictly **Version 1 (Foundation)**. It establishes the secure architectural foundation without premature complexity.
-- **NO** premature AI / LLM dependencies
-- **NO** OpenDots
-- **NO** real Aadhaar or biometrics
-- **NO** 3D or heavy decorative animations
-- **NO** fake statistics or fabricated claim metrics
-- **NO** premature file upload / OCR document pipelines
+Core domain workflows are implemented in the API and exercised by Rust integration/security tests. The UI combines API-backed workflows with local demo data and simulated interface elements; see [Known limitations](#known-limitations).
 
-V1 delivers a real, runnable, tested system with:
-1. **Strong Multi-User Isolation & Object-Level Authorization** (Backend enforced — User A cannot access User B's resources)
-2. **Robust Role-Based Access Control** (`CITIZEN`, `FIELD_OFFICIAL`, `VERIFICATION_OFFICER`, `DEPARTMENT_ADMIN`, `AUDITOR`, `SUPER_ADMIN`)
-3. **Argon2id Cryptographic Password Hashing & JWT Sessions**
-4. **Per-User Persistent Multilingual Architecture** (English `en` and Hindi `hi`)
-5. **Real-Data Dashboard & Traceable Security Auditing** (`audit_events`)
-6. **Deterministic Seed Data & Reversible PostgreSQL Migrations**
+## Core capabilities
 
----
+| Capability | What is present | Status |
+|---|---|---|
+| Accounts and profile | Registration, login, bearer-token sessions, profile/preferences and family actions. | Implemented in API; profile UI is present. |
+| Household and people records | People, households, memberships, relationships, properties, life events and disputes. | Implemented; seeded data is synthetic. |
+| Family360 | Searchable, filterable household visualization with selected-member details, relationships and timeline. | Implemented as a visualization over household/person records. |
+| Schemes and eligibility | Scheme/rule management and deterministic rule evaluation with per-application assessment results. | Implemented; scheme data is synthetic and rule coverage depends on configured rules. |
+| Applications and verification | Draft/submission, assignment, evidence requests and submission, verification, approval/rejection. | Implemented in API; presented through role workspaces. |
+| Documents and evidence | Upload, metadata, application linking, preview/download, versioning, verification and extraction/evidence endpoints. | Implemented with local file storage; OCR/extraction depends on configured system tools and document type. |
+| Benefits | Benefit records, events/assets, listing, detail and disbursement action. | Implemented against demo records; no live payment integration. |
+| Communications and notifications | Notifications with read state; role workspaces also include contextual inbox/message interfaces. | Notifications are API-backed; inbox interactions are partly demo/client-driven. |
+| Audit | User activity and role-authorized audit event views, with events written by workflow operations. | Implemented; this is an application audit log, not a certified immutable ledger. |
+| Duplicate review | Entity-resolution cases and benefit-duplicate checks with human resolution actions. | Implemented as matching/review workflows; a match is an investigation signal, not a fraud finding. |
+| Mira AI | Authenticated assistant route, optional Groq completion and a local fallback. | Partial; see [Mira AI](#mira-ai). |
 
-## 2. Quick Start: One Command Sequence
+## Product architecture
 
-### Prerequisites
-- Node.js (v20+) and npm
-- Rust stable toolchain (1.80+) and Cargo
-- PostgreSQL (16+) running locally, or Docker
+```text
+Browser
+  └─ React + TanStack Start/Router UI
+       └─ JSON API calls with bearer token
+            └─ Rust Axum API and application services
+                 ├─ PostgreSQL (SQLx)
+                 ├─ local document storage
+                 └─ optional Groq chat completion
+```
 
-### 1-Command Local Launch
+The API is the persistence and workflow layer. Most authenticated API handlers extract an authenticated user, and domain services check role and/or record scope. The UI also has route and workspace configuration, but hiding a navigation item is not itself an authorization boundary.
+
+### User roles
+
+The backend role enum and seed data define `CITIZEN`, `FIELD_OFFICIAL`, `VERIFICATION_OFFICER`, `SCHEME_OFFICER`, `SUPERVISOR`, `DEPARTMENT_ADMIN`, `AUDITOR` and `SUPER_ADMIN`.
+
+| Role | Primary work |
+|---|---|
+| Citizen | Own profile and household, schemes, applications, documents, benefits, notifications and support views. API access is scoped to the authenticated user and related records. |
+| Field official | Field and household record work, evidence collection and assigned verification tasks. Access depends on the API operation and role checks. |
+| Verification officer | Review assigned applications, documents and evidence; request further evidence and record verification. |
+| Scheme officer | Scheme/rule and application review workflows. |
+| Supervisor | Escalated or supervisory review workflows. |
+| Department administrator | Department operations, scheme/rule administration and demo operations. |
+| Auditor | Read-oriented audit and oversight views; write actions are restricted by API role checks. |
+| Super administrator | System-level role exists in the backend model; it is not presented as a separate seeded demo identity. |
+
+The frontend also uses workspace names such as `officer`, `verifier`, `scheme`, `supervisor`, `auditor` and `admin`. These are presentation choices mapped to backend roles, not additional database roles.
+
+### Main workflows
+
+Citizen-facing flow:
+
+```text
+Profile / household → scheme discovery → eligibility assessment
+  → application → documents and evidence → review / clarification
+  → verification → decision → benefit record → audit history
+```
+
+Officer-facing flow:
+
+```text
+Role workspace / queue → application → Family360 and records
+  → documents / evidence review → request evidence or verify
+  → decision or escalation → audit history
+```
+
+Concrete route families include `/citizen/*`, `/officer/*`, `/verifier/*`, `/department/*` and `/auditor/*`. The generated route tree is at `apps/web/src/routeTree.gen.ts`; API routes are registered in `apps/api/src/api/mod.rs` under `/api/v1`.
+
+## Family360
+
+Family360 is an interactive view over the underlying household and person records, not a separate source of truth. The web component loads household family data and fetches person 360 details when a member is selected. It supports member search, generation/role/verification filters, node selection, relationship inspection, member details, zoom, reset/fullscreen, path finding and a history timeline. The API also exposes household graph/timeline and person 360/relationship data.
+
+The visualization can display verification and conflict information provided by records and seeded data. It does not independently verify the accuracy of those records.
+
+## Schemes and eligibility
+
+Schemes have status, descriptive fields and configurable rules. The API's eligibility engine evaluates configured rules and stores an assessment and individual rule results for an application. Assessment is deterministic application logic; Mira AI is not the eligibility authority. Seeded schemes and applicant records are synthetic, and the repository does not integrate with an official scheme registry.
+
+## Applications and verification
+
+Application status values in the database include `DRAFT`, `SUBMITTED`, `UNDER_REVIEW`, `EVIDENCE_REQUESTED`, `EVIDENCE_SUBMITTED`, `FIELD_VERIFIED`, `APPROVED`, `REJECTED` and `WITHDRAWN`. API actions create/assess/submit applications, assign them, request and submit evidence, verify, approve and reject. The application/document endpoints link evidence to case review.
+
+## Documents and evidence
+
+The API supports document upload, metadata, application linkage, preview/download, archive, replacement/version history, document verification and extraction review. Files are stored by the API in its configured local storage directory (the repository's compose setup mounts a volume for this). Document evidence packs and consistency reports are available through API endpoints. OCR and extraction are not a general guarantee for every file: processing depends on available tools, format and processing state. The repository includes sensitive-looking synthetic sample files; do not treat the demo store as a production storage design.
+
+## Benefits
+
+Benefit records relate to the scheme and person/household/application domain, with benefit events/assets and API operations to list, inspect and record disbursement. Values and status shown by the demo are synthetic. No bank, treasury or real disbursement provider is integrated.
+
+## Communications and notifications
+
+The API provides user notifications and read-state updates. Role workspaces include inbox, threaded messages, replies and clarification-oriented UI. The inbox experience is not a general email service, and the repository's client data layer includes demo-driven content; do not assume every displayed conversation is persisted as a backend communication record.
+
+## Audit and account history
+
+Workflow and security-related operations insert `audit_events` with event type, actor/user, organization where available, request ID, IP address where captured, details and timestamp. API routes distinguish role-authorized audit event access (`/api/v1/audit/events`) from a user's own activity (`/api/v1/audit/my-activity`). The web application has audit views and Profile/Account screens. These records are ordinary application database records; there is no implemented hash-chain guarantee or external compliance certification.
+
+## Mira AI
+
+The API exposes authenticated `POST /api/v1/ai/chat`. When `GROQ_API_KEY` is configured, the API sends a chat completion request to Groq; `GROQ_MODEL` selects the model and defaults in code to `llama-3.3-70b-versatile`. Without a key or when the provider call fails, the application returns a local fallback response. Some fallback answers are fixed demo text and are not reliable live record lookups.
+
+The API builds role-oriented context and sends it with the prompt; it also includes input pattern checks, output sanitization and instructions treating supplied record/document content as untrusted data. These are defense-in-depth measures, not a guarantee against prompt injection or disclosure. Context construction includes hard-coded demo identities and summaries, so do not use this path with real sensitive records without further review. The assistant helps explain/navigation and is not an autonomous decision-maker.
+
+## Security and privacy
+
+Implemented mechanisms include Argon2 password hashing, signed JWT bearer tokens, authenticated API extractors, role/record checks in service methods, request IDs, CORS configuration, and audit events. Demo login is disabled when `APP_ENV=production` and can be disabled in other environments with `MIRA_DEMO_MODE=false`. API keys are read server-side from environment configuration.
+
+The repository does not establish legal/regulatory compliance, production-grade encrypted document storage, a certified immutable audit trail, external identity verification, or a comprehensive deployment security posture. Review defaults in `.env.example` and `docker-compose.yml` before any non-local deployment; replace development secrets and configure origins, database access, storage and operational controls appropriately.
+
+## Demo environment
+
+The API seeds a synthetic Mira Demo Department. With demo mode enabled, the login screen/API can select these role accounts:
+
+| Email | Demonstrates |
+|---|---|
+| `demo.citizen@mira.demo` | Citizen household, schemes, applications and benefits. |
+| `demo.verifier@mira.demo` | Verification queues and evidence review. |
+| `demo.scheme@mira.demo` | Scheme/rule and scheme-officer workflows. |
+| `demo.supervisor@mira.demo` | Supervisor workflows. |
+| `demo.auditor@mira.demo` | Audit and oversight views. |
+| `demo.admin@mira.demo` | Department administration. |
+
+Demo login uses a seeded development credential internally; this README intentionally does not publish it. The `npm run seed` command resets and reseeds synthetic domain data, so it should only target a disposable development database.
+
+## Technology stack
+
+| Layer | Technology |
+|---|---|
+| Web | React 19, TypeScript, TanStack Start and Router, Vite |
+| Styling and UI | Tailwind CSS 4, Radix UI primitives, project UI components |
+| API | Rust, Axum 0.7, Tokio |
+| Database | PostgreSQL, SQLx 0.7 |
+| Authentication | Argon2 password hashing, JSON Web Tokens (`jsonwebtoken`) |
+| AI | Optional Groq chat completions through server-side `reqwest` |
+| Frontend tests | Vitest, Testing Library, jsdom |
+| Backend tests | Cargo test (Rust integration tests) |
+| Containers | Dockerfiles for API/web and Docker Compose with PostgreSQL |
+
+## Repository structure
+
+```text
+apps/
+  api/src/              Axum routes, auth, application/domain services, database and AI
+  api/tests/            Rust API, workflow and security tests
+  web/src/routes/       TanStack file-based routes and role workspaces
+  web/src/components/   Shared, civic and role-specific UI
+  web/src/lib/           API client, app state, eligibility and translations
+migrations/             PostgreSQL schema migrations
+scripts/                Development, test and seed entry points
+docker/                 API and web container definitions
+docs/                   API and architecture notes
+```
+
+## Local development
+
+Prerequisites: Node.js/npm, Rust/Cargo, Docker Compose (or a compatible PostgreSQL instance). The repository root has scripts but no root dependency set; install frontend dependencies in `apps/web`.
 
 ```bash
-# Clone and enter directory
-cd /path/to/mira
-
-# Start the local database (Docker Compose publishes it on port 5433)
+git clone <repository-url>
+cd mira
+npm --prefix apps/web install
 docker compose up -d postgres
-
-# Start both Rust Axum API and React Frontend concurrently
 npm run dev
 ```
 
-The services will be available at:
-- **Web Frontend:** [http://localhost:5173](http://localhost:5173)
-- **Core Rust API:** [http://localhost:4000](http://localhost:4000)
-- **API Health:** [http://localhost:4000/api/v1/health](http://localhost:4000/api/v1/health)
+The development script starts the API on `http://localhost:4000` and web app on `http://localhost:5173`. The API waits for PostgreSQL on port `5433`, runs migrations, and seeds demo data on startup. Health endpoint: `http://localhost:4000/api/v1/health`.
 
----
+For explicit environment configuration, copy `.env.example` to `.env` and set a local `DATABASE_URL`. The checked-in example and compose file contain development-only defaults; do not reuse those credentials or JWT secret outside a local demo. The API reads `.env` from its working directory (`apps/api`) and the root script passes `DATABASE_URL` through to it.
 
-## 3. Synthetic Demo Environment & Credentials
+## Environment variables
 
-Mira V1 includes a **Synthetic Demo Environment** ("Mira Demo Department") populated with deterministic seed accounts:
+See [`.env.example`](.env.example) for the documented local settings. The API also recognizes optional `GROQ_API_KEY` and `GROQ_MODEL`; provide these only in the API process environment if enabling live chat. `VITE_API_BASE_URL` can override the web API base URL; by default the web client uses same-origin `/api` (the dev/prod web proxy handles it).
 
-| Role | Demo Email | Password | Primary Scope |
-| :--- | :--- | :--- | :--- |
-| **CITIZEN** | `citizen@mira.local` | `MiraDemo@2026!` | Resident profile, personal preferences |
-| **FIELD_OFFICIAL** | `officer@mira.local` | `MiraDemo@2026!` | Field collection & credential review |
-| **VERIFICATION_OFFICER** | `verifier@mira.local` | `MiraDemo@2026!` | Claim adjudication & verification |
-| **DEPARTMENT_ADMIN** | `admin@mira.local` | `MiraDemo@2026!` | Departmental operations & audit review |
-| **AUDITOR** | `auditor@mira.local` | `MiraDemo@2026!` | Independent oversight & security audit logs |
+Important API settings include `DATABASE_URL`, `JWT_SECRET`, `JWT_EXPIRATION_HOURS`, `PORT`, `APP_ENV`, `MIRA_DEMO_MODE`, `CORS_ORIGINS` and `RUST_LOG`. Never commit real keys, passwords or tokens.
 
-> **Note:** The web frontend login page includes a **1-click autofill selector** for each role to streamline evaluation.
+## Database
 
----
-
-## 4. Multi-User Isolation & Security Guarantees
-
-A core requirement of Mira V1 is **backend-enforced object-level authorization**.
-
-### IDOR Protection Guarantee
-- Frontend filtering is **never** relied upon for isolation.
-- When an authenticated user calls `GET /api/v1/profile/:id`:
-  - Access to their **own** profile (`caller.id == target.id`) is permitted (`200 OK`).
-  - Access to a **foreign** profile by a `CITIZEN` or unauthorized role is **actively denied with `403 Forbidden`**.
-  - Only authorized oversight roles (`AUDITOR`, `DEPARTMENT_ADMIN`, `SUPER_ADMIN`) have legitimate multi-profile inspection rights.
-- **Automated Test Proof:** The test suite includes `test_mandatory_multi_user_isolation_and_idor_protection` which registers User A and User B and validates that User A is rejected when attempting to read User B's profile.
-- **Interactive In-App Proof:** The dashboard includes a live "Test IDOR Protection" action that demonstrates the `403 Forbidden` response in real time.
-
----
-
-## 5. Technology Stack
-
-### Frontend (`apps/web`)
-- **React 18 + TypeScript + Vite**
-- **Tailwind CSS** (Calm, accessible, trustworthy civic design system)
-- **React Router v6** (Protected routing & role-based route guards)
-- **TanStack Query v5** (Server state synchronization)
-- **Zod** (Client-side input schema validation)
-- **Lucide React** (Consistent iconography)
-- **i18n Translation Engine** (Key-based, per-user persistent dictionary for `en` and `hi`)
-
-### Backend (`apps/api`)
-- **Rust (Stable)**
-- **Axum 0.7** (High-throughput, memory-safe web framework)
-- **Tokio** (Asynchronous runtime)
-- **SQLx 0.7** (Typed PostgreSQL integration with connection pooling)
-- **Argon2id** (Memory-hard salted password hashing)
-- **jsonwebtoken** (Stateless, signed claims with correlation tracking)
-- **tracing / tracing-subscriber** (Structured JSON operational logging)
-- **UUID v4 & Chrono** (Type-safe identifiers and timestamps)
-
-### Database (`migrations/`)
-- **PostgreSQL 18** (System of record)
-- UUID primary keys for all entities
-- Foundation tables: `users`, `roles`, `user_roles`, `organizations`, `user_organizations`, `sessions`, `audit_events`
-- Fully reversible migrations (`0001_initial_schema.sql` and `0001_initial_schema_down.sql`)
-
----
-
-## 6. Repository Architecture
-
-```text
-mira/
-├── apps/
-│   ├── web/                    # React + TypeScript + Vite frontend
-│   │   ├── src/
-│   │   │   ├── api/            # API client with correlation IDs
-│   │   │   ├── components/     # Accessible UI components (Navbar, RoleBadge, ProtectedRoute)
-│   │   │   ├── context/        # Auth and state contexts
-│   │   │   ├── i18n/           # English (en.json) & Hindi (hi.json) dictionaries
-│   │   │   ├── pages/          # Login, Register, Dashboard, Profile, AuditTrail
-│   │   │   ├── test/           # Vitest unit test suite
-│   │   │   └── types/          # Shared frontend domain interfaces
-│   └── api/                    # Rust Axum core backend
-│       ├── src/
-│       │   ├── api/            # Axum router & thin HTTP handlers
-│       │   ├── application/    # Domain services (Auth, Profile, Audit, Health)
-│       │   ├── auth/           # Argon2id hasher, JWT claims, CurrentUser extractor
-│       │   ├── config/         # Environment configuration
-│       │   ├── database/       # Connection pool, migration runner, seed script
-│       │   ├── domain/         # Strongly-typed domain models & V2 extension contracts
-│       │   ├── errors/         # Consistent error format { error: { code, message, request_id } }
-│       │   ├── infrastructure/ # Tracing, request ID middleware, CORS, security headers
-│       │   └── main.rs         # Application entry point
-│       └── tests/              # Rust integration & IDOR security test suite
-├── migrations/                 # Reversible SQL migrations
-│   ├── 0001_initial_schema.sql
-│   └── 0001_initial_schema_down.sql
-├── scripts/                    # Automation scripts (dev.sh, test.sh, seed.sh)
-├── docs/                       # API documentation (docs/api.md)
-├── docker/                     # Dockerfiles for web and api
-├── docker-compose.yml          # Containerized development orchestration
-├── .env.example                # Sample environment variables
-└── README.md
-```
-
----
-
-## 7. Running Tests
-
-Run the complete automated test suite across backend and frontend:
+PostgreSQL schema changes are SQL files in `migrations/`. The API currently embeds and executes migrations `0001` through `0008` during startup. Run the explicit commands from the API directory when needed:
 
 ```bash
-# Run both backend integration tests and frontend unit tests
-./scripts/test.sh
-```
-
-Or individually:
-
-```bash
-# Rust backend integration & IDOR tests
 cd apps/api
-cargo test
-
-# Frontend Vitest unit tests
-cd apps/web
-npm test
+cargo run -- migrate
+cargo run -- seed
 ```
 
----
+The seed operation is intended for local synthetic data and clears/recreates demo domain rows. It is destructive to data in the target Mira database.
 
-## 8. Docker Deployment
+## Testing and quality checks
 
-To launch the full environment (PostgreSQL + Rust API + Nginx Web) using Docker:
+Available root scripts:
 
 ```bash
-docker compose up --build
+npm test
+npm run build:web
+npm run build:api
 ```
 
----
+`npm test` invokes `scripts/test.sh`, which runs Rust integration tests against `mira_test` on PostgreSQL port `5433`, then frontend Vitest tests. Ensure the test database is available before running it. Frontend-only commands are `cd apps/web && npm test` and `npm run lint`. There is no dedicated root typecheck script; the web build runs the configured TypeScript/Vite build.
 
-## 9. V2 Readiness: Extension Path Without Rewriting V1
+## Build and deployment
 
-Mira V1 establishes clean boundaries so Version 2 can implement:
-1. **Temporal Household Graph:** `Household`, `Person`, `HouseholdMembership` (with `valid_from`, `valid_to` intervals) link cleanly to existing `user_id` and `organization_id` foreign keys.
-2. **Benefit-Scope Engine:** Entitlement definitions (`BenefitScheme`) and claims (`Application`) attach directly to the existing organization and role isolation model.
-3. **Cryptographic Audit Hash Chain:** The `audit_events` table already includes `previous_hash` and `current_hash` columns, enabling seamless activation of SHA-256 block chaining in V2.
-4. **Deterministic Evidence Pipeline:** Future duplicate detection and machine-assisted verification will operate over deterministic domain models without modifying core authentication or tenancy.
-# mira
+Build the web and API independently with the root scripts above. `docker compose up --build` builds the web/API images and PostgreSQL service for a local containerized demonstration; it is not a production deployment recipe. Compose publishes web on port `3000`, API on `4000` and PostgreSQL on `5433`, and mounts database/document volumes. Set production secrets and infrastructure controls outside this sample configuration.
+
+## Known limitations
+
+- Seeded people, schemes, applications, benefits, audit activity and document files are synthetic.
+- Some workspace metrics, inbox content, identity flows and other screen states are client-side demonstrations; the login UI does not connect to UIDAI or another identity provider.
+- The AI fallback contains fixed sample answers, and the current authorized-context builder includes hard-coded role identity/context examples. Live Groq use is optional and requires review before supplying sensitive data.
+- Document processing capability varies by file type and locally available OCR/extraction tools. Local file storage is not a managed production document service.
+- The UI contains translations for multiple Indian languages, but dictionaries are partial; backend preference validation currently supports English (`en`) and Hindi (`hi`).
+- Notifications have API persistence; the inbox is not uniformly backed by a persisted message/communication domain model.
+- No live government registry, scheme catalog, identity, email/SMS, payment or benefit-disbursement integration is configured.
+
+## Roadmap
+
+### Current
+
+API-backed household/person records, scheme rules and assessments, application workflow, document/evidence endpoints, benefits, notifications, audit events, role workspaces and Family360 visualization.
+
+### Next
+
+Replace demo-only UI data and hard-coded AI context with consistently API-backed, record-scoped workflows; complete translation coverage and document-processing setup.
+
+### Future
+
+Integrate external identity, registry, messaging and payment services only with appropriate authorization, operational safeguards and deployment-specific review.
+
+## Development guidelines
+
+- Treat API authorization and record scope as the access boundary; frontend navigation is not authorization.
+- Keep synthetic demo fixtures clearly separated from live integrations and avoid adding real personal data to seed files.
+- Update migrations and tests alongside backend domain/workflow changes.
+- Keep secrets in environment configuration, never in source or documentation.

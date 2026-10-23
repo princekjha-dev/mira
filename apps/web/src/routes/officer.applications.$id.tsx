@@ -1,8 +1,10 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useState } from "react";
-import { AlertOctagon, AlertTriangle, CheckCircle2 } from "lucide-react";
+import { useState, useEffect } from "react";
+import { AlertOctagon, AlertTriangle, CheckCircle2, Eye, FileText, Users } from "lucide-react";
 import { toast } from "sonner";
 import { nowStamp, useApp } from "@/lib/app-state";
+import { DocumentViewer } from "@/components/gov/DocumentViewer";
+import { apiRequest, type ApiDocument } from "@/lib/api";
 import {
   BENEFITS,
   CITIZEN,
@@ -106,6 +108,35 @@ function Review() {
   const [note, setNote] = useState("");
   const [err, setErr] = useState("");
   const [busy, setBusy] = useState(false);
+  const [submittedDocs, setSubmittedDocs] = useState<ApiDocument[]>([]);
+  const [activeDoc, setActiveDoc] = useState<ApiDocument | null>(null);
+
+  const loadDocuments = () => {
+    if (!state.session?.apiToken) return;
+    const targetId = (a as any)?.rawId || a?.id;
+    if (!targetId) return;
+    apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/applications/${targetId}/documents`)
+      .then((res) => {
+        if (res.data && res.data.length > 0) {
+          setSubmittedDocs(res.data);
+        } else {
+          apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/documents`)
+            .then((all) => setSubmittedDocs(all.data || []))
+            .catch(() => setSubmittedDocs([]));
+        }
+      })
+      .catch(() => {
+        apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/documents`)
+          .then((all) => setSubmittedDocs(all.data || []))
+          .catch(() => setSubmittedDocs([]));
+      });
+  };
+
+  useEffect(() => {
+    if (a) {
+      loadDocuments();
+    }
+  }, [a?.id, (a as any)?.rawId, state.session?.apiToken]);
   if (!a)
     return (
       <Empty
@@ -272,13 +303,22 @@ function Review() {
           <Panel
             title="Family information"
             actions={
-              <Link
-                to="/officer/families/$id"
-                params={{ id: a.householdId }}
-                className="text-xs text-gov hover:underline"
-              >
-                Family record
-              </Link>
+              <div className="flex items-center gap-3">
+                <Link
+                  to="/officer/family360"
+                  className="text-xs font-semibold text-gov hover:underline flex items-center gap-1"
+                >
+                  <Users className="h-3.5 w-3.5" />
+                  Family360 Graph
+                </Link>
+                <Link
+                  to="/officer/families/$id"
+                  params={{ id: a.householdId }}
+                  className="text-xs text-muted-foreground hover:underline"
+                >
+                  Household record
+                </Link>
+              </div>
             }
           >
             {own ? (
@@ -347,19 +387,66 @@ function Review() {
               </p>
             )}
           </Panel>
-          <Panel title="Uploaded documents">
-            <ul className="space-y-1.5 text-sm">
-              {s.documents.map((d, i) => {
-                const st =
-                  d === "Income Certificate" && a.mismatch
-                    ? "Mismatch detected"
-                    : d.startsWith("Property")
-                      ? "Manual verification required"
-                      : d === "BPL Certificate" &&
-                          a.status === "Additional Evidence Required"
-                        ? "Expired document"
-                        : "Verified";
-                return (
+          <Panel title="Submitted documents & verification">
+            {submittedDocs.length > 0 ? (
+              <ul className="space-y-2 text-sm">
+                {submittedDocs.map((doc) => {
+                  const isConflict =
+                    doc.verification_status === "ACTION_REQUIRED" ||
+                    doc.verification_status === "MISMATCH";
+                  return (
+                    <li
+                      key={doc.id}
+                      className="flex items-center justify-between gap-2 p-2 rounded-md border bg-slate-50/60"
+                    >
+                      <div className="flex items-center gap-2 min-w-0">
+                        <FileText
+                          className={`h-4 w-4 shrink-0 ${
+                            isConflict
+                              ? "text-amber-600"
+                              : doc.verification_status === "VERIFIED"
+                              ? "text-emerald-600"
+                              : "text-slate-500"
+                          }`}
+                        />
+                        <div className="min-w-0">
+                          <p className="font-medium text-xs truncate">
+                            {doc.original_filename}
+                          </p>
+                          <p className="text-[10px] text-muted-foreground">
+                            {doc.document_type}
+                          </p>
+                        </div>
+                      </div>
+                      <div className="flex items-center gap-1.5 shrink-0">
+                        <Pill
+                          t={
+                            doc.verification_status === "VERIFIED"
+                              ? "ok"
+                              : isConflict
+                              ? "warn"
+                              : "default"
+                          }
+                        >
+                          {doc.verification_status}
+                        </Pill>
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          onClick={() => setActiveDoc(doc)}
+                          className="h-6 text-[11px] px-1.5 text-blue-700"
+                        >
+                          <Eye className="h-3 w-3 mr-1" />
+                          View
+                        </Button>
+                      </div>
+                    </li>
+                  );
+                })}
+              </ul>
+            ) : (
+              <ul className="space-y-1.5 text-sm">
+                {s.documents.map((d, i) => (
                   <li key={d} className="flex justify-between gap-2">
                     <span>
                       {d}{" "}
@@ -367,11 +454,11 @@ function Review() {
                         · file_{i + 1}.pdf
                       </span>
                     </span>
-                    <Pill t={st === "Verified" ? "ok" : "warn"}>{st}</Pill>
+                    <Pill t="ok">Verified</Pill>
                   </li>
-                );
-              })}
-            </ul>
+                ))}
+              </ul>
+            )}
           </Panel>
         </div>
         <div className="space-y-4">
@@ -553,6 +640,17 @@ function Review() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {activeDoc && state.session && (
+        <DocumentViewer
+          document={activeDoc}
+          session={state.session}
+          onClose={() => setActiveDoc(null)}
+          onChanged={() => {
+            loadDocuments();
+          }}
+        />
+      )}
     </div>
   );
 }

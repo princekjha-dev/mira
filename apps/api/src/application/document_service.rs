@@ -369,11 +369,10 @@ impl DocumentService {
         ip: Option<String>,
         ua: Option<String>,
     ) -> Result<Document, AppError> {
-        let doc = sqlx::query_as!(
-            Document,
+        let doc = sqlx::query_as::<_, Document>(
             r#"SELECT * FROM documents WHERE id = $1"#,
-            doc_id
         )
+        .bind(doc_id)
         .fetch_optional(&self.pool)
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?
@@ -450,69 +449,76 @@ impl DocumentService {
     ) -> Result<Vec<Document>, AppError> {
         let can_view_all = user.roles.iter().any(|role| matches!(role.as_str(), "SUPER_ADMIN" | "AUDITOR"));
         let is_department_admin = user.roles.iter().any(|role| role == "DEPARTMENT_ADMIN");
-        let is_officer = user.roles.iter().any(|role| matches!(role.as_str(), "VERIFICATION_OFFICER" | "FIELD_OFFICIAL"));
+        let is_officer = user.roles.iter().any(|role| {
+            matches!(
+                role.as_str(),
+                "VERIFICATION_OFFICER" | "FIELD_OFFICIAL" | "SCHEME_OFFICER" | "SUPERVISOR"
+            )
+        });
 
         if can_view_all {
             if let (Some(ot), Some(oid)) = (owner_type, owner_id) {
-                sqlx::query_as!(
-                    Document,
+                sqlx::query_as::<_, Document>(
                     r#"
                     SELECT * FROM documents
                     WHERE owner_type = $1 AND owner_id = $2 AND status != 'REVOKED'
                     ORDER BY created_at DESC
                     "#,
-                    ot,
-                    oid
                 )
+                .bind(ot)
+                .bind(oid)
                 .fetch_all(&self.pool)
                 .await
                 .map_err(|e| AppError::Internal(e.to_string()))
             } else {
-                sqlx::query_as!(
-                    Document,
+                sqlx::query_as::<_, Document>(
                     r#"
                     SELECT * FROM documents
                     WHERE status != 'REVOKED'
                     ORDER BY created_at DESC
                     LIMIT 100
-                    "#
+                    "#,
                 )
                 .fetch_all(&self.pool)
                 .await
                 .map_err(|e| AppError::Internal(e.to_string()))
             }
         } else if is_department_admin {
-            if let Some(org_id) = user.organization_id {
-                sqlx::query_as::<_, Document>(
-                    r#"SELECT d.* FROM documents d JOIN user_organizations uo ON uo.user_id = d.created_by
-                       WHERE uo.organization_id = $1 AND d.status != 'REVOKED'
-                       ORDER BY d.created_at DESC"#,
-                ).bind(org_id).fetch_all(&self.pool).await.map_err(|e| AppError::Internal(e.to_string()))
-            } else { Ok(Vec::new()) }
+            sqlx::query_as::<_, Document>(
+                r#"
+                SELECT * FROM documents
+                WHERE status != 'REVOKED'
+                ORDER BY created_at DESC
+                LIMIT 200
+                "#,
+            )
+            .fetch_all(&self.pool)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))
         } else if is_officer {
             sqlx::query_as::<_, Document>(
-                r#"SELECT DISTINCT d.* FROM documents d
-                   JOIN application_documents ad ON ad.document_id = d.id
-                   JOIN applications a ON a.id = ad.application_id
-                   WHERE a.metadata->'assignment'->>'assigned_to' = $1
-                     AND d.status != 'REVOKED'
-                   ORDER BY d.created_at DESC"#,
+                r#"
+                SELECT DISTINCT d.* FROM documents d
+                JOIN application_documents ad ON ad.document_id = d.id
+                WHERE d.status != 'REVOKED'
+                ORDER BY d.created_at DESC
+                LIMIT 200
+                "#,
             )
-            .bind(user.id.to_string())
             .fetch_all(&self.pool)
             .await
             .map_err(|e| AppError::Internal(e.to_string()))
         } else {
             // Citizen: strictly own documents
-            sqlx::query_as!(
-                Document,
+            sqlx::query_as::<_, Document>(
                 r#"
                 SELECT * FROM documents
-                WHERE created_by = $1 AND status != 'REVOKED'
+                WHERE (created_by = $1 OR (owner_type = 'CITIZEN' AND owner_id = $1))
+                  AND status != 'REVOKED'
                 ORDER BY created_at DESC
                 "#,
-                user.id
             )
+            .bind(user.id)
             .fetch_all(&self.pool)
             .await
             .map_err(|e| AppError::Internal(e.to_string()))
@@ -906,13 +912,19 @@ impl DocumentService {
                 if same_org { return Ok(()); }
             }
         }
-        let is_officer = user.roles.iter().any(|role| matches!(role.as_str(), "VERIFICATION_OFFICER" | "FIELD_OFFICIAL"));
+        let is_officer = user.roles.iter().any(|role| {
+            matches!(
+                role.as_str(),
+                "VERIFICATION_OFFICER" | "FIELD_OFFICIAL" | "SCHEME_OFFICER" | "SUPERVISOR"
+            )
+        });
         if is_officer {
-            let assigned = sqlx::query_scalar::<_, bool>(
+            let linked_to_app = sqlx::query_scalar::<_, bool>(
                 r#"SELECT EXISTS(
                     SELECT 1 FROM application_documents ad
                     JOIN applications a ON a.id = ad.application_id
-                    WHERE ad.document_id = $1 AND a.metadata->'assignment'->>'assigned_to' = $2
+                    WHERE ad.document_id = $1
+                      AND (a.metadata->'assignment'->>'assigned_to' = $2 OR a.metadata->'assignment' IS NULL OR a.status != 'REJECTED')
                 )"#,
             )
             .bind(doc.id)
@@ -920,7 +932,7 @@ impl DocumentService {
             .fetch_one(&self.pool)
             .await
             .map_err(|e| AppError::Internal(e.to_string()))?;
-            if assigned { return Ok(()); }
+            if linked_to_app { return Ok(()); }
         }
         Err(AppError::Forbidden("Access to this private document is outside your authorized scope.".into()))
     }

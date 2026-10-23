@@ -242,6 +242,81 @@ pub async fn raise_my_family_dispute_handler(
     Ok((StatusCode::CREATED, Json(ApiResponse { data: dispute })))
 }
 
+pub async fn get_household_family_handler(
+    State(state): State<AppState>,
+    Path(id_or_public_id): Path<String>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    let household_id: Uuid = if let Ok(parsed) = Uuid::parse_str(&id_or_public_id) {
+        parsed
+    } else {
+        sqlx::query_scalar::<_, Uuid>("SELECT id FROM households WHERE public_id = $1")
+            .bind(&id_or_public_id)
+            .fetch_optional(&state.pool)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Household '{}' not found", id_or_public_id)))?
+    };
+
+    let family = ProfileService::get_family_by_household_id(&state.pool, household_id, &user).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: family })))
+}
+
+pub async fn get_person_360_handler(
+    State(state): State<AppState>,
+    Path(id_or_public_id): Path<String>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    let person_id: Uuid = if let Ok(parsed) = Uuid::parse_str(&id_or_public_id) {
+        parsed
+    } else {
+        sqlx::query_scalar::<_, Uuid>("SELECT id FROM persons WHERE public_id = $1")
+            .bind(&id_or_public_id)
+            .fetch_optional(&state.pool)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Person '{}' not found", id_or_public_id)))?
+    };
+
+    let details = ProfileService::get_person_360_details(&state.pool, person_id, &user).await?;
+    Ok((StatusCode::OK, Json(ApiResponse { data: details })))
+}
+
+pub async fn get_my_audit_activity_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    let rows = sqlx::query(
+        r#"
+        SELECT id, event_type, user_id, organization_id, request_id,
+               ip_address, details, previous_hash, current_hash, created_at
+        FROM audit_events
+        WHERE user_id = $1
+        ORDER BY created_at DESC
+        LIMIT 20
+        "#,
+    )
+    .bind(user.id)
+    .fetch_all(&state.pool)
+    .await?;
+
+    let events: Vec<crate::domain::AuditEvent> = rows
+        .into_iter()
+        .map(|r| crate::domain::AuditEvent {
+            id: r.get("id"),
+            event_type: r.get("event_type"),
+            user_id: r.get("user_id"),
+            organization_id: r.get("organization_id"),
+            request_id: r.get("request_id"),
+            ip_address: r.get("ip_address"),
+            details: r.get("details"),
+            previous_hash: r.get("previous_hash"),
+            current_hash: r.get("current_hash"),
+            created_at: r.get("created_at"),
+        })
+        .collect();
+
+    Ok((StatusCode::OK, Json(ApiResponse { data: events })))
+}
+
 #[derive(Deserialize)]
 pub struct AuditQuery {
     pub limit: Option<i64>,
@@ -514,11 +589,21 @@ pub async fn get_person_graph_handler(
 
 pub async fn get_household_graph_handler(
     State(state): State<AppState>,
-    Path(id): Path<Uuid>,
+    Path(id_or_public_id): Path<String>,
     Query(dq): Query<DateQuery>,
     user: AuthenticatedUser,
 ) -> Result<impl IntoResponse, AppError> {
-    let graph = GraphService::get_household_graph(&state.pool, id, &user, dq.date).await?;
+    let household_id: Uuid = if let Ok(parsed) = Uuid::parse_str(&id_or_public_id) {
+        parsed
+    } else {
+        sqlx::query_scalar::<_, Uuid>("SELECT id FROM households WHERE public_id = $1")
+            .bind(&id_or_public_id)
+            .fetch_optional(&state.pool)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Household '{}' not found", id_or_public_id)))?
+    };
+
+    let graph = GraphService::get_household_graph(&state.pool, household_id, &user, dq.date).await?;
     Ok((StatusCode::OK, Json(ApiResponse { data: graph })))
 }
 
@@ -556,7 +641,7 @@ fn require_admin_or_officer(user: &AuthenticatedUser) -> Result<(), AppError> {
         return Err(AppError::Forbidden("Auditors hold read-only oversight permissions".to_string()));
     }
     let is_authorized = user.roles.iter().any(|r| {
-        matches!(r.as_str(), "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "FIELD_OFFICIAL" | "VERIFICATION_OFFICER")
+        matches!(r.as_str(), "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "FIELD_OFFICIAL" | "VERIFICATION_OFFICER" | "SCHEME_OFFICER" | "SUPERVISOR")
     });
     if !is_authorized {
         return Err(AppError::Forbidden("Operation requires official or administrator authorization".to_string()));
@@ -1153,6 +1238,233 @@ pub async fn link_application_document_handler(
     }) })))
 }
 
+pub async fn get_application_documents_handler(
+    State(state): State<AppState>,
+    Path(app_id_or_number): Path<String>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    let application_id: Uuid = if let Ok(parsed) = Uuid::parse_str(&app_id_or_number) {
+        parsed
+    } else {
+        sqlx::query_scalar::<_, Uuid>(
+            "SELECT id FROM applications WHERE application_number = $1 OR public_id = $1"
+        )
+        .bind(&app_id_or_number)
+        .fetch_optional(&state.pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Application '{}' not found", app_id_or_number)))?
+    };
+
+    let owns_application = sqlx::query_scalar::<_, bool>(
+        "SELECT EXISTS(SELECT 1 FROM applications WHERE id = $1 AND created_by = $2)"
+    )
+    .bind(application_id)
+    .bind(user.id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    let is_official = user.roles.iter().any(|r| {
+        matches!(r.as_str(), "SUPER_ADMIN" | "DEPARTMENT_ADMIN" | "VERIFICATION_OFFICER" | "SCHEME_OFFICER" | "FIELD_OFFICIAL" | "SUPERVISOR" | "AUDITOR")
+    });
+
+    if !owns_application && !is_official {
+        return Err(AppError::Forbidden("You are not authorized to inspect documents for this application.".into()));
+    }
+
+    let rows = sqlx::query(
+        r#"
+        SELECT d.id, d.public_id, d.document_type, d.original_filename, d.detected_mime_type,
+               d.size_bytes, d.sha256, d.status, d.verification_status, d.expires_at,
+               d.version_number, d.created_at, d.updated_at,
+               ad.required_type, ad.linked_at, ad.document_version_id
+        FROM application_documents ad
+        JOIN documents d ON d.id = ad.document_id
+        WHERE ad.application_id = $1
+        ORDER BY ad.linked_at ASC
+        "#,
+    )
+    .bind(application_id)
+    .fetch_all(&state.pool)
+    .await?;
+
+    let mut docs = Vec::new();
+    for r in rows {
+        let doc_id: Uuid = r.get("id");
+        let extraction_rows = sqlx::query(
+            "SELECT field, value, normalized_value, confidence::float8 as confidence, status FROM document_extractions WHERE document_id = $1"
+        )
+        .bind(doc_id)
+        .fetch_all(&state.pool)
+        .await
+        .unwrap_or_default();
+
+        let mut extractions = Vec::new();
+        for er in extraction_rows {
+            extractions.push(serde_json::json!({
+                "field": er.get::<String, _>("field"),
+                "value": er.get::<String, _>("value"),
+                "normalized_value": er.get::<Option<String>, _>("normalized_value"),
+                "confidence": er.get::<f64, _>("confidence"),
+                "status": er.get::<String, _>("status")
+            }));
+        }
+
+        docs.push(serde_json::json!({
+            "id": doc_id,
+            "public_id": r.get::<String, _>("public_id"),
+            "document_type": r.get::<String, _>("document_type"),
+            "original_filename": r.get::<String, _>("original_filename"),
+            "detected_mime_type": r.get::<String, _>("detected_mime_type"),
+            "size_bytes": r.get::<i64, _>("size_bytes"),
+            "sha256": r.get::<String, _>("sha256"),
+            "status": r.get::<String, _>("status"),
+            "verification_status": r.get::<String, _>("verification_status"),
+            "expires_at": r.get::<Option<chrono::DateTime<chrono::Utc>>, _>("expires_at"),
+            "version_number": r.get::<i32, _>("version_number"),
+            "created_at": r.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+            "updated_at": r.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
+            "required_type": r.get::<String, _>("required_type"),
+            "linked_at": r.get::<chrono::DateTime<chrono::Utc>, _>("linked_at"),
+            "document_version_id": r.get::<Uuid, _>("document_version_id"),
+            "extractions": extractions
+        }));
+    }
+
+    Ok((StatusCode::OK, Json(ApiResponse { data: docs })))
+}
+
+#[derive(Deserialize)]
+pub struct VerifyDocumentRequest {
+    pub verification_status: String,
+    pub notes: Option<String>,
+}
+
+pub async fn verify_document_handler(
+    State(state): State<AppState>,
+    Path(doc_id_or_public_id): Path<String>,
+    user: AuthenticatedUser,
+    Json(payload): Json<VerifyDocumentRequest>,
+) -> Result<impl IntoResponse, AppError> {
+    require_admin_or_officer(&user)?;
+
+    let valid_statuses = ["VERIFIED", "REJECTED", "ACTION_REQUIRED", "MISMATCH", "PENDING_REVIEW"];
+    if !valid_statuses.contains(&payload.verification_status.as_str()) {
+        return Err(AppError::BadRequest(format!("Invalid verification status: {}", payload.verification_status)));
+    }
+
+    let doc_id: Uuid = if let Ok(parsed) = Uuid::parse_str(&doc_id_or_public_id) {
+        parsed
+    } else {
+        sqlx::query_scalar::<_, Uuid>("SELECT id FROM documents WHERE public_id = $1")
+            .bind(&doc_id_or_public_id)
+            .fetch_optional(&state.pool)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Document '{}' not found", doc_id_or_public_id)))?
+    };
+
+    let prior = sqlx::query("SELECT id, verification_status, original_filename FROM documents WHERE id = $1")
+        .bind(doc_id)
+        .fetch_optional(&state.pool)
+        .await?
+        .ok_or_else(|| AppError::NotFound(format!("Document {} not found", doc_id)))?;
+
+    let prev_status: String = prior.get("verification_status");
+    let filename: String = prior.get("original_filename");
+
+    let updated = sqlx::query(
+        r#"
+        UPDATE documents
+        SET verification_status = $1,
+            updated_at = NOW()
+        WHERE id = $2
+        RETURNING id, public_id, document_type, original_filename, detected_mime_type, size_bytes,
+                  sha256, status, verification_status, expires_at, version_number, created_at, updated_at
+        "#
+    )
+    .bind(&payload.verification_status)
+    .bind(doc_id)
+    .fetch_one(&state.pool)
+    .await?;
+
+    sqlx::query(
+        "INSERT INTO audit_events (event_type, user_id, organization_id, request_id, details) VALUES ('DOCUMENT_VERIFIED', $1, $2, $3, $4)"
+    )
+    .bind(user.id)
+    .bind(user.organization_id)
+    .bind(&user.request_id)
+    .bind(serde_json::json!({
+        "document_id": doc_id,
+        "filename": filename,
+        "previous_status": prev_status,
+        "new_status": payload.verification_status,
+        "notes": payload.notes
+    }))
+    .execute(&state.pool)
+    .await?;
+
+    Ok((StatusCode::OK, Json(ApiResponse {
+        data: serde_json::json!({
+            "id": updated.get::<Uuid, _>("id"),
+            "public_id": updated.get::<String, _>("public_id"),
+            "document_type": updated.get::<String, _>("document_type"),
+            "original_filename": updated.get::<String, _>("original_filename"),
+            "detected_mime_type": updated.get::<String, _>("detected_mime_type"),
+            "size_bytes": updated.get::<i64, _>("size_bytes"),
+            "sha256": updated.get::<String, _>("sha256"),
+            "status": updated.get::<String, _>("status"),
+            "verification_status": updated.get::<String, _>("verification_status"),
+            "version_number": updated.get::<i32, _>("version_number"),
+            "created_at": updated.get::<chrono::DateTime<chrono::Utc>, _>("created_at"),
+            "updated_at": updated.get::<chrono::DateTime<chrono::Utc>, _>("updated_at"),
+        })
+    })))
+}
+
+pub async fn demo_reset_handler(
+    State(state): State<AppState>,
+    user: AuthenticatedUser,
+) -> Result<impl IntoResponse, AppError> {
+    if !state.config.demo_mode && state.config.app_env != "development" {
+        return Err(AppError::Forbidden("Demo reset is only available in development or demo mode.".into()));
+    }
+
+    crate::database::seed_database(&state.pool).await?;
+
+    let fresh_user = sqlx::query("SELECT id, organization_id FROM users WHERE email = $1")
+        .bind(&user.email)
+        .fetch_optional(&state.pool)
+        .await
+        .ok()
+        .flatten();
+
+    let (audit_user_id, audit_org_id) = if let Some(row) = fresh_user {
+        (row.get::<Option<Uuid>, _>("id"), row.get::<Option<Uuid>, _>("organization_id"))
+    } else {
+        (None, None)
+    };
+
+    let _ = sqlx::query(
+        "INSERT INTO audit_events (event_type, user_id, organization_id, request_id, details) VALUES ('DEMO_ENVIRONMENT_RESET', $1, $2, $3, $4)"
+    )
+    .bind(audit_user_id)
+    .bind(audit_org_id)
+    .bind(&user.request_id)
+    .bind(serde_json::json!({
+        "reset_by": user.email,
+        "timestamp": chrono::Utc::now().to_rfc3339()
+    }))
+    .execute(&state.pool)
+    .await;
+
+    Ok((StatusCode::OK, Json(ApiResponse {
+        data: serde_json::json!({
+            "status": "SUCCESS",
+            "message": "Mira synthetic demo environment reset to canonical baseline.",
+            "timestamp": chrono::Utc::now().to_rfc3339()
+        })
+    })))
+}
+
 #[derive(Deserialize)]
 pub struct DocumentListQuery {
     pub owner_type: Option<String>,
@@ -1469,8 +1781,17 @@ pub async fn archive_document_handler(
 pub async fn get_document_extractions_handler(
     State(state): State<AppState>,
     user: AuthenticatedUser,
-    Path(id): Path<Uuid>,
+    Path(id_or_public_id): Path<String>,
 ) -> Result<impl IntoResponse, AppError> {
+    let id: Uuid = if let Ok(parsed) = Uuid::parse_str(&id_or_public_id) {
+        parsed
+    } else {
+        sqlx::query_scalar::<_, Uuid>("SELECT id FROM documents WHERE public_id = $1")
+            .bind(&id_or_public_id)
+            .fetch_optional(&state.pool)
+            .await?
+            .ok_or_else(|| AppError::NotFound(format!("Document '{}' not found", id_or_public_id)))?
+    };
     let doc_service = crate::application::DocumentService::new(state.pool.clone(), "data/storage").await?;
     doc_service.get_document(id, &user, "CITIZEN_SELF_SERVICE", None, None).await?;
     let extractions = doc_service.get_extractions(id).await?;
@@ -1568,10 +1889,12 @@ pub fn create_router(state: AppState) -> Router {
 
         // Audit Trail
         .route("/api/v1/audit/events", get(audit_events_handler))
+        .route("/api/v1/audit/my-activity", get(get_my_audit_activity_handler))
 
         // V2 Persons
         .route("/api/v1/persons", get(list_persons_handler).post(create_person_handler))
         .route("/api/v1/persons/:id", get(get_person_handler).patch(patch_person_handler))
+        .route("/api/v1/persons/:id/360", get(get_person_360_handler))
         .route("/api/v1/persons/:id/relationships", get(get_person_relationships_handler).post(create_person_relationship_handler))
         .route("/api/v1/persons/:id/households", get(get_person_households_handler))
         .route("/api/v1/persons/:id/properties", get(get_person_properties_handler))
@@ -1581,6 +1904,8 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/v1/households", get(list_households_handler).post(create_household_handler))
         .route("/api/v1/households/split", post(split_household_handler))
         .route("/api/v1/households/:id", get(get_household_handler).patch(patch_household_handler))
+        .route("/api/v1/households/:id/family", get(get_household_family_handler))
+        .route("/api/v1/households/:id/graph", get(get_household_graph_handler))
         .route("/api/v1/households/:id/members", get(get_household_members_handler).post(add_household_member_handler))
         .route("/api/v1/households/:id/properties", get(get_household_properties_handler))
         .route("/api/v1/households/:id/timeline", get(get_household_timeline_handler))
@@ -1646,13 +1971,16 @@ pub fn create_router(state: AppState) -> Router {
         .route("/api/v1/documents/:id/preview", get(preview_document_handler))
         .route("/api/v1/documents/:id/replace", post(replace_document_handler))
         .route("/api/v1/documents/:id/versions", get(document_versions_handler))
-        .route("/api/v1/documents/:id/applications", get(document_applications_handler))
-        .route("/api/v1/applications/:id/documents", post(link_application_document_handler))
+        .route("/api/v1/applications/:id/documents", get(get_application_documents_handler).post(link_application_document_handler))
+        .route("/api/v1/documents/:id/verify", post(verify_document_handler))
         .route("/api/v1/documents/:id/extractions", get(get_document_extractions_handler))
         .route("/api/v1/documents/:id/verify-extraction", post(verify_extraction_handler))
         .route("/api/v1/cases/:id/evidence-pack", get(get_case_evidence_pack_handler))
         .route("/api/v1/cases/:id/document-consistency", get(get_case_consistency_handler))
         .route("/api/v1/cases/:id/evidence-report", get(get_case_evidence_report_handler))
+
+        // Demo Environment Management
+        .route("/api/v1/demo/reset", post(demo_reset_handler))
         
         // Mira AI Secure Assistant (Groq-powered & Role-authorized)
         .route("/api/v1/ai/chat", post(crate::ai::ai_chat_handler))

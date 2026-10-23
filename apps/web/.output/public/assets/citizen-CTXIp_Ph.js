@@ -1,1 +1,0 @@
-import{l as e}from"./button-KmRTh43o.js";import{t}from"./MiraShell-BFGJybp_.js";import{Mn as n,y as r}from"./index-j6-8rMQO.js";var i=e();function a(){return(0,i.jsx)(r,{role:`citizen`,children:(0,i.jsx)(t,{children:(0,i.jsx)(n,{})})})}export{a as component};

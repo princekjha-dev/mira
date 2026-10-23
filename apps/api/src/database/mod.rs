@@ -87,10 +87,60 @@ async fn run_migrations_inner(pool: &PgPool) -> Result<(), AppError> {
     Ok(())
 }
 
+async fn clean_demo_data(pool: &PgPool) -> Result<(), AppError> {
+    let tables = [
+        "document_verifications",
+        "document_consistency_checks",
+        "document_extractions",
+        "ocr_results",
+        "document_jobs",
+        "document_access_logs",
+        "document_versions",
+        "application_documents",
+        "benefit_duplicate_decisions",
+        "benefit_duplicate_candidates",
+        "benefit_duplicate_cases",
+        "benefit_events",
+        "benefit_assets",
+        "benefits",
+        "eligibility_rule_results",
+        "eligibility_assessments",
+        "applications",
+        "scheme_rules",
+        "schemes",
+        "property_associations",
+        "properties",
+        "household_memberships",
+        "person_relationships",
+        "person_identifiers",
+        "life_events",
+        "households",
+        "persons",
+        "documents",
+        "notifications",
+        "audit_events",
+        "user_roles",
+        "user_organizations",
+        "users",
+        "roles",
+        "organizations",
+        "source_records",
+    ];
+
+    for table in tables {
+        let q = format!("DELETE FROM {}", table);
+        let _ = sqlx::query(&q).execute(pool).await;
+    }
+    Ok(())
+}
+
 /// Deterministic Seed Data Runner
-/// Safe, idempotent, and repeatable seeding of foundation and V2 domain data
+/// Safe, idempotent, and repeatable seeding of foundation, V2, V3, V4, and V5 demo data
 pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     tracing::info!("Starting deterministic database seed for Mira synthetic demo environment");
+
+    // Clean tables for 100% deterministic idempotency
+    clean_demo_data(pool).await?;
 
     // ========================================================================
     // 1. Roles
@@ -158,15 +208,16 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
         ("demo.supervisor@mira.demo", "Arun Deshmukh (Supervisor)", "en", RoleType::Supervisor.as_str()),
         ("demo.auditor@mira.demo", "Kavita Rao (Auditor)", "en", RoleType::Auditor.as_str()),
         ("demo.admin@mira.demo", "System Administrator", "en", RoleType::DepartmentAdmin.as_str()),
-        // Legacy aliases
+        // Legacy aliases for backwards compatibility
         ("citizen@mira.local", "Rajesh Sharma (Citizen)", "en", RoleType::Citizen.as_str()),
         ("officer@mira.local", "Priya Sharma (Field Official)", "en", RoleType::FieldOfficial.as_str()),
-        ("verifier@mira.local", "Anil Verma (Verification Officer)", "hi", RoleType::VerificationOfficer.as_str()),
-        ("admin@mira.local", "Sunita Patel (Department Admin)", "en", RoleType::DepartmentAdmin.as_str()),
-        ("auditor@mira.local", "Vikram Malhotra (Auditor)", "en", RoleType::Auditor.as_str()),
+        ("verifier@mira.local", "Vikram Malhotra (Verification Officer)", "hi", RoleType::VerificationOfficer.as_str()),
+        ("admin@mira.local", "System Administrator", "en", RoleType::DepartmentAdmin.as_str()),
+        ("auditor@mira.local", "Kavita Rao (Auditor)", "en", RoleType::Auditor.as_str()),
     ];
 
     let mut admin_user_id = Uuid::nil();
+    let mut citizen_user_id = Uuid::nil();
 
     for (email, display_name, lang, role_name) in demo_users {
         let user_row = sqlx::query(
@@ -190,8 +241,11 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
         .map_err(|e| AppError::Internal(format!("Failed to seed user {}: {}", email, e)))?;
 
         let user_id: Uuid = user_row.get("id");
-        if role_name == RoleType::DepartmentAdmin.as_str() {
+        if role_name == RoleType::DepartmentAdmin.as_str() && admin_user_id == Uuid::nil() {
             admin_user_id = user_id;
+        }
+        if email == "demo.citizen@mira.demo" {
+            citizen_user_id = user_id;
         }
 
         let role_row = sqlx::query("SELECT id FROM roles WHERE name = $1")
@@ -230,12 +284,13 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     }
 
     // ========================================================================
-    // 4. V2 Provenance Sources
+    // 4. Provenance Sources
     // ========================================================================
     let sources = [
         ("HOUSEHOLD_REGISTER", "HR-2024-DEL-01", "State Household Census Register 2024", "HIGH"),
         ("FIELD_VERIFICATION", "FV-2025-089", "Field Inspector Verification Unit", "VERY_HIGH"),
         ("BIRTH_REGISTER", "BR-MIRA-DEMO", "Civil Registration System", "VERY_HIGH"),
+        ("REVENUE_REGISTER", "REV-UP-2025-01", "State Land & Revenue Records Bureau", "VERY_HIGH"),
     ];
 
     let mut source_hr_id = Uuid::nil();
@@ -266,7 +321,7 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     }
 
     // ========================================================================
-    // 5. V2 Persons (Ramesh, Sita, Amit, Rahul, Priya, Arjun)
+    // 5. Baseline Test Persons (Ramesh, Sita, Amit, Rahul, Priya, Arjun)
     // ========================================================================
     let persons: [(&str, &str, Option<&str>, &str, Option<NaiveDate>, &str, &str, &str); 6] = [
         ("P-1001", "Ramesh", None, "Kumar", NaiveDate::from_ymd_opt(1968, 4, 12), "Male", "ramesh@synthetic.local", "ACTIVE"),
@@ -308,7 +363,6 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
         let pub_id: String = row.get("public_id");
         person_map.insert(pub_id, id);
 
-        // Add synthetic identifier
         sqlx::query(
             r#"
             INSERT INTO person_identifiers (id, person_id, identifier_type, identifier_reference, source_id, verified)
@@ -330,9 +384,7 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     let priya_id = person_map["P-1005"];
     let arjun_id = person_map["P-1006"];
 
-    // ========================================================================
-    // 6. V2 Family Relationships
-    // ========================================================================
+    // Relationships for baseline persons
     let relationships: [(Uuid, Uuid, &str, NaiveDate, Option<NaiveDate>); 7] = [
         (ramesh_id, sita_id, "SPOUSE", NaiveDate::from_ymd_opt(1993, 2, 14).unwrap(), None),
         (ramesh_id, amit_id, "PARENT", NaiveDate::from_ymd_opt(1996, 11, 4).unwrap(), None),
@@ -359,12 +411,10 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
         .bind(admin_user_id)
         .execute(pool)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to seed relationship {} -> {}: {}", p_a, p_b, e)))?;
+        .map_err(|e| AppError::Internal(format!("Failed to seed relationship: {}", e)))?;
     }
 
-    // ========================================================================
-    // 7. V2 Households (H001, H002, H003)
-    // ========================================================================
+    // Baseline Households (H001, H002, H003)
     let households = [
         ("H001", "Ramesh Kumar Household", "ACTIVE"),
         ("H002", "Rahul Kumar Household", "ACTIVE"),
@@ -399,21 +449,13 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     let h002_id = household_map["H002"];
     let h003_id = household_map["H003"];
 
-    // ========================================================================
-    // 8. V2 Household Memberships (with Historical Separation on 2025-07-01)
-    // ========================================================================
     let sep_date = NaiveDate::from_ymd_opt(2025, 7, 1).unwrap();
-
     let memberships = [
-        // H001 members
         (h001_id, ramesh_id, "HEAD", NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(), None),
         (h001_id, sita_id, "SPOUSE", NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(), None),
         (h001_id, amit_id, "CHILD", NaiveDate::from_ymd_opt(2018, 3, 10).unwrap(), None),
-        // Rahul was in H001 until 2025-07-01!
         (h001_id, rahul_id, "CHILD", NaiveDate::from_ymd_opt(2018, 1, 1).unwrap(), Some(sep_date)),
-        // Rahul moved to H002 effective 2025-07-01!
         (h002_id, rahul_id, "HEAD", sep_date, None),
-        // H003 members
         (h003_id, priya_id, "HEAD", NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(), None),
         (h003_id, arjun_id, "SPOUSE", NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(), None),
     ];
@@ -434,12 +476,10 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
         .bind(admin_user_id)
         .execute(pool)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to seed membership {} -> {}: {}", hid, pid, e)))?;
+        .map_err(|e| AppError::Internal(format!("Failed to seed membership: {}", e)))?;
     }
 
-    // ========================================================================
-    // 9. V2 Properties & Associations
-    // ========================================================================
+    // Baseline Properties
     let properties = [
         ("PROP-001", "HOUSE", "Plot 42, Civil Lines", "Civil Lines", "Central Delhi", "Delhi", "110054", 28.6812, 77.2228),
         ("PROP-002", "APARTMENT", "Flat 304, Shanti Enclave", "Mayur Vihar", "East Delhi", "Delhi", "110091", 28.6080, 77.2950),
@@ -448,7 +488,7 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
 
     let mut prop_map = std::collections::HashMap::new();
 
-    for (pr_id, pr_type, addr, loc, dist, state, pin, lat, lng) in properties {
+    for (p_pub, p_type, p_addr, p_loc, p_dist, p_state, p_post, p_lat, p_long) in properties {
         let row = sqlx::query(
             r#"
             INSERT INTO properties (id, public_id, property_type, address_line, locality, district, state, postal_code, latitude, longitude)
@@ -457,128 +497,65 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
             RETURNING id, public_id
             "#,
         )
-        .bind(pr_id)
-        .bind(pr_type)
-        .bind(addr)
-        .bind(loc)
-        .bind(dist)
-        .bind(state)
-        .bind(pin)
-        .bind(lat)
-        .bind(lng)
+        .bind(p_pub)
+        .bind(p_type)
+        .bind(p_addr)
+        .bind(p_loc)
+        .bind(p_dist)
+        .bind(p_state)
+        .bind(p_post)
+        .bind(p_lat)
+        .bind(p_long)
         .fetch_one(pool)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to seed property {}: {}", pr_id, e)))?;
+        .map_err(|e| AppError::Internal(format!("Failed to seed property {}: {}", p_pub, e)))?;
 
         let id: Uuid = row.get("id");
         let pub_id: String = row.get("public_id");
         prop_map.insert(pub_id, id);
     }
 
-    let p001_id = prop_map["PROP-001"];
-    let p002_id = prop_map["PROP-002"];
-    let p003_id = prop_map["PROP-003"];
+    let prop1_id = prop_map["PROP-001"];
+    let prop2_id = prop_map["PROP-002"];
+    let prop3_id = prop_map["PROP-003"];
 
-    // Associations
-    // H001 occupies PROP-001
-    sqlx::query(
-        r#"
-        INSERT INTO property_associations (id, property_id, household_id, association_type, valid_from, verification_status, confidence)
-        VALUES (gen_random_uuid(), $1, $2, 'HOUSEHOLD_OCCUPIES', '2015-01-01', 'VERIFIED', 1.00)
-        "#,
-    )
-    .bind(p001_id)
-    .bind(h001_id)
-    .execute(pool)
-    .await?;
+    let prop_assocs: [(Uuid, Option<Uuid>, Option<Uuid>, &str, NaiveDate, Option<NaiveDate>); 3] = [
+        (prop1_id, Some(h001_id), None, "HOUSEHOLD_OCCUPIES", NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(), None),
+        (prop2_id, Some(h002_id), None, "HOUSEHOLD_OCCUPIES", sep_date, None),
+        (prop3_id, None, Some(ramesh_id), "PERSON_OWNS", NaiveDate::from_ymd_opt(2010, 5, 20).unwrap(), None),
+    ];
 
-    // H002 occupies PROP-002 (since separation 2025-07-01)
-    sqlx::query(
-        r#"
-        INSERT INTO property_associations (id, property_id, household_id, association_type, valid_from, verification_status, confidence)
-        VALUES (gen_random_uuid(), $1, $2, 'HOUSEHOLD_OCCUPIES', $3, 'VERIFIED', 1.00)
-        "#,
-    )
-    .bind(p002_id)
-    .bind(h002_id)
-    .bind(sep_date)
-    .execute(pool)
-    .await?;
-
-    // Ramesh owns Land PROP-003
-    sqlx::query(
-        r#"
-        INSERT INTO property_associations (id, property_id, person_id, association_type, valid_from, verification_status, confidence)
-        VALUES (gen_random_uuid(), $1, $2, 'PERSON_OWNS', '2010-04-15', 'VERIFIED', 1.00)
-        "#,
-    )
-    .bind(p003_id)
-    .bind(ramesh_id)
-    .execute(pool)
-    .await?;
-
-    // ========================================================================
-    // 10. V2 Life Events (Separation Event)
-    // ========================================================================
-    sqlx::query(
-        r#"
-        INSERT INTO life_events (id, event_type, person_id, household_id, effective_date, source_id, metadata, created_by)
-        VALUES (gen_random_uuid(), 'HOUSEHOLD_SEPARATION', $1, $2, $3, $4, $5, $6)
-        "#,
-    )
-    .bind(rahul_id)
-    .bind(h001_id)
-    .bind(sep_date)
-    .bind(source_fv_id)
-    .bind(serde_json::json!({
-        "previous_household_id": h001_id,
-        "new_household_id": h002_id,
-        "person_name": "Rahul Kumar",
-        "notes": "Household separation and establishment of independent dwelling recorded by Field Verification unit"
-    }))
-    .bind(admin_user_id)
-    .execute(pool)
-    .await?;
-
-    // ========================================================================
-    // 11. V3 Schemes & Eligibility Rules
-    // ========================================================================
-    let v3_already_seeded: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM schemes WHERE code = 'SCH_STUDENT_SCHOLARSHIP')")
-        .fetch_one(pool)
+    for (p_id, h_id, per_id, a_type, vfrom, vto) in prop_assocs {
+        sqlx::query(
+            r#"
+            INSERT INTO property_associations (id, property_id, household_id, person_id, association_type, valid_from, valid_to, verification_status, confidence)
+            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6, 'VERIFIED', 1.00)
+            "#,
+        )
+        .bind(p_id)
+        .bind(h_id)
+        .bind(per_id)
+        .bind(a_type)
+        .bind(vfrom)
+        .bind(vto)
+        .execute(pool)
         .await
-        .unwrap_or(false);
+        .map_err(|e| AppError::Internal(format!("Failed to seed property association: {}", e)))?;
+    }
 
-    if !v3_already_seeded {
-
-
+    // ========================================================================
+    // 6. Schemes Master
+    // ========================================================================
     let schemes = [
-        (
-            "SCH-001",
-            "SCH_STUDENT_SCHOLARSHIP",
-            "Student Scholarship",
-            "Direct individual educational financial assistance for enrolled students aged 5 to 25.",
-            "Department of Higher Education",
-            "ACTIVE",
-            "INDIVIDUAL",
-        ),
-        (
-            "SCH-002",
-            "SCH_HH_SANITATION",
-            "Household Sanitation Assistance",
-            "Household-level assistance for toilet and sanitation infrastructure construction.",
-            "Ministry of Housing and Urban Affairs",
-            "ACTIVE",
-            "HOUSEHOLD",
-        ),
-        (
-            "SCH-003",
-            "SCH_WATER_CONNECTION",
-            "Water Connection Assistance",
-            "Infrastructure potable water connection subsidy for residential properties.",
-            "Department of Drinking Water and Sanitation",
-            "ACTIVE",
-            "PROPERTY",
-        ),
+        ("SCH-001", "SCH_STUDENT_SCHOLARSHIP", "Student Educational Scholarship Assistance", "Direct annual financial scholarship for meritorious students from low-income families", "Department of Higher Education", "ACTIVE", "INDIVIDUAL"),
+        ("SCH-002", "SCH_HH_SANITATION", "Household Sanitation and Hygiene Support Scheme", "Comprehensive toilet construction and sanitation facility support for verified rural and peri-urban families", "Department of Drinking Water and Sanitation", "ACTIVE", "HOUSEHOLD"),
+        ("SCH-003", "SCH_WATER_CONNECTION", "Jal Jeevan Household Tap Water Connection", "Piped clean drinking water infrastructure connection to registered residential dwelling plots", "Department of Water Resources", "ACTIVE", "PROPERTY"),
+        ("SCH-004", "SCH_RURAL_HOUSING", "Pradhan Mantri Rural Housing Assistance Scheme", "Financial assistance for construction of pucca dwelling unit for rural families without permanent housing", "Department of Rural Development", "ACTIVE", "HOUSEHOLD"),
+        ("SCH-005", "SCH_ANTYODAYA_RATION", "Antyodaya Priority Grain and Food Security Scheme", "Monthly subsidized food grain entitlement for vulnerable and low-income rural households", "Department of Food & Public Distribution", "ACTIVE", "HOUSEHOLD"),
+        ("SCH-006", "SCH_AYUSHMAN_HEALTH", "Ayushman National Universal Healthcare Cover", "Cashless tertiary and secondary hospital treatment cover up to ₹5,00,000 per family per year", "National Health Authority", "ACTIVE", "HOUSEHOLD"),
+        ("SCH-007", "SCH_SENIOR_PENSION", "National Senior Citizen Social Security Pension", "Monthly direct benefit social pension for senior residents aged 60 and above", "Department of Social Justice", "ACTIVE", "INDIVIDUAL"),
+        ("SCH-008", "SCH_DISABILITY_SUPPORT", "Divyangjan Assistive Aid & Livelihood Support", "Financial and assistive aid support for persons with certified physical mobility challenges", "Department of Empowerment of Persons with Disabilities", "ACTIVE", "INDIVIDUAL"),
+        ("SCH-009", "SCH_RURAL_LIVELIHOOD", "Deendayal Antyodaya Rural Livelihood Mission", "Seed capital and skill development support for rural women and small enterprise households", "Department of Rural Development", "ACTIVE", "HOUSEHOLD"),
     ];
 
     let mut scheme_map = std::collections::HashMap::new();
@@ -612,74 +589,72 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
         scheme_map.insert(code, id);
     }
 
-    let sch_scholarship_id = scheme_map["SCH_STUDENT_SCHOLARSHIP"];
-    let sch_sanitation_id = scheme_map["SCH_HH_SANITATION"];
-    let sch_water_id = scheme_map["SCH_WATER_CONNECTION"];
-
     // Rules for Student Scholarship
+    let sch_scholarship_id = scheme_map["SCH_STUDENT_SCHOLARSHIP"];
     let scholarship_rules = [
         (sch_scholarship_id, "AGE_MIN", ">=", "5", 1),
         (sch_scholarship_id, "AGE_MAX", "<=", "25", 2),
         (sch_scholarship_id, "RESIDENCY_REQUIRED", "=", "TRUE", 3),
+        (sch_scholarship_id, "INCOME_MAX", "<=", "200000", 4),
     ];
-
     for (sch_id, r_type, op, val, prio) in scholarship_rules {
-        sqlx::query(
-            r#"
-            INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active)
-            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true)
-            "#,
-        )
-        .bind(sch_id)
-        .bind(r_type)
-        .bind(op)
-        .bind(val)
-        .bind(prio)
-        .execute(pool)
-        .await
-        .map_err(|e| AppError::Internal(format!("Failed to seed rule {}: {}", r_type, e)))?;
+        sqlx::query("INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true)")
+            .bind(sch_id).bind(r_type).bind(op).bind(val).bind(prio).execute(pool).await?;
     }
 
-    // Rules for Household Sanitation Assistance
+    // Rules for Sanitation
+    let sch_sanitation_id = scheme_map["SCH_HH_SANITATION"];
     let sanitation_rules = [
         (sch_sanitation_id, "HOUSEHOLD_SIZE_MIN", ">=", "2", 1),
         (sch_sanitation_id, "RESIDENCY_REQUIRED", "=", "TRUE", 2),
+        (sch_sanitation_id, "INCOME_MAX", "<=", "250000", 3),
     ];
-
     for (sch_id, r_type, op, val, prio) in sanitation_rules {
-        sqlx::query(
-            r#"
-            INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active)
-            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true)
-            "#,
-        )
-        .bind(sch_id)
-        .bind(r_type)
-        .bind(op)
-        .bind(val)
-        .bind(prio)
-        .execute(pool)
-        .await
-        .map_err(|e| AppError::Internal(format!("Failed to seed rule {}: {}", r_type, e)))?;
+        sqlx::query("INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true)")
+            .bind(sch_id).bind(r_type).bind(op).bind(val).bind(prio).execute(pool).await?;
     }
 
-    // Rules for Water Connection Assistance
-    sqlx::query(
-        r#"
-        INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active)
-        VALUES (gen_random_uuid(), $1, 'PROPERTY_REQUIRED', '=', 'TRUE', 1, true)
-        "#,
-    )
-    .bind(sch_water_id)
-    .execute(pool)
-    .await
-    .map_err(|e| AppError::Internal(format!("Failed to seed rule PROPERTY_REQUIRED: {}", e)))?;
+    // Rules for Water Connection
+    let sch_water_id = scheme_map["SCH_WATER_CONNECTION"];
+    sqlx::query("INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active) VALUES (gen_random_uuid(), $1, 'PROPERTY_REQUIRED', '=', 'TRUE', 1, true)")
+        .bind(sch_water_id).execute(pool).await?;
+
+    // Rules for Rural Housing
+    let sch_housing_id = scheme_map["SCH_RURAL_HOUSING"];
+    let housing_rules = [
+        (sch_housing_id, "INCOME_MAX", "<=", "200000", 1),
+        (sch_housing_id, "RESIDENCY_REQUIRED", "=", "TRUE", 2),
+    ];
+    for (sch_id, r_type, op, val, prio) in housing_rules {
+        sqlx::query("INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true)")
+            .bind(sch_id).bind(r_type).bind(op).bind(val).bind(prio).execute(pool).await?;
+    }
+
+    // Rules for Senior Pension
+    let sch_pension_id = scheme_map["SCH_SENIOR_PENSION"];
+    let pension_rules = [
+        (sch_pension_id, "AGE_MIN", ">=", "60", 1),
+        (sch_pension_id, "INCOME_MAX", "<=", "200000", 2),
+    ];
+    for (sch_id, r_type, op, val, prio) in pension_rules {
+        sqlx::query("INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true)")
+            .bind(sch_id).bind(r_type).bind(op).bind(val).bind(prio).execute(pool).await?;
+    }
+
+    // Rules for Ayushman Healthcare
+    let sch_health_id = scheme_map["SCH_AYUSHMAN_HEALTH"];
+    let health_rules = [
+        (sch_health_id, "INCOME_MAX", "<=", "250000", 1),
+        (sch_health_id, "RESIDENCY_REQUIRED", "=", "TRUE", 2),
+    ];
+    for (sch_id, r_type, op, val, prio) in health_rules {
+        sqlx::query("INSERT INTO scheme_rules (id, scheme_id, rule_type, operator, value, priority, active) VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, true)")
+            .bind(sch_id).bind(r_type).bind(op).bind(val).bind(prio).execute(pool).await?;
+    }
 
     // ========================================================================
-    // 12. V3 Seed Applications & Benefits
+    // 7. Seed Rahul's historical benefit (for duplicate/history test)
     // ========================================================================
-
-    // 1. Rahul - Student Scholarship (INDIVIDUAL, ₹10,000, 2025)
     let app1_row = sqlx::query(
         r#"
         INSERT INTO applications (
@@ -690,7 +665,6 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
             gen_random_uuid(), 'APP-2025-001', 'APP-SCHOLAR-2025-001', $1, $2, $2,
             '2025-01-08T10:00:00Z', 'DISBURSED', 'BENEFIT_DISBURSED', '2025-01-08', $3
         )
-        ON CONFLICT (application_number) DO UPDATE SET status = EXCLUDED.status
         RETURNING id
         "#,
     )
@@ -698,12 +672,10 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     .bind(rahul_id)
     .bind(admin_user_id)
     .fetch_one(pool)
-    .await
-    .map_err(|e| AppError::Internal(format!("Failed to seed application APP-2025-001: {}", e)))?;
+    .await?;
 
     let app1_id: Uuid = app1_row.get("id");
 
-    // Eligibility assessment for App 1
     let assess1_row = sqlx::query(
         r#"
         INSERT INTO eligibility_assessments (id, application_id, result, evaluated_at, engine_version, summary)
@@ -718,7 +690,6 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
 
     let assess1_id: Uuid = assess1_row.get("id");
 
-    // Rule results for App 1
     sqlx::query(
         r#"
         INSERT INTO eligibility_rule_results (id, assessment_id, rule_type, result, actual_value, expected_value, explanation)
@@ -732,8 +703,7 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     .execute(pool)
     .await?;
 
-    // Benefit 1: Rahul Scholarship
-    let ben1_row = sqlx::query(
+    sqlx::query(
         r#"
         INSERT INTO benefits (
             id, public_id, scheme_id, application_id, benefit_unit_type, person_id,
@@ -746,8 +716,6 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
             10000.00, 'INR', 'Direct Educational Student Scholarship Allowance for 2025 academic session',
             $4, $5
         )
-        ON CONFLICT (public_id) DO UPDATE SET status = EXCLUDED.status
-        RETURNING id
         "#,
     )
     .bind(sch_scholarship_id)
@@ -755,225 +723,16 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     .bind(rahul_id)
     .bind(source_hr_id)
     .bind(admin_user_id)
-    .fetch_one(pool)
-    .await?;
-
-    let ben1_id: Uuid = ben1_row.get("id");
-
-    sqlx::query(
-        r#"
-        INSERT INTO benefit_events (id, benefit_id, event_type, effective_at, recorded_at, source_id, metadata, created_by)
-        VALUES 
-        (gen_random_uuid(), $1, 'APPROVED', '2025-01-10T12:00:00Z', '2025-01-10T12:00:00Z', $2, '{"notes":"Scholarship approved based on verified age & enrollment"}'::jsonb, $3),
-        (gen_random_uuid(), $1, 'DISBURSED', '2025-01-15T15:30:00Z', '2025-01-15T15:30:00Z', $2, '{"disbursement_method":"Electronic Civic Transfer","batch":"BTCH-2025-01"}'::jsonb, $3)
-        "#,
-    )
-    .bind(ben1_id)
-    .bind(source_hr_id)
-    .bind(admin_user_id)
     .execute(pool)
     .await?;
 
-    // 2. Household H001 - Household Sanitation Assistance (Toilet T001, 2024)
-    let app2_row = sqlx::query(
-        r#"
-        INSERT INTO applications (
-            id, public_id, application_number, scheme_id, applicant_person_id, target_household_id, target_property_id,
-            submitted_at, status, current_stage, application_date, created_by
-        )
-        VALUES (
-            gen_random_uuid(), 'APP-2024-001', 'APP-SAN-2024-001', $1, $2, $3, $4,
-            '2024-05-20T11:00:00Z', 'DISBURSED', 'BENEFIT_DISBURSED', '2024-05-20', $5
-        )
-        ON CONFLICT (application_number) DO UPDATE SET status = EXCLUDED.status
-        RETURNING id
-        "#,
-    )
-    .bind(sch_sanitation_id)
-    .bind(ramesh_id)
-    .bind(h001_id)
-    .bind(p001_id)
-    .bind(admin_user_id)
-    .fetch_one(pool)
-    .await?;
+    // Seed Sharma Family (35 members, ₹1,72,000 income, 6 applications)
+    seed_sharma_family(pool, citizen_user_id, admin_user_id, source_hr_id, source_fv_id).await?;
 
-    let app2_id: Uuid = app2_row.get("id");
-
-    let ben2_row = sqlx::query(
-        r#"
-        INSERT INTO benefits (
-            id, public_id, scheme_id, application_id, benefit_unit_type, household_id, property_id,
-            status, approved_at, disbursed_at, valid_from, valid_to, quantity, unit,
-            description, source_id, created_by
-        )
-        VALUES (
-            gen_random_uuid(), 'BEN-2024-001', $1, $2, 'HOUSEHOLD', $3, $4,
-            'DISBURSED', '2024-06-05T14:00:00Z', '2024-06-12T16:00:00Z', '2024-06-01', '2024-12-31',
-            1, 'toilet', '1 Sanitation Toilet Asset Unit (T001) allocated to Household H001',
-            $5, $6
-        )
-        ON CONFLICT (public_id) DO UPDATE SET status = EXCLUDED.status
-        RETURNING id
-        "#,
-    )
-    .bind(sch_sanitation_id)
-    .bind(app2_id)
-    .bind(h001_id)
-    .bind(p001_id)
-    .bind(source_fv_id)
-    .bind(admin_user_id)
-    .fetch_one(pool)
-    .await?;
-
-    let ben2_id: Uuid = ben2_row.get("id");
-
-    // Link toilet asset
-    sqlx::query(
-        r#"
-        INSERT INTO benefit_assets (id, benefit_id, property_id, asset_role)
-        VALUES (gen_random_uuid(), $1, $2, 'PHYSICAL_ASSET')
-        "#,
-    )
-    .bind(ben2_id)
-    .bind(p001_id)
-    .execute(pool)
-    .await?;
-
-    // 3. Property P001 - Water Connection Assistance (PROPERTY, 2025)
-    let ben3_row = sqlx::query(
-        r#"
-        INSERT INTO benefits (
-            id, public_id, scheme_id, benefit_unit_type, property_id,
-            status, approved_at, disbursed_at, valid_from, quantity, unit,
-            description, source_id, created_by
-        )
-        VALUES (
-            gen_random_uuid(), 'BEN-2025-002', $1, 'PROPERTY', $2,
-            'DISBURSED', '2025-03-10T09:00:00Z', '2025-03-20T11:00:00Z', '2025-03-01',
-            1, 'connection', '1 Residential Potable Water Connection Line allocated to Property PROP-001',
-            $3, $4
-        )
-        ON CONFLICT (public_id) DO UPDATE SET status = EXCLUDED.status
-        RETURNING id
-        "#,
-    )
-    .bind(sch_water_id)
-    .bind(p001_id)
-    .bind(source_fv_id)
-    .bind(admin_user_id)
-    .fetch_one(pool)
-    .await?;
-
-    let _ben3_id: Uuid = ben3_row.get("id");
-    }
-
-    let h001_id: Uuid = sqlx::query_scalar("SELECT id FROM households WHERE public_id = 'H001'")
-        .fetch_one(pool)
-        .await?;
-
-    // ========================================================================
-    // 16. V4 Matching Model Configuration (Centralized & Versioned)
-    // ========================================================================
-
-    sqlx::query(
-        r#"
-        INSERT INTO matching_model_versions (
-            id, name, version, strong_match_threshold, possible_match_threshold,
-            non_match_threshold, duplicate_high_threshold, duplicate_review_threshold,
-            field_weights, blocking_strategies, normalization_version, is_active, created_by
-        )
-        VALUES (
-            gen_random_uuid(), 'Default Deterministic Civic Matching Configuration', 'v4.0.0',
-            0.82, 0.58, 0.35, 0.78, 0.48,
-            '{"name": 0.30, "date_of_birth": 0.25, "parent_name": 0.15, "address": 0.10, "household": 0.10, "phone": 0.05, "gender": 0.05}'::jsonb,
-            '["NAME_PREFIX_DOB_YEAR", "NAME_PREFIX_DISTRICT", "PHONE_SUFFIX"]'::jsonb,
-            'v4.0.0-unicode-translit', TRUE, $1
-        )
-        ON CONFLICT (version) DO UPDATE SET is_active = TRUE
-        "#,
-    )
-    .bind(admin_user_id)
-    .execute(pool)
-    .await?;
-
-    // ========================================================================
-    // 17. V4 Demo Scenario C: Devanagari Multilingual Records (सुनीता देवी / Sunita Devi)
-    // ========================================================================
-    let sunita_en = sqlx::query(
-        r#"
-        INSERT INTO persons (id, public_id, first_name, last_name, date_of_birth, gender, phone, status, created_by)
-        VALUES (gen_random_uuid(), 'P-DEMO-SUNITA-EN', 'Sunita', 'Devi', '1985-05-15', 'FEMALE', '+919876543201', 'ACTIVE', $1)
-        ON CONFLICT (public_id) DO UPDATE SET first_name = EXCLUDED.first_name
-        RETURNING id
-        "#,
-    )
-    .bind(admin_user_id)
-    .fetch_one(pool)
-    .await?;
-    let sunita_en_id: Uuid = sunita_en.get("id");
-
-    let _sunita_hi = sqlx::query(
-        r#"
-        INSERT INTO persons (id, public_id, first_name, last_name, date_of_birth, gender, phone, status, created_by)
-        VALUES (gen_random_uuid(), 'P-DEMO-SUNITA-HI', 'सुनीता', 'देवी', '1985-05-15', 'FEMALE', '+919876543201', 'ACTIVE', $1)
-        ON CONFLICT (public_id) DO UPDATE SET first_name = EXCLUDED.first_name
-        RETURNING id
-        "#,
-    )
-    .bind(admin_user_id)
-    .fetch_one(pool)
-    .await?;
-
-    // Link Sunita to Household H001 and Property P001 for rich evidence matrix
-    let _ = sqlx::query(
-        r#"
-        INSERT INTO household_members (id, household_id, person_id, role, valid_from, created_by)
-        VALUES (gen_random_uuid(), $1, $2, 'MEMBER', '2023-01-01', $3)
-        ON CONFLICT DO NOTHING
-        "#,
-    )
-    .bind(h001_id)
-    .bind(sunita_en_id)
-    .bind(admin_user_id)
-    .execute(pool)
-    .await;
-
-    // ========================================================================
-    // 18. V4 Demo Scenario D: DOB Contradiction Person Record (Rahul Kumar 1988 vs 1998)
-    // ========================================================================
-    let _rahul_older = sqlx::query(
-        r#"
-        INSERT INTO persons (id, public_id, first_name, last_name, date_of_birth, gender, phone, status, created_by)
-        VALUES (gen_random_uuid(), 'P-DEMO-RAHUL-1988', 'Rahul', 'Kumar', '1988-04-12', 'MALE', '+919876543299', 'ACTIVE', $1)
-        ON CONFLICT (public_id) DO UPDATE SET first_name = EXCLUDED.first_name
-        RETURNING id
-        "#,
-    )
-    .bind(admin_user_id)
-    .fetch_one(pool)
-    .await?;
-
-    // Initial seed audit record
-    let seed_request_id = format!("seed-{}", Uuid::new_v4());
-    sqlx::query(
-        r#"
-        INSERT INTO audit_events (id, event_type, user_id, organization_id, request_id, details)
-        VALUES (gen_random_uuid(), 'SYSTEM_INITIALIZED', NULL, $1, $2, $3)
-        "#,
-    )
-    .bind(org_id)
-    .bind(seed_request_id)
-    .bind(serde_json::json!({
-        "message": "Mira V4 Entity Resolution, Explainable Duplicate Intelligence & Human Review system seeded",
-        "environment": "Synthetic Demo Environment"
-    }))
-    .execute(pool)
-    .await
-    .map_err(|e| AppError::Internal(format!("Failed to write seed audit event: {}", e)))?;
-
-    seed_sharma_family(pool, admin_user_id, source_hr_id, source_fv_id).await?;
+    // Seed 10 realistic synthetic documents and application document links
     seed_demo_documents(pool).await?;
-    tracing::info!("Deterministic V4 seed finished successfully. Sharma Family (MIRA-FAM-10482) and Duplicate Detection ready.");
+
+    tracing::info!("Deterministic V4/V5 seed finished successfully. Sharma Family (35 members) and 10 synthetic documents ready.");
     Ok(())
 }
 
@@ -1001,17 +760,11 @@ fn synthetic_demo_pdf(label: &str) -> Vec<u8> {
 
 async fn seed_sharma_family(
     pool: &PgPool,
+    citizen_user_id: Uuid,
     admin_user_id: Uuid,
     source_hr_id: Uuid,
     source_fv_id: Uuid,
 ) -> Result<(), AppError> {
-    let citizen_user_id = sqlx::query_scalar::<_, Uuid>(
-        "SELECT id FROM users WHERE email = 'demo.citizen@mira.demo' OR email = 'citizen@mira.local' ORDER BY (email = 'demo.citizen@mira.demo') DESC LIMIT 1"
-    )
-    .fetch_optional(pool)
-    .await?
-    .unwrap_or(admin_user_id);
-
     // 1. Household: MIRA-FAM-10482
     let hh_row = sqlx::query(
         r#"
@@ -1027,18 +780,57 @@ async fn seed_sharma_family(
 
     let sharma_hh_id: Uuid = hh_row.get("id");
 
-    // 2. Persons for Sharma Family:
+    // 2. 35 Members for Sharma Family (Multi-generational tree):
+    // Generation 1 (Great-Grandparents / Grandparents / Elders)
+    // Generation 2 (Rajesh & Siblings / In-laws / Cousins)
+    // Generation 3 (Children)
+    // Generation 4 (Infants / Dependents)
     let sharma_persons = [
-        ("P-10482-01", "Rajesh", "Sharma", NaiveDate::from_ymd_opt(1985, 3, 12), "Male", "demo.citizen@mira.demo", "XXXX-XXXX-4821"),
-        ("P-10482-02", "Sunita", "Sharma", NaiveDate::from_ymd_opt(1988, 7, 24), "Female", "sunita.sharma@mira.demo", "XXXX-XXXX-7722"),
-        ("P-10482-03", "Ananya", "Sharma", NaiveDate::from_ymd_opt(2012, 5, 18), "Female", "ananya.sharma@mira.demo", "XXXX-XXXX-9410"),
-        ("P-10482-04", "Aarav", "Sharma", NaiveDate::from_ymd_opt(2016, 9, 10), "Male", "aarav.sharma@mira.demo", "XXXX-XXXX-4412"),
-        ("P-10482-05", "Meena", "Sharma", NaiveDate::from_ymd_opt(1960, 11, 4), "Female", "meena.sharma@mira.demo", "XXXX-XXXX-1102"),
+        // G2 Head & Applicant
+        ("P-10482-01", "Rajesh", "Sharma", NaiveDate::from_ymd_opt(1985, 3, 12), "Male", "demo.citizen@mira.demo", "XXXX-XXXX-4821", "HEAD"),
+        ("P-10482-02", "Sunita", "Sharma", NaiveDate::from_ymd_opt(1988, 7, 24), "Female", "sunita.sharma@mira.demo", "XXXX-XXXX-7722", "SPOUSE"),
+        // G1 Elders
+        ("P-10482-03", "Devraj", "Sharma", NaiveDate::from_ymd_opt(1938, 4, 10), "Male", "devraj.sharma@mira.demo", "XXXX-XXXX-3801", "DEPENDENT"),
+        ("P-10482-04", "Kamala", "Sharma", NaiveDate::from_ymd_opt(1941, 8, 15), "Female", "kamala.sharma@mira.demo", "XXXX-XXXX-4102", "DEPENDENT"),
+        ("P-10482-05", "Meena", "Sharma", NaiveDate::from_ymd_opt(1960, 11, 4), "Female", "meena.sharma@mira.demo", "XXXX-XXXX-1102", "DEPENDENT"),
+        ("P-10482-06", "Ramakant", "Sharma", NaiveDate::from_ymd_opt(1958, 2, 19), "Male", "ramakant.sharma@mira.demo", "XXXX-XXXX-5803", "DEPENDENT"),
+        ("P-10482-07", "Harish", "Sharma", NaiveDate::from_ymd_opt(1962, 9, 5), "Male", "harish.sharma@mira.demo", "XXXX-XXXX-6204", "DEPENDENT"),
+        ("P-10482-08", "Shashi", "Sharma", NaiveDate::from_ymd_opt(1965, 6, 12), "Female", "shashi.sharma@mira.demo", "XXXX-XXXX-6505", "DEPENDENT"),
+        // G2 Siblings & In-Laws (using SIBLING and OTHER to satisfy chk_membership_role)
+        ("P-10482-09", "Manoj", "Sharma", NaiveDate::from_ymd_opt(1987, 5, 14), "Male", "manoj.sharma@mira.demo", "XXXX-XXXX-8706", "SIBLING"),
+        ("P-10482-10", "Pooja", "Sharma", NaiveDate::from_ymd_opt(1990, 1, 20), "Female", "pooja.sharma@mira.demo", "XXXX-XXXX-9007", "SIBLING"),
+        ("P-10482-11", "Suresh", "Sharma", NaiveDate::from_ymd_opt(1989, 10, 8), "Male", "suresh.sharma@mira.demo", "XXXX-XXXX-8908", "SIBLING"),
+        ("P-10482-12", "Kavita", "Sharma", NaiveDate::from_ymd_opt(1992, 4, 16), "Female", "kavita.sharma@mira.demo", "XXXX-XXXX-9209", "SIBLING"),
+        ("P-10482-13", "Anita", "Sharma", NaiveDate::from_ymd_opt(1991, 12, 3), "Female", "anita.sharma@mira.demo", "XXXX-XXXX-9110", "SIBLING"),
+        ("P-10482-14", "Deepak", "Verma", NaiveDate::from_ymd_opt(1988, 3, 29), "Male", "deepak.verma@mira.demo", "XXXX-XXXX-8811", "OTHER"),
+        ("P-10482-15", "Vikram", "Sharma", NaiveDate::from_ymd_opt(1984, 7, 11), "Male", "vikram.sharma@mira.demo", "XXXX-XXXX-8412", "SIBLING"),
+        ("P-10482-16", "Neha", "Sharma", NaiveDate::from_ymd_opt(1987, 11, 25), "Female", "neha.sharma@mira.demo", "XXXX-XXXX-8713", "OTHER"),
+        ("P-10482-17", "Sanjay", "Sharma", NaiveDate::from_ymd_opt(1986, 8, 17), "Male", "sanjay.sharma@mira.demo", "XXXX-XXXX-8614", "SIBLING"),
+        ("P-10482-18", "Ritu", "Sharma", NaiveDate::from_ymd_opt(1989, 2, 9), "Female", "ritu.sharma@mira.demo", "XXXX-XXXX-8915", "OTHER"),
+        // G3 Children
+        ("P-10482-19", "Ananya", "Sharma", NaiveDate::from_ymd_opt(2012, 5, 18), "Female", "ananya.sharma@mira.demo", "XXXX-XXXX-9410", "CHILD"),
+        ("P-10482-20", "Aarav", "Sharma", NaiveDate::from_ymd_opt(2016, 9, 10), "Male", "aarav.sharma@mira.demo", "XXXX-XXXX-4412", "CHILD"),
+        ("P-10482-21", "Diya", "Sharma", NaiveDate::from_ymd_opt(2014, 3, 22), "Female", "diya.sharma@mira.demo", "XXXX-XXXX-1421", "CHILD"),
+        ("P-10482-22", "Rohan", "Sharma", NaiveDate::from_ymd_opt(2018, 7, 15), "Male", "rohan.sharma@mira.demo", "XXXX-XXXX-1822", "CHILD"),
+        ("P-10482-23", "Ishaan", "Sharma", NaiveDate::from_ymd_opt(2015, 11, 30), "Male", "ishaan.sharma@mira.demo", "XXXX-XXXX-1523", "CHILD"),
+        ("P-10482-24", "Tanya", "Sharma", NaiveDate::from_ymd_opt(2019, 4, 5), "Female", "tanya.sharma@mira.demo", "XXXX-XXXX-1924", "CHILD"),
+        ("P-10482-25", "Aryan", "Verma", NaiveDate::from_ymd_opt(2017, 6, 18), "Male", "aryan.verma@mira.demo", "XXXX-XXXX-1725", "CHILD"),
+        ("P-10482-26", "Simran", "Verma", NaiveDate::from_ymd_opt(2020, 9, 12), "Female", "simran.verma@mira.demo", "XXXX-XXXX-2026", "CHILD"),
+        ("P-10482-27", "Aditya", "Sharma", NaiveDate::from_ymd_opt(2013, 1, 25), "Male", "aditya.sharma@mira.demo", "XXXX-XXXX-1327", "CHILD"),
+        ("P-10482-28", "Riya", "Sharma", NaiveDate::from_ymd_opt(2016, 5, 8), "Female", "riya.sharma@mira.demo", "XXXX-XXXX-1628", "CHILD"),
+        ("P-10482-29", "Varun", "Sharma", NaiveDate::from_ymd_opt(2015, 8, 19), "Male", "varun.sharma@mira.demo", "XXXX-XXXX-1529", "CHILD"),
+        ("P-10482-30", "Khushi", "Sharma", NaiveDate::from_ymd_opt(2018, 12, 4), "Female", "khushi.sharma@mira.demo", "XXXX-XXXX-1830", "CHILD"),
+        ("P-10482-31", "Pranav", "Sharma", NaiveDate::from_ymd_opt(2021, 2, 14), "Male", "pranav.sharma@mira.demo", "XXXX-XXXX-2131", "CHILD"),
+        ("P-10482-32", "Sneha", "Sharma", NaiveDate::from_ymd_opt(2022, 8, 20), "Female", "sneha.sharma@mira.demo", "XXXX-XXXX-2232", "CHILD"),
+        ("P-10482-33", "Vihaan", "Sharma", NaiveDate::from_ymd_opt(2023, 4, 11), "Male", "vihaan.sharma@mira.demo", "XXXX-XXXX-2333", "CHILD"),
+        // G4 Great-Grandchildren / Dependents
+        ("P-10482-34", "Krrish", "Sharma", NaiveDate::from_ymd_opt(2024, 6, 1), "Male", "krrish.sharma@mira.demo", "XXXX-XXXX-2434", "DEPENDENT"),
+        ("P-10482-35", "Anvi", "Sharma", NaiveDate::from_ymd_opt(2025, 1, 15), "Female", "anvi.sharma@mira.demo", "XXXX-XXXX-2535", "DEPENDENT"),
     ];
 
     let mut person_map = std::collections::HashMap::new();
 
-    for (pub_id, fname, lname, dob, gender, email, masked_id) in sharma_persons {
+    for (pub_id, fname, lname, dob, gender, email, masked_id, role) in sharma_persons {
         let p_row = sqlx::query(
             r#"
             INSERT INTO persons (id, public_id, first_name, last_name, date_of_birth, gender, email, status, created_by)
@@ -1061,11 +853,11 @@ async fn seed_sharma_family(
         let pid: Uuid = p_row.get("id");
         person_map.insert(pub_id, pid);
 
+        // Aadhaar Identifier
         let _ = sqlx::query(
             r#"
             INSERT INTO person_identifiers (id, person_id, identifier_type, identifier_reference, source_id, verified)
             VALUES (gen_random_uuid(), $1, 'DEMO_AADHAAR', $2, $3, true)
-            ON CONFLICT DO NOTHING
             "#,
         )
         .bind(pid)
@@ -1073,23 +865,117 @@ async fn seed_sharma_family(
         .bind(source_hr_id)
         .execute(pool)
         .await;
+
+        // Household Membership
+        let _ = sqlx::query(
+            r#"
+            INSERT INTO household_memberships (id, household_id, person_id, membership_role, valid_from, source_id, verification_status, confidence, created_by)
+            VALUES (gen_random_uuid(), $1, $2, $3, '2010-02-14', $4, 'VERIFIED', 1.00, $5)
+            "#,
+        )
+        .bind(sharma_hh_id)
+        .bind(pid)
+        .bind(role)
+        .bind(source_hr_id)
+        .bind(citizen_user_id)
+        .execute(pool)
+        .await;
     }
 
     let rajesh_id = person_map["P-10482-01"];
     let sunita_id = person_map["P-10482-02"];
-    let ananya_id = person_map["P-10482-03"];
-    let aarav_id = person_map["P-10482-04"];
+    let devraj_id = person_map["P-10482-03"];
+    let kamala_id = person_map["P-10482-04"];
     let meena_id = person_map["P-10482-05"];
+    let ramakant_id = person_map["P-10482-06"];
+    let harish_id = person_map["P-10482-07"];
+    let shashi_id = person_map["P-10482-08"];
+    let manoj_id = person_map["P-10482-09"];
+    let pooja_id = person_map["P-10482-10"];
+    let suresh_id = person_map["P-10482-11"];
+    let kavita_id = person_map["P-10482-12"];
+    let anita_id = person_map["P-10482-13"];
+    let deepak_id = person_map["P-10482-14"];
+    let vikram_id = person_map["P-10482-15"];
+    let neha_id = person_map["P-10482-16"];
+    let sanjay_id = person_map["P-10482-17"];
+    let ritu_id = person_map["P-10482-18"];
+    let ananya_id = person_map["P-10482-19"];
+    let aarav_id = person_map["P-10482-20"];
+    let diya_id = person_map["P-10482-21"];
+    let rohan_id = person_map["P-10482-22"];
+    let ishaan_id = person_map["P-10482-23"];
+    let tanya_id = person_map["P-10482-24"];
+    let aryan_id = person_map["P-10482-25"];
+    let simran_id = person_map["P-10482-26"];
+    let aditya_id = person_map["P-10482-27"];
+    let riya_id = person_map["P-10482-28"];
+    let varun_id = person_map["P-10482-29"];
+    let khushi_id = person_map["P-10482-30"];
+    let pranav_id = person_map["P-10482-31"];
+    let sneha_id = person_map["P-10482-32"];
+    let vihaan_id = person_map["P-10482-33"];
 
-    // 3. Relationships:
+    // 3. Relationships for Sharma Family Tree:
     let rels = [
+        // G1 Marriages & Lineage
+        (devraj_id, kamala_id, "SPOUSE", NaiveDate::from_ymd_opt(1957, 5, 20).unwrap()),
+        (devraj_id, ramakant_id, "PARENT", NaiveDate::from_ymd_opt(1958, 2, 19).unwrap()),
+        (kamala_id, ramakant_id, "PARENT", NaiveDate::from_ymd_opt(1958, 2, 19).unwrap()),
+        (devraj_id, harish_id, "PARENT", NaiveDate::from_ymd_opt(1962, 9, 5).unwrap()),
+        (kamala_id, harish_id, "PARENT", NaiveDate::from_ymd_opt(1962, 9, 5).unwrap()),
+        (ramakant_id, meena_id, "SPOUSE", NaiveDate::from_ymd_opt(1983, 11, 28).unwrap()),
+        (harish_id, shashi_id, "SPOUSE", NaiveDate::from_ymd_opt(1983, 2, 14).unwrap()),
+        // G2 Marriages & Lineage
+        (ramakant_id, rajesh_id, "PARENT", NaiveDate::from_ymd_opt(1985, 3, 12).unwrap()),
+        (meena_id, rajesh_id, "PARENT", NaiveDate::from_ymd_opt(1985, 3, 12).unwrap()),
+        (ramakant_id, manoj_id, "PARENT", NaiveDate::from_ymd_opt(1987, 5, 14).unwrap()),
+        (meena_id, manoj_id, "PARENT", NaiveDate::from_ymd_opt(1987, 5, 14).unwrap()),
+        (ramakant_id, suresh_id, "PARENT", NaiveDate::from_ymd_opt(1989, 10, 8).unwrap()),
+        (meena_id, suresh_id, "PARENT", NaiveDate::from_ymd_opt(1989, 10, 8).unwrap()),
+        (ramakant_id, anita_id, "PARENT", NaiveDate::from_ymd_opt(1991, 12, 3).unwrap()),
+        (meena_id, anita_id, "PARENT", NaiveDate::from_ymd_opt(1991, 12, 3).unwrap()),
+        (harish_id, vikram_id, "PARENT", NaiveDate::from_ymd_opt(1984, 7, 11).unwrap()),
+        (shashi_id, vikram_id, "PARENT", NaiveDate::from_ymd_opt(1984, 7, 11).unwrap()),
+        (harish_id, sanjay_id, "PARENT", NaiveDate::from_ymd_opt(1986, 8, 17).unwrap()),
+        (shashi_id, sanjay_id, "PARENT", NaiveDate::from_ymd_opt(1986, 8, 17).unwrap()),
         (rajesh_id, sunita_id, "SPOUSE", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
+        (manoj_id, pooja_id, "SPOUSE", NaiveDate::from_ymd_opt(2012, 11, 20).unwrap()),
+        (suresh_id, kavita_id, "SPOUSE", NaiveDate::from_ymd_opt(2014, 5, 12).unwrap()),
+        (deepak_id, anita_id, "SPOUSE", NaiveDate::from_ymd_opt(2015, 12, 8).unwrap()),
+        (vikram_id, neha_id, "SPOUSE", NaiveDate::from_ymd_opt(2011, 4, 18).unwrap()),
+        (sanjay_id, ritu_id, "SPOUSE", NaiveDate::from_ymd_opt(2013, 9, 22).unwrap()),
+        // G3 Lineage
         (rajesh_id, ananya_id, "PARENT", NaiveDate::from_ymd_opt(2012, 5, 18).unwrap()),
         (sunita_id, ananya_id, "PARENT", NaiveDate::from_ymd_opt(2012, 5, 18).unwrap()),
         (rajesh_id, aarav_id, "PARENT", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
         (sunita_id, aarav_id, "PARENT", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
-        (meena_id, rajesh_id, "PARENT", NaiveDate::from_ymd_opt(1985, 3, 12).unwrap()),
-        (ananya_id, aarav_id, "SIBLING", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
+        (manoj_id, diya_id, "PARENT", NaiveDate::from_ymd_opt(2014, 3, 22).unwrap()),
+        (pooja_id, diya_id, "PARENT", NaiveDate::from_ymd_opt(2014, 3, 22).unwrap()),
+        (manoj_id, rohan_id, "PARENT", NaiveDate::from_ymd_opt(2018, 7, 15).unwrap()),
+        (pooja_id, rohan_id, "PARENT", NaiveDate::from_ymd_opt(2018, 7, 15).unwrap()),
+        (manoj_id, pranav_id, "PARENT", NaiveDate::from_ymd_opt(2021, 2, 14).unwrap()),
+        (pooja_id, pranav_id, "PARENT", NaiveDate::from_ymd_opt(2021, 2, 14).unwrap()),
+        (suresh_id, ishaan_id, "PARENT", NaiveDate::from_ymd_opt(2015, 11, 30).unwrap()),
+        (kavita_id, ishaan_id, "PARENT", NaiveDate::from_ymd_opt(2015, 11, 30).unwrap()),
+        (suresh_id, tanya_id, "PARENT", NaiveDate::from_ymd_opt(2019, 4, 5).unwrap()),
+        (kavita_id, tanya_id, "PARENT", NaiveDate::from_ymd_opt(2019, 4, 5).unwrap()),
+        (suresh_id, sneha_id, "PARENT", NaiveDate::from_ymd_opt(2022, 8, 20).unwrap()),
+        (kavita_id, sneha_id, "PARENT", NaiveDate::from_ymd_opt(2022, 8, 20).unwrap()),
+        (deepak_id, aryan_id, "PARENT", NaiveDate::from_ymd_opt(2017, 6, 18).unwrap()),
+        (anita_id, aryan_id, "PARENT", NaiveDate::from_ymd_opt(2017, 6, 18).unwrap()),
+        (deepak_id, simran_id, "PARENT", NaiveDate::from_ymd_opt(2020, 9, 12).unwrap()),
+        (anita_id, simran_id, "PARENT", NaiveDate::from_ymd_opt(2020, 9, 12).unwrap()),
+        (vikram_id, aditya_id, "PARENT", NaiveDate::from_ymd_opt(2013, 1, 25).unwrap()),
+        (neha_id, aditya_id, "PARENT", NaiveDate::from_ymd_opt(2013, 1, 25).unwrap()),
+        (vikram_id, riya_id, "PARENT", NaiveDate::from_ymd_opt(2016, 5, 8).unwrap()),
+        (neha_id, riya_id, "PARENT", NaiveDate::from_ymd_opt(2016, 5, 8).unwrap()),
+        (vikram_id, vihaan_id, "PARENT", NaiveDate::from_ymd_opt(2023, 4, 11).unwrap()),
+        (neha_id, vihaan_id, "PARENT", NaiveDate::from_ymd_opt(2023, 4, 11).unwrap()),
+        (sanjay_id, varun_id, "PARENT", NaiveDate::from_ymd_opt(2015, 8, 19).unwrap()),
+        (ritu_id, varun_id, "PARENT", NaiveDate::from_ymd_opt(2015, 8, 19).unwrap()),
+        (sanjay_id, khushi_id, "PARENT", NaiveDate::from_ymd_opt(2018, 12, 4).unwrap()),
+        (ritu_id, khushi_id, "PARENT", NaiveDate::from_ymd_opt(2018, 12, 4).unwrap()),
     ];
 
     for (p_a, p_b, rtype, vfrom) in rels {
@@ -1097,7 +983,6 @@ async fn seed_sharma_family(
             r#"
             INSERT INTO person_relationships (id, person_a_id, person_b_id, relationship_type, valid_from, source_id, verification_status, confidence, created_by)
             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'VERIFIED', 1.00, $6)
-            ON CONFLICT DO NOTHING
             "#,
         )
         .bind(p_a)
@@ -1110,34 +995,7 @@ async fn seed_sharma_family(
         .await;
     }
 
-    // 4. Memberships in Sharma Household:
-    let members = [
-        (rajesh_id, "HEAD", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
-        (sunita_id, "SPOUSE", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
-        (ananya_id, "CHILD", NaiveDate::from_ymd_opt(2012, 5, 18).unwrap()),
-        (aarav_id, "CHILD", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
-        (meena_id, "DEPENDENT", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
-    ];
-
-    for (pid, role, vfrom) in members {
-        let _ = sqlx::query(
-            r#"
-            INSERT INTO household_memberships (id, household_id, person_id, membership_role, valid_from, source_id, verification_status, confidence, created_by)
-            VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, 'VERIFIED', 1.00, $6)
-            ON CONFLICT DO NOTHING
-            "#,
-        )
-        .bind(sharma_hh_id)
-        .bind(pid)
-        .bind(role)
-        .bind(vfrom)
-        .bind(source_hr_id)
-        .bind(citizen_user_id)
-        .execute(pool)
-        .await;
-    }
-
-    // 5. Property for Sharma Family:
+    // 4. Property for Sharma Family
     let prop_row = sqlx::query(
         r#"
         INSERT INTO properties (id, public_id, property_type, address_line, locality, district, state, postal_code, latitude, longitude)
@@ -1155,7 +1013,6 @@ async fn seed_sharma_family(
         r#"
         INSERT INTO property_associations (id, property_id, household_id, association_type, valid_from, verification_status, confidence)
         VALUES (gen_random_uuid(), $1, $2, 'HOUSEHOLD_OCCUPIES', '2010-02-14', 'VERIFIED', 1.00)
-        ON CONFLICT DO NOTHING
         "#,
     )
     .bind(sharma_prop_id)
@@ -1163,14 +1020,14 @@ async fn seed_sharma_family(
     .execute(pool)
     .await;
 
-    // 6. Life Events Timeline for Sharma Family:
+    // 5. Timeline Events for Sharma Family (Economic profile: ₹1,72,000 annual income)
     let timeline_events = [
-        ("MARRIAGE", Some(rajesh_id), NaiveDate::from_ymd_opt(2010, 2, 14).unwrap(), "Marriage registered with Sunita Sharma (Civil Registration Office)", "Civil Registration Office"),
-        ("BIRTH", Some(ananya_id), NaiveDate::from_ymd_opt(2012, 5, 18).unwrap(), "Ananya Sharma born (Civil Registration System, BR-2012-0941)", "Civil Registration System"),
-        ("BIRTH", Some(aarav_id), NaiveDate::from_ymd_opt(2016, 9, 10).unwrap(), "Aarav Sharma born (Civil Registration System, BR-2016-4412)", "Civil Registration System"),
-        ("ADDRESS_UPDATE", Some(rajesh_id), NaiveDate::from_ymd_opt(2018, 6, 15).unwrap(), "Household address updated to Demo District, Uttar Pradesh", "Field Verification Unit"),
-        ("INCOME_CERTIFICATE", Some(rajesh_id), NaiveDate::from_ymd_opt(2024, 4, 10).unwrap(), "Income certificate issued (₹1,40,000 / year)", "Revenue Department"),
-        ("SCHEME_APPLICATION", Some(rajesh_id), NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(), "New scheme application submitted: Student Scholarship", "Mira Portal"),
+        ("MARRIAGE", Some(rajesh_id), NaiveDate::from_ymd_opt(2010, 2, 14).unwrap(), "Marriage registered with Sunita Sharma", "Civil Registration Office"),
+        ("BIRTH", Some(ananya_id), NaiveDate::from_ymd_opt(2012, 5, 18).unwrap(), "Ananya Sharma born (BR-2012-0941)", "Civil Registration System"),
+        ("BIRTH", Some(aarav_id), NaiveDate::from_ymd_opt(2016, 9, 10).unwrap(), "Aarav Sharma born (BR-2016-4412)", "Civil Registration System"),
+        ("ADDRESS_UPDATE", Some(rajesh_id), NaiveDate::from_ymd_opt(2018, 6, 15).unwrap(), "Household address verified: House No. 42, Ward 7, Demo District", "Field Verification Unit"),
+        ("INCOME_CERTIFICATE", Some(rajesh_id), NaiveDate::from_ymd_opt(2025, 4, 10).unwrap(), "Income certificate verified: ₹1,72,000 / year (Under ₹2,00,000 poverty line)", "Revenue Department"),
+        ("SCHEME_APPLICATION", Some(rajesh_id), NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(), "Student Scholarship application submitted for Ananya Sharma", "Mira Welfare Portal"),
     ];
 
     for (etype, pid, edate, desc, sname) in timeline_events {
@@ -1178,7 +1035,6 @@ async fn seed_sharma_family(
             r#"
             INSERT INTO life_events (id, event_type, person_id, household_id, effective_date, metadata, created_by)
             VALUES (gen_random_uuid(), $1, $2, $3, $4, $5, $6)
-            ON CONFLICT DO NOTHING
             "#,
         )
         .bind(etype)
@@ -1196,143 +1052,543 @@ async fn seed_sharma_family(
         .await;
     }
 
-    // 7. Scenario 1: Clarification Request Application
-    let sch_scholarship_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_STUDENT_SCHOLARSHIP'")
-        .fetch_optional(pool)
-        .await?;
+    // 6. Schemes references
+    let sch_scholarship_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_STUDENT_SCHOLARSHIP'").fetch_one(pool).await?;
+    let sch_sanitation_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_HH_SANITATION'").fetch_one(pool).await?;
+    let sch_housing_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_RURAL_HOUSING'").fetch_one(pool).await?;
+    let sch_water_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_WATER_CONNECTION'").fetch_one(pool).await?;
+    let sch_health_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_AYUSHMAN_HEALTH'").fetch_one(pool).await?;
+    let sch_pension_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_SENIOR_PENSION'").fetch_one(pool).await?;
 
-    if let Some(sch_id) = sch_scholarship_id {
-        let _ = sqlx::query(
-            r#"
-            INSERT INTO applications (
-                id, public_id, application_number, scheme_id, applicant_person_id, target_person_id,
-                submitted_at, status, current_stage, application_date, metadata, created_by
-            )
-            VALUES (
-                gen_random_uuid(), 'APP-2026-10482', 'APP-SCHOLAR-2026-10482', $1, $2, $3,
-                '2026-01-12T09:30:00Z', 'UNDER_VERIFICATION', 'EVIDENCE_REQUESTED', '2026-01-12', $4, $5
-            )
-            ON CONFLICT (application_number) DO UPDATE
-            SET status = EXCLUDED.status, current_stage = EXCLUDED.current_stage, metadata = EXCLUDED.metadata
-            "#,
+    // ------------------------------------------------------------------------
+    // APPLICATION 1: Student Scholarship (EVIDENCE_REQUIRED - Clarification Loop)
+    // ------------------------------------------------------------------------
+    let app_scholar_row = sqlx::query(
+        r#"
+        INSERT INTO applications (
+            id, public_id, application_number, scheme_id, applicant_person_id, target_person_id,
+            submitted_at, status, current_stage, application_date, metadata, created_by
         )
-        .bind(sch_id)
-        .bind(rajesh_id)
-        .bind(ananya_id)
-        .bind(serde_json::json!({
-            "declared_income": 140000,
-            "applicant_name": "Rajesh Sharma",
-            "target_name": "Ananya Sharma",
-            "household_public_id": "MIRA-FAM-10482",
-            "evidence_requests": [
-                {
-                    "id": "EV-REQ-10482",
-                    "evidence_type": "RESIDENCE_PROOF",
-                    "reason": "Address Variation Flagged",
-                    "description": "Preliminary document extraction found address text variation with municipal database. Please upload current address proof / electricity bill.",
-                    "status": "PENDING",
-                    "requested_at": "2026-01-14T11:00:00Z",
-                    "requested_by": "Verification Officer"
-                }
-            ],
-            "clarification_needed": true,
-            "notes": "Evidence requested by verification officer."
-        }))
-        .bind(citizen_user_id)
-        .execute(pool)
-        .await;
-
-        let _ = sqlx::query(
-            r#"
-            INSERT INTO notifications (id, user_id, title, message, notification_type, action_link)
-            VALUES (gen_random_uuid(), $1, 'Action Required: Clarification Requested', 'Verification officer requested updated residence document for application APP-SCHOLAR-2026-10482.', 'ACTION_REQUIRED', '/citizen/applications/APP-2026-10482')
-            ON CONFLICT DO NOTHING
-            "#,
+        VALUES (
+            gen_random_uuid(), 'APP-2026-10482', 'APP-SCHOLAR-2026-10482', $1, $2, $3,
+            '2026-01-12T09:30:00Z', 'EVIDENCE_REQUIRED', 'EVIDENCE_REQUIRED', '2026-01-12', $4, $5
         )
-        .bind(citizen_user_id)
-        .execute(pool)
-        .await;
-    }
+        RETURNING id
+        "#,
+    )
+    .bind(sch_scholarship_id)
+    .bind(rajesh_id)
+    .bind(ananya_id)
+    .bind(serde_json::json!({
+        "declared_income": 172000,
+        "applicant_name": "Rajesh Sharma",
+        "target_name": "Ananya Sharma",
+        "household_public_id": "MIRA-FAM-10482",
+        "evidence_requests": [
+            {
+                "id": "EV-REQ-10482",
+                "evidence_type": "RESIDENCE_PROOF",
+                "reason": "Address Variation Flagged",
+                "description": "Preliminary document extraction found address text variation with municipal database. Please upload current address proof or electricity bill.",
+                "deadline": "2026-02-15",
+                "requested_by": admin_user_id,
+                "requested_at": "2026-01-14T11:00:00Z",
+                "status": "OPEN"
+            }
+        ],
+        "clarification_needed": true,
+        "notes": "Evidence requested by Verification Officer Vikram Malhotra."
+    }))
+    .bind(citizen_user_id)
+    .fetch_one(pool)
+    .await?;
 
-    // 8. Scenario 2: Potential Duplicate Detection Case
-    let sch_sanitation_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_HH_SANITATION'")
-        .fetch_optional(pool)
-        .await?;
+    let app_scholar_id: Uuid = app_scholar_row.get("id");
 
-    if let Some(san_id) = sch_sanitation_id {
-        let dup_app_row = sqlx::query(
-            r#"
-            INSERT INTO applications (
-                id, public_id, application_number, scheme_id, applicant_person_id, target_household_id, target_property_id,
-                submitted_at, status, current_stage, application_date, metadata, created_by
-            )
-            VALUES (
-                gen_random_uuid(), 'APP-2026-10483', 'APP-SAN-2026-10483', $1, $2, $3, $4,
-                '2026-01-14T14:00:00Z', 'UNDER_VERIFICATION', 'OFFICER_REVIEW', '2026-01-14', $5, $6
-            )
-            ON CONFLICT (application_number) DO UPDATE SET status = EXCLUDED.status
-            RETURNING id
-            "#,
+    let _ = sqlx::query(
+        r#"
+        INSERT INTO notifications (id, user_id, type, title, message, entity_type, entity_id)
+        VALUES (gen_random_uuid(), $1, 'ACTION_REQUIRED', 'Action Required: Additional Evidence for APP-SCHOLAR-2026-10482', 'Verification officer requested updated residence document for application APP-SCHOLAR-2026-10482.', 'APPLICATION', $2)
+        "#,
+    )
+    .bind(citizen_user_id)
+    .bind(app_scholar_id.to_string())
+    .execute(pool)
+    .await;
+
+    // ------------------------------------------------------------------------
+    // APPLICATION 2: Sanitation Support (UNDER_VERIFICATION - Duplicate Alert)
+    // ------------------------------------------------------------------------
+    let app_san_row = sqlx::query(
+        r#"
+        INSERT INTO applications (
+            id, public_id, application_number, scheme_id, applicant_person_id, target_household_id, target_property_id,
+            submitted_at, status, current_stage, application_date, metadata, created_by
         )
-        .bind(san_id)
-        .bind(rajesh_id)
-        .bind(sharma_hh_id)
-        .bind(sharma_prop_id)
-        .bind(serde_json::json!({
-            "duplicate_alert": true,
-            "notes": "Potential overlap identified with prior household sanitation record."
-        }))
+        VALUES (
+            gen_random_uuid(), 'APP-2026-10483', 'APP-SAN-2026-10483', $1, $2, $3, $4,
+            '2026-01-14T14:00:00Z', 'UNDER_VERIFICATION', 'OFFICER_REVIEW', '2026-01-14', $5, $6
+        )
+        RETURNING id
+        "#,
+    )
+    .bind(sch_sanitation_id)
+    .bind(rajesh_id)
+    .bind(sharma_hh_id)
+    .bind(sharma_prop_id)
+    .bind(serde_json::json!({
+        "declared_income": 172000,
+        "duplicate_alert": true,
+        "notes": "Potential overlap identified with prior household sanitation record."
+    }))
+    .bind(citizen_user_id)
+    .fetch_one(pool)
+    .await?;
+
+    let app_san_id: Uuid = app_san_row.get("id");
+
+    let dup_case_row = sqlx::query(
+        r#"
+        INSERT INTO benefit_duplicate_cases (
+            id, public_id, application_id, scheme_id, benefit_scope, benefit_unit_type,
+            household_id, status, priority, assessment, reason, recommended_action, created_by
+        )
+        VALUES (
+            gen_random_uuid(), 'CASE-DUP-2026-10483', $1, $2, 'HOUSEHOLD', 'HOUSEHOLD',
+            $3, 'OPEN', 'MEDIUM', 'POTENTIAL_DUPLICATE',
+            'Potential duplicate detected: Lineage cross-match shows prior sanitation asset allocated under family ancestor record.',
+            'MANUAL_REVIEW', $4
+        )
+        RETURNING id
+        "#,
+    )
+    .bind(app_san_id)
+    .bind(sch_sanitation_id)
+    .bind(sharma_hh_id)
+    .bind(admin_user_id)
+    .fetch_one(pool)
+    .await?;
+
+    let dup_case_id: Uuid = dup_case_row.get("id");
+
+    let existing_ben_row = sqlx::query(
+        r#"
+        INSERT INTO benefits (
+            id, public_id, scheme_id, benefit_unit_type, household_id,
+            status, approved_at, disbursed_at, valid_from, valid_to, amount, currency,
+            description, created_by
+        )
+        VALUES (
+            gen_random_uuid(), 'BEN-SAN-2021-HIST', $1, 'HOUSEHOLD', $2,
+            'DISBURSED', '2021-03-15T10:00:00Z', '2021-03-20T10:00:00Z', '2021-03-15', '2026-03-15',
+            12000.00, 'INR', 'Prior rural sanitation asset granted to ancestral Sharma lineage', $3
+        )
+        RETURNING id
+        "#,
+    )
+    .bind(sch_sanitation_id)
+    .bind(sharma_hh_id)
+    .bind(admin_user_id)
+    .fetch_one(pool)
+    .await?;
+
+    let existing_ben_id: Uuid = existing_ben_row.get("id");
+
+    let _ = sqlx::query(
+        r#"
+        INSERT INTO benefit_duplicate_candidates (
+            id, case_id, existing_benefit_id, candidate_rank, duplicate_category, overlap_score, explanation
+        )
+        VALUES (
+            gen_random_uuid(), $1, $2, 1, 'POTENTIAL_DUPLICATE', 0.84,
+            'Prior sanitation asset allocated in 2021 under ancestor record. Verification required to confirm whether this is a legitimate new dwelling unit.'
+        )
+        "#,
+    )
+    .bind(dup_case_id)
+    .bind(existing_ben_id)
+    .execute(pool)
+    .await;
+
+    // ------------------------------------------------------------------------
+    // APPLICATION 3: Rural Housing Assistance (SUBMITTED - Document Review)
+    // ------------------------------------------------------------------------
+    let app_house_row = sqlx::query(
+        r#"
+        INSERT INTO applications (
+            id, public_id, application_number, scheme_id, applicant_person_id, target_household_id, target_property_id,
+            submitted_at, status, current_stage, application_date, metadata, created_by
+        )
+        VALUES (
+            gen_random_uuid(), 'APP-2026-10484', 'APP-HOUSE-2026-10484', $1, $2, $3, $4,
+            '2026-01-16T11:00:00Z', 'SUBMITTED', 'DOCUMENT_REVIEW', '2026-01-16', $5, $6
+        )
+        RETURNING id
+        "#,
+    )
+    .bind(sch_housing_id)
+    .bind(rajesh_id)
+    .bind(sharma_hh_id)
+    .bind(sharma_prop_id)
+    .bind(serde_json::json!({
+        "declared_income": 172000,
+        "housing_type": "Kutcha",
+        "notes": "Application submitted with Income Certificate and Land Khatauni."
+    }))
+    .bind(citizen_user_id)
+    .fetch_one(pool)
+    .await?;
+
+    let _app_house_id: Uuid = app_house_row.get("id");
+
+    // ------------------------------------------------------------------------
+    // APPLICATION 4: Water Connection (UNDER_VERIFICATION - Ready for Scheme Officer)
+    // ------------------------------------------------------------------------
+    let app_water_row = sqlx::query(
+        r#"
+        INSERT INTO applications (
+            id, public_id, application_number, scheme_id, applicant_person_id, target_property_id,
+            submitted_at, status, current_stage, application_date, metadata, created_by
+        )
+        VALUES (
+            gen_random_uuid(), 'APP-2026-10485', 'APP-WATER-2026-10485', $1, $2, $3,
+            '2026-01-10T08:00:00Z', 'UNDER_VERIFICATION', 'SCHEME_REVIEW', '2026-01-10', $4, $5
+        )
+        RETURNING id
+        "#,
+    )
+    .bind(sch_water_id)
+    .bind(rajesh_id)
+    .bind(sharma_prop_id)
+    .bind(serde_json::json!({
+        "declared_income": 172000,
+        "connection_type": "DOMESTIC",
+        "officer_verification": "SATISFIED",
+        "notes": "Field inspection verified tap line proximity. Ready for Scheme Officer approval."
+    }))
+    .bind(citizen_user_id)
+    .fetch_one(pool)
+    .await?;
+
+    let _app_water_id: Uuid = app_water_row.get("id");
+
+    // ------------------------------------------------------------------------
+    // APPLICATION 5: Ayushman Universal Healthcare (APPROVED - Disbursed Benefit)
+    // ------------------------------------------------------------------------
+    let app_health_row = sqlx::query(
+        r#"
+        INSERT INTO applications (
+            id, public_id, application_number, scheme_id, applicant_person_id, target_household_id,
+            submitted_at, status, current_stage, application_date, metadata, created_by
+        )
+        VALUES (
+            gen_random_uuid(), 'APP-2026-10486', 'APP-HEALTH-2026-10486', $1, $2, $3,
+            '2025-11-01T10:00:00Z', 'APPROVED', 'BENEFIT_DISBURSED', '2025-11-01', $4, $5
+        )
+        RETURNING id
+        "#,
+    )
+    .bind(sch_health_id)
+    .bind(rajesh_id)
+    .bind(sharma_hh_id)
+    .bind(serde_json::json!({
+        "declared_income": 172000,
+        "beneficiary_count": 35,
+        "card_number": "PMJAY-2025-10482-GOLD"
+    }))
+    .bind(citizen_user_id)
+    .fetch_one(pool)
+    .await?;
+
+    let app_health_id: Uuid = app_health_row.get("id");
+
+    let _ = sqlx::query(
+        r#"
+        INSERT INTO benefits (
+            id, public_id, scheme_id, application_id, benefit_unit_type, household_id,
+            status, approved_at, disbursed_at, valid_from, valid_to, amount, currency,
+            description, created_by
+        )
+        VALUES (
+            gen_random_uuid(), 'BEN-2026-10486', $1, $2, 'HOUSEHOLD', $3,
+            'APPROVED', '2025-11-10T12:00:00Z', '2025-11-15T00:00:00Z', '2025-11-10', '2026-11-10',
+            500000.00, 'INR', 'Ayushman Bharat Family Healthcare Golden Protection Card', $4
+        )
+        "#,
+    )
+    .bind(sch_health_id)
+    .bind(app_health_id)
+    .bind(sharma_hh_id)
+    .bind(admin_user_id)
+    .execute(pool)
+    .await;
+
+    // ------------------------------------------------------------------------
+    // APPLICATION 6: Senior Citizen Pension for Meena Sharma (SUPERVISOR_REVIEW - Escalated)
+    // ------------------------------------------------------------------------
+    let app_pension_row = sqlx::query(
+        r#"
+        INSERT INTO applications (
+            id, public_id, application_number, scheme_id, applicant_person_id, target_person_id,
+            submitted_at, status, current_stage, application_date, metadata, created_by
+        )
+        VALUES (
+            gen_random_uuid(), 'APP-2026-10487', 'APP-PENSION-2026-10487', $1, $2, $3,
+            '2026-01-18T14:30:00Z', 'UNDER_VERIFICATION', 'SUPERVISOR_REVIEW', '2026-01-18', $4, $5
+        )
+        RETURNING id
+        "#,
+    )
+    .bind(sch_pension_id)
+    .bind(rajesh_id)
+    .bind(meena_id)
+    .bind(serde_json::json!({
+        "declared_income": 172000,
+        "target_name": "Meena Sharma",
+        "target_age": 65,
+        "escalation": {
+            "reason": "Special Pension Tier Approval",
+            "escalated_to": "Supervisor Arun Deshmukh",
+            "notes": "Elder dependent meets base age criteria. Escalated for second supervisor sign-off on widow pension overlay."
+        }
+    }))
+    .bind(citizen_user_id)
+    .fetch_one(pool)
+    .await?;
+
+    let _app_pension_id: Uuid = app_pension_row.get("id");
+
+    Ok(())
+}
+
+async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
+    let citizen_user_id = sqlx::query_scalar::<_, Uuid>(
+        "SELECT id FROM users WHERE email = 'demo.citizen@mira.demo' OR email = 'citizen@mira.local' ORDER BY (email = 'demo.citizen@mira.demo') DESC LIMIT 1"
+    )
+    .fetch_optional(pool)
+    .await?
+    .unwrap_or_else(Uuid::new_v4);
+
+    let storage = Path::new("data/storage/safe_store");
+    tokio::fs::create_dir_all(storage).await.map_err(|e| AppError::Internal(format!("Unable to prepare document storage: {e}")))?;
+
+    // 10 realistic synthetic documents for Rajesh Sharma:
+    let docs = [
+        // 1. Aadhaar Card
+        ("DOC-DEMO-AADHAAR-01", "Aadhaar Card - Rajesh Sharma.pdf", "IDENTITY_SUPPORTING_DOCUMENT", "VERIFIED", None, 10),
+        // 2. Synthetic altered document: Income Certificate (declared ₹1,72,000 vs OCR ₹2,31,000)
+        ("DOC-DEMO-INCOME-01", "Income Certificate 2025-26.pdf", "INCOME_CERTIFICATE", "ACTION_REQUIRED", None, 5),
+        // 3. Residence Certificate with address discrepancy
+        ("DOC-DEMO-RESIDENCE-01", "Residence Certificate - Ward 7.pdf", "RESIDENCE_CERTIFICATE", "ACTION_REQUIRED", None, 4),
+        // 4. BPL Priority Ration Card (expired)
+        ("DOC-DEMO-RATION-01", "BPL Priority Ration Card.pdf", "OTHER", "EXPIRED", Some("2025-03-31T00:00:00Z"), 220),
+        // 5. Land Revenue Record (Pending Review)
+        ("DOC-DEMO-LAND-01", "Land Revenue Record - Khatauni.pdf", "PROPERTY_DOCUMENT", "PENDING_REVIEW", None, 2),
+        // 6. Utility Bill (Verified residence proof)
+        ("DOC-DEMO-UTIL-01", "Electricity Utility Bill - Latest.pdf", "RESIDENCE_PROOF", "VERIFIED", None, 3),
+        // 7. Caste Certificate (Verified)
+        ("DOC-DEMO-CASTE-01", "Caste & Category Certificate.pdf", "COMMUNITY_CERTIFICATE", "VERIFIED", None, 40),
+        // 8. Education Certificate
+        ("DOC-DEMO-EDU-01", "School Enrollment Certificate - Ananya.pdf", "EDUCATION_CERTIFICATE", "VERIFIED", None, 12),
+        // 9. Bank Passbook
+        ("DOC-DEMO-BANK-01", "Bank Passbook Front Page.pdf", "FINANCIAL_DOCUMENT", "VERIFIED", None, 15),
+        // 10. Medical Card
+        ("DOC-DEMO-HEALTH-01", "Health Assessment Card.pdf", "MEDICAL_CERTIFICATE", "VERIFIED", None, 20),
+    ];
+
+    let mut doc_map = std::collections::HashMap::new();
+
+    for (pub_id, filename, doc_type, verification, expiry, age_days) in docs {
+        let label = filename.trim_end_matches(".pdf");
+        let bytes = synthetic_demo_pdf(label);
+        let hash = format!("{:x}", Sha256::digest(&bytes));
+        let key = format!("{}.pdf", Uuid::new_v4());
+        tokio::fs::write(storage.join(&key), &bytes).await.map_err(|e| AppError::Internal(format!("Unable to seed demo document object: {e}")))?;
+
+        let row = sqlx::query(
+            r#"INSERT INTO documents (
+                public_id, owner_type, owner_id, document_type, original_filename, detected_mime_type,
+                size_bytes, original_size_bytes, sha256, storage_reference, status, verification_status, expires_at, created_by,
+                created_at, updated_at
+            ) VALUES ($1, 'CITIZEN', $2, $3, $4, 'application/pdf', $5, $5, $6, $7, 'READY', $8, $9, $2,
+                NOW() - ($10 * INTERVAL '1 day'), NOW() - ($10 * INTERVAL '1 day')) RETURNING id"#,
+        )
+        .bind(pub_id)
         .bind(citizen_user_id)
+        .bind(doc_type)
+        .bind(filename)
+        .bind(bytes.len() as i64)
+        .bind(&hash)
+        .bind(&key)
+        .bind(verification)
+        .bind(expiry.map(|date| date.parse::<chrono::DateTime<chrono::Utc>>()).transpose().map_err(|e| AppError::Internal(e.to_string()))?)
+        .bind(age_days)
         .fetch_one(pool)
-        .await?;
+        .await
+        .map_err(|e| AppError::Internal(format!("Unable to seed document metadata: {e}")))?;
 
-        let dup_app_id: Uuid = dup_app_row.get("id");
+        let document_id: Uuid = row.get("id");
+        doc_map.insert(pub_id, document_id);
 
-        let dup_case_row = sqlx::query(
-            r#"
-            INSERT INTO benefit_duplicate_cases (
-                id, public_id, application_id, scheme_id, benefit_scope, benefit_unit_type,
-                household_id, status, priority, assessment, reason, recommended_action, created_by
-            )
-            VALUES (
-                gen_random_uuid(), 'CASE-DUP-2026-10483', $1, $2, 'HOUSEHOLD', 'HOUSEHOLD',
-                $3, 'OPEN', 'MEDIUM', 'POTENTIAL_DUPLICATE',
-                'Potential duplicate detected because two applications share matching identity reference and overlapping benefit period.',
-                'MANUAL_REVIEW', $4
-            )
-            ON CONFLICT (public_id) DO UPDATE SET status = EXCLUDED.status
-            RETURNING id
-            "#,
-        )
-        .bind(dup_app_id)
-        .bind(san_id)
-        .bind(sharma_hh_id)
-        .bind(admin_user_id)
-        .fetch_one(pool)
-        .await?;
+        sqlx::query("INSERT INTO document_versions (document_id, version_type, storage_reference, mime_type, size_bytes, sha256, compression_type) VALUES ($1, 'ORIGINAL', $2, 'application/pdf', $3, $4, 'NONE')")
+            .bind(document_id).bind(&key).bind(bytes.len() as i64).bind(&hash).execute(pool).await?;
 
-        let case_id: Uuid = dup_case_row.get("id");
+        sqlx::query("INSERT INTO document_access_logs (document_id, user_id, action, purpose) VALUES ($1, $2, 'PROCESS', 'CITIZEN_SELF_SERVICE')")
+            .bind(document_id).bind(citizen_user_id).execute(pool).await?;
 
-        let existing_benefit_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM benefits WHERE scheme_id = $1 LIMIT 1")
-            .bind(san_id)
-            .fetch_optional(pool)
-            .await?;
-
-        if let Some(eb_id) = existing_benefit_id {
+        // Structured OCR Extractions
+        if pub_id == "DOC-DEMO-AADHAAR-01" {
             let _ = sqlx::query(
                 r#"
-                INSERT INTO benefit_duplicate_candidates (
-                    id, case_id, existing_benefit_id, candidate_rank, duplicate_category, overlap_score, explanation
+                INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                VALUES 
+                ($1, 'Name', 'Rajesh Sharma', 'RAJESH SHARMA', 0.98, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'DOB', '12 March 1985', '1985-03-12', 0.97, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'Document Number', 'XXXX-XXXX-4821', 'XXXX-XXXX-4821', 0.99, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'Address', 'House No. 42, Ward 7, Demo District, UP', 'HOUSE NO 42 WARD 7 DEMO DISTRICT UP', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+        } else if pub_id == "DOC-DEMO-INCOME-01" {
+            // Synthetic altered document: declared ₹1,72,000 vs OCR extracted ₹2,31,000
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                VALUES 
+                ($1, 'Declared Annual Income', '₹1,72,000', '172000', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'Extracted OCR Income', '₹2,31,000', '231000', 0.82, 'DEMO_OCR_SIMULATION', 'CONFLICTING'),
+                ($1, 'Discrepancy Note', 'Declared ₹1,72,000 vs OCR ₹2,31,000 exceeds ceiling threshold. Requires officer verification.', 'DISCREPANCY_FLAGGED', 0.90, 'DEMO_OCR_SIMULATION', 'CONFLICTING'),
+                ($1, 'Certificate Number', 'IC-2025-UP-71829', 'IC-2025-UP-71829', 0.94, 'DEMO_OCR_SIMULATION', 'SYSTEM_EXTRACTED'),
+                ($1, 'Issuing Authority', 'Tehsildar, Demo District', 'TEHSILDAR DEMO DISTRICT', 0.91, 'DEMO_OCR_SIMULATION', 'SYSTEM_EXTRACTED')
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO document_consistency_checks (
+                    id, document_id, check_type, field, result,
+                    source_a_label, source_a_value, source_b_label, source_b_value,
+                    action_recommended, explanation
                 )
                 VALUES (
-                    gen_random_uuid(), $1, $2, 1, 'POTENTIAL_DUPLICATE', 0.84,
-                    'Prior sanitation asset allocated under common household lineage. Verification required to confirm whether this is a legitimate new dwelling allotment.'
+                    gen_random_uuid(), $1, 'SCHEME_CONFLICT', 'income', 'CONFLICT',
+                    'Declared Application Income', '₹1,72,000', 'OCR Extracted Revenue Stamp', '₹2,31,000',
+                    'MANUAL_VERIFICATION_REQUIRED',
+                    'Declared household income of ₹1,72,000 is under the ₹2,00,000 threshold, but raw OCR extraction reads ₹2,31,000 which exceeds the threshold. Officer verification and clarification required.'
                 )
-                ON CONFLICT DO NOTHING
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+        } else if pub_id == "DOC-DEMO-RESIDENCE-01" {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                VALUES 
+                ($1, 'Address', 'Ward 7, Civil Lines, Demo District', 'WARD 7 CIVIL LINES DEMO DISTRICT', 0.88, 'DEMO_OCR_SIMULATION', 'CONFLICTING'),
+                ($1, 'Applicant Name', 'Rajesh Sharma', 'RAJESH SHARMA', 0.94, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+        } else if pub_id == "DOC-DEMO-LAND-01" {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                VALUES 
+                ($1, 'Khasra Number', 'Plot 42/Ward 7', 'PLOT 42 WARD 7', 0.96, 'DEMO_OCR_SIMULATION', 'SYSTEM_EXTRACTED'),
+                ($1, 'Holding Area', '0.18 Hectares', '0.18 HA', 0.93, 'DEMO_OCR_SIMULATION', 'SYSTEM_EXTRACTED')
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+        } else if pub_id == "DOC-DEMO-UTIL-01" {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                VALUES 
+                ($1, 'Consumer Number', 'UPPCL-2026-99214', 'UPPCL-2026-99214', 0.97, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'Service Address', 'House No. 42, Ward 7, Demo District', 'HOUSE NO 42 WARD 7 DEMO DISTRICT', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+        } else if pub_id == "DOC-DEMO-EDU-01" {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                VALUES 
+                ($1, 'Student Name', 'Ananya Sharma', 'ANANYA SHARMA', 0.96, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'Class', 'Class VII', 'CLASS VII', 0.98, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'Institution', 'Government Model Inter College', 'GOVERNMENT MODEL INTER COLLEGE', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+        } else if pub_id == "DOC-DEMO-BANK-01" {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                VALUES 
+                ($1, 'Account Holder', 'Rajesh Sharma', 'RAJESH SHARMA', 0.97, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'Bank Name', 'State Bank of India', 'STATE BANK OF INDIA', 0.98, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'IFSC Code', 'SBIN0001234', 'SBIN0001234', 0.99, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+        } else if pub_id == "DOC-DEMO-HEALTH-01" {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
+                VALUES 
+                ($1, 'Patient Name', 'Meena Sharma', 'MEENA SHARMA', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
+                ($1, 'Assessment', 'Senior Age Health Certification', 'SENIOR AGE HEALTH CERTIFICATION', 0.94, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
+                "#
+            )
+            .bind(document_id).execute(pool).await;
+        }
+    }
+
+    // Link documents to seeded applications
+    let app_docs = [
+        // App 1: Student Scholarship
+        ("APP-2026-10482", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
+        ("APP-2026-10482", "DOC-DEMO-INCOME-01", "INCOME_CERTIFICATE"),
+        ("APP-2026-10482", "DOC-DEMO-EDU-01", "EDUCATION_CERTIFICATE"),
+        ("APP-2026-10482", "DOC-DEMO-RESIDENCE-01", "RESIDENCE_CERTIFICATE"),
+        // App 2: Sanitation
+        ("APP-2026-10483", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
+        ("APP-2026-10483", "DOC-DEMO-RESIDENCE-01", "RESIDENCE_CERTIFICATE"),
+        ("APP-2026-10483", "DOC-DEMO-UTIL-01", "RESIDENCE_PROOF"),
+        // App 3: Rural Housing
+        ("APP-2026-10484", "DOC-DEMO-INCOME-01", "INCOME_CERTIFICATE"),
+        ("APP-2026-10484", "DOC-DEMO-LAND-01", "PROPERTY_DOCUMENT"),
+        ("APP-2026-10484", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
+        // App 4: Water Connection
+        ("APP-2026-10485", "DOC-DEMO-LAND-01", "PROPERTY_DOCUMENT"),
+        ("APP-2026-10485", "DOC-DEMO-UTIL-01", "RESIDENCE_PROOF"),
+        // App 5: Healthcare
+        ("APP-2026-10486", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
+        ("APP-2026-10486", "DOC-DEMO-INCOME-01", "INCOME_CERTIFICATE"),
+        ("APP-2026-10486", "DOC-DEMO-RATION-01", "BPL_CERTIFICATE"),
+        // App 6: Pension
+        ("APP-2026-10487", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
+        ("APP-2026-10487", "DOC-DEMO-BANK-01", "BANK_PASSBOOK"),
+        ("APP-2026-10487", "DOC-DEMO-HEALTH-01", "MEDICAL_CERTIFICATE"),
+    ];
+
+    for (app_pub, doc_pub, req_type) in app_docs {
+        let app_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM applications WHERE public_id = $1").bind(app_pub).fetch_optional(pool).await?;
+        let doc_id = doc_map.get(doc_pub).copied();
+
+        if let (Some(aid), Some(did)) = (app_id, doc_id) {
+            let _ = sqlx::query(
+                r#"
+                INSERT INTO application_documents (id, application_id, document_id, document_version_id, required_type, status, linked_by)
+                VALUES (gen_random_uuid(), $1, $2, $2, $3, 'LINKED', $4)
+                ON CONFLICT (application_id, document_id, document_version_id) DO NOTHING
                 "#,
             )
-            .bind(case_id)
-            .bind(eb_id)
+            .bind(aid)
+            .bind(did)
+            .bind(req_type)
+            .bind(citizen_user_id)
             .execute(pool)
             .await;
         }
@@ -1340,101 +1596,3 @@ async fn seed_sharma_family(
 
     Ok(())
 }
-
-async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
-    let users = sqlx::query_scalar::<_, Uuid>(
-        "SELECT id FROM users WHERE email IN ('demo.citizen@mira.demo', 'citizen@mira.local')"
-    )
-    .fetch_all(pool)
-    .await?;
-
-    if users.is_empty() {
-        return Ok(());
-    }
-
-    let storage = Path::new("data/storage/safe_store");
-    tokio::fs::create_dir_all(storage).await.map_err(|e| AppError::Internal(format!("Unable to prepare document storage: {e}")))?;
-
-    let docs = [
-        ("Aadhaar Card - Rajesh Sharma.pdf", "IDENTITY_SUPPORTING_DOCUMENT", "VERIFIED", None, 5),
-        ("Income Certificate 2024-25.pdf", "INCOME_CERTIFICATE", "VERIFIED", None, 4),
-        ("Residence Certificate - Ward 7.pdf", "RESIDENCE_CERTIFICATE", "ACTION_REQUIRED", None, 3),
-        ("BPL Priority Ration Card.pdf", "OTHER", "EXPIRED", Some("2025-03-31T00:00:00Z"), 220),
-        ("Land Revenue Record.pdf", "PROPERTY_DOCUMENT", "PENDING_REVIEW", None, 1),
-    ];
-
-    for user_id in users {
-        for (filename, doc_type, verification, expiry, age_days) in docs {
-            let exists = sqlx::query_scalar::<_, bool>("SELECT EXISTS(SELECT 1 FROM documents WHERE created_by = $1 AND original_filename = $2)")
-                .bind(user_id).bind(filename).fetch_one(pool).await?;
-            if exists { continue; }
-            let label = filename.trim_end_matches(".pdf");
-            let bytes = synthetic_demo_pdf(label);
-            let hash = format!("{:x}", Sha256::digest(&bytes));
-            let key = format!("{}.pdf", Uuid::new_v4());
-            tokio::fs::write(storage.join(&key), &bytes).await.map_err(|e| AppError::Internal(format!("Unable to seed demo document object: {e}")))?;
-            let row = sqlx::query(
-                r#"INSERT INTO documents (
-                    public_id, owner_type, owner_id, document_type, original_filename, detected_mime_type,
-                    size_bytes, original_size_bytes, sha256, storage_reference, status, verification_status, expires_at, created_by,
-                    created_at, updated_at
-                ) VALUES ($1, 'CITIZEN', $2, $3, $4, 'application/pdf', $5, $5, $6, $7, 'READY', $8, $9, $2,
-                    NOW() - ($10 * INTERVAL '1 day'), NOW() - ($10 * INTERVAL '1 day')) RETURNING id"#,
-            )
-            .bind(format!("DOC-DEMO-{}", Uuid::new_v4().to_string()[..8].to_uppercase()))
-            .bind(user_id).bind(doc_type).bind(filename).bind(bytes.len() as i64).bind(&hash).bind(&key)
-            .bind(verification).bind(expiry.map(|date| date.parse::<chrono::DateTime<chrono::Utc>>()).transpose().map_err(|e| AppError::Internal(e.to_string()))?).bind(age_days)
-            .fetch_one(pool).await.map_err(|e| AppError::Internal(format!("Unable to seed synthetic document metadata: {e}")))?;
-            let document_id: Uuid = row.get("id");
-
-            sqlx::query("INSERT INTO document_versions (document_id, version_type, storage_reference, mime_type, size_bytes, sha256, compression_type) VALUES ($1, 'ORIGINAL', $2, 'application/pdf', $3, $4, 'NONE')")
-                .bind(document_id).bind(&key).bind(bytes.len() as i64).bind(&hash).execute(pool).await?;
-            sqlx::query("INSERT INTO document_access_logs (document_id, user_id, action, purpose) VALUES ($1, $2, 'PROCESS', 'CITIZEN_SELF_SERVICE')")
-                .bind(document_id).bind(user_id).execute(pool).await?;
-
-            // Add realistic extracted fields
-            if doc_type == "IDENTITY_SUPPORTING_DOCUMENT" {
-                let _ = sqlx::query(
-                    r#"
-                    INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
-                    VALUES 
-                    ($1, 'Name', 'Rajesh Sharma', 'RAJESH SHARMA', 0.94, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
-                    ($1, 'DOB', '12 March 1985', '1985-03-12', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
-                    ($1, 'Document Number', 'XXXX-XXXX-4821', 'XXXX-XXXX-4821', 0.98, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
-                    ($1, 'Address', 'Demo District, Uttar Pradesh', 'DEMO DISTRICT UTTAR PRADESH', 0.94, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
-                    "#
-                )
-                .bind(document_id)
-                .execute(pool)
-                .await;
-            } else if doc_type == "INCOME_CERTIFICATE" {
-                let _ = sqlx::query(
-                    r#"
-                    INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
-                    VALUES 
-                    ($1, 'Annual Income', '₹1,40,000', '140000', 0.96, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
-                    ($1, 'Certificate Number', 'IC-2024-UP-09881', 'IC-2024-UP-09881', 0.95, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED'),
-                    ($1, 'Issuing Authority', 'Tehsildar, Demo District', 'TEHSILDAR DEMO DISTRICT', 0.92, 'DEMO_OCR_SIMULATION', 'OFFICER_VERIFIED')
-                    "#
-                )
-                .bind(document_id)
-                .execute(pool)
-                .await;
-            } else if doc_type == "RESIDENCE_CERTIFICATE" {
-                let _ = sqlx::query(
-                    r#"
-                    INSERT INTO document_extractions (document_id, field, value, normalized_value, confidence, extraction_method, status)
-                    VALUES 
-                    ($1, 'Address', 'Ward 7, Civil Lines, Demo District', 'WARD 7 CIVIL LINES DEMO DISTRICT', 0.88, 'DEMO_OCR_SIMULATION', 'CONFLICTING'),
-                    ($1, 'Applicant Name', 'Rajesh Sharma', 'RAJESH SHARMA', 0.93, 'DEMO_OCR_SIMULATION', 'SYSTEM_EXTRACTED')
-                    "#
-                )
-                .bind(document_id)
-                .execute(pool)
-                .await;
-            }
-        }
-    }
-    Ok(())
-}
-

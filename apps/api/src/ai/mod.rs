@@ -529,7 +529,7 @@ pub fn generate_grounded_fallback(
     } else if lower.contains("eligib") || lower.contains("criteria") || lower.contains("rule") {
         "Rural Housing Assistance Scheme is currently on Rule Version 3.2. Requirements: Household income under ₹1,80,000, Kutcha dwelling verified by field visit, and verifiable residence in jurisdiction.".to_string()
     } else if lower.contains("family") || lower.contains("household") || lower.contains("member") {
-        "Household MIRA-FAM-10482 (Sharma Family) has 11 registered members across 3 generations. All relationships are attested against civil registration records.".to_string()
+        "Household MIRA-FAM-10482 (Sharma Family) has 35 registered members across 4 generations. All relationships are attested against civil registration records.".to_string()
     } else if lower.contains("mismatch") || lower.contains("duplicate") {
         "Mira flagged an investigation signal regarding an existing district ration entitlement. Under human-in-the-loop policy, this is not treated as fraud; it is marked for officer review to confirm household transition.".to_string()
     } else if lower.contains("audit") || lower.contains("ledger") || lower.contains("merkle") {
