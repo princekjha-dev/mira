@@ -39,7 +39,9 @@ export function CommentsThread({
     if (!commentText.trim()) return;
 
     // Detect @mentions
-    const mentions = Array.from(commentText.matchAll(/@(\w+)/g)).map((m) => m[1]);
+    const mentions = Array.from(commentText.matchAll(/@(\w+)/g)).map(
+      (m) => m[1],
+    );
 
     addComment({
       recordType,
@@ -97,7 +99,8 @@ export function CommentsThread({
           </span>
         </div>
         <span className="text-[11px] text-muted-foreground">
-          Use <code className="text-gov font-mono">@name</code> to mention officers
+          Use <code className="text-gov font-mono">@name</code> to mention
+          officers
         </span>
       </div>
 
@@ -105,7 +108,8 @@ export function CommentsThread({
       <div className="space-y-4">
         {comments.length === 0 ? (
           <p className="text-xs text-muted-foreground text-center py-4">
-            No notes logged yet. Use this section for team collaboration, verification queries, or field clarifications.
+            No notes logged yet. Use this section for team collaboration,
+            verification queries, or field clarifications.
           </p>
         ) : (
           comments.map((comment) => (
@@ -115,7 +119,9 @@ export function CommentsThread({
             >
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-navy">{comment.author.name}</span>
+                  <span className="font-bold text-navy">
+                    {comment.author.name}
+                  </span>
                   <span
                     className={cn(
                       "rounded text-[9px] px-1.5 py-0.2 border uppercase font-mono font-medium",

@@ -1,0 +1,13 @@
+**/.git
+**/.github
+**/node_modules
+**/dist
+**/.output
+**/.tanstack
+**/.wrangler
+**/target
+**/*.log
+**/.env
+apps/api/target
+apps/api/data/storage/safe_store/*
+!apps/api/data/storage/safe_store/.gitkeep

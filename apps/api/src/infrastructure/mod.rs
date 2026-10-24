@@ -73,10 +73,9 @@ pub async fn request_id_and_logging_middleware(
         header::X_CONTENT_TYPE_OPTIONS,
         HeaderValue::from_static("nosniff"),
     );
-    response.headers_mut().insert(
-        header::X_FRAME_OPTIONS,
-        HeaderValue::from_static("DENY"),
-    );
+    response
+        .headers_mut()
+        .insert(header::X_FRAME_OPTIONS, HeaderValue::from_static("DENY"));
     response.headers_mut().insert(
         HeaderName::from_static("x-xss-protection"),
         HeaderValue::from_static("1; mode=block"),
@@ -111,9 +110,7 @@ pub fn create_cors_layer(config: &AppConfig) -> CorsLayer {
             header::CONTENT_TYPE,
             HeaderName::from_static(REQUEST_ID_HEADER),
         ])
-        .expose_headers([
-            HeaderName::from_static(REQUEST_ID_HEADER),
-        ]);
+        .expose_headers([HeaderName::from_static(REQUEST_ID_HEADER)]);
 
     if config.cors_origins.is_empty() || config.cors_origins.contains(&"*".to_string()) {
         layer = layer.allow_origin(Any);

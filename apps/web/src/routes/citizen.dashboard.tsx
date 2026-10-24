@@ -31,7 +31,12 @@ import {
   MiraStatus,
   MiraEmptyState,
 } from "@/components/mira";
-import { apiRequest, fetchMyFamily, type ApiDocument, type ApiFamilyResponse } from "@/lib/api";
+import {
+  apiRequest,
+  fetchMyFamily,
+  type ApiDocument,
+  type ApiFamilyResponse,
+} from "@/lib/api";
 import { formatBytes } from "@/lib/document-config";
 import { DocumentViewer } from "@/components/gov/DocumentViewer";
 
@@ -41,7 +46,8 @@ export const Route = createFileRoute("/citizen/dashboard")({
       { title: "Rajesh Sharma — Citizen Workspace · Mira" },
       {
         name: "description",
-        content: "Authoritative family record, scheme applications, verified civil documents, and entitlement services.",
+        content:
+          "Authoritative family record, scheme applications, verified civil documents, and entitlement services.",
       },
     ],
   }),
@@ -49,14 +55,54 @@ export const Route = createFileRoute("/citizen/dashboard")({
 });
 
 const QUICK_SERVICES = [
-  { to: "/schemes", icon: ClipboardList, label: "Apply for Scheme", desc: "Discover active welfare programs" },
-  { to: "/eligibility", icon: ListChecks, label: "Check Eligibility", desc: "Instant automated criteria test" },
-  { to: "/citizen/applications", icon: FileCheck2, label: "Track Application", desc: "Real-time verification telemetry" },
-  { to: "/citizen/family", icon: Users, label: "My Family Tree", desc: "Verified household roster" },
-  { to: "/citizen/documents", icon: FolderOpen, label: "Civil Documents", desc: "Attested digital certificates" },
-  { to: "/citizen/benefits", icon: History, label: "Benefit Disbursements", desc: "Direct benefit transfer logs" },
-  { to: "/citizen/family", icon: UserPen, label: "Report Life Event", desc: "Birth, marriage & address changes" },
-  { to: "/citizen/grievances", icon: MessageSquareWarning, label: "Lodge Grievance", desc: "Direct supervisory escalation" },
+  {
+    to: "/schemes",
+    icon: ClipboardList,
+    label: "Apply for Scheme",
+    desc: "Discover active welfare programs",
+  },
+  {
+    to: "/eligibility",
+    icon: ListChecks,
+    label: "Check Eligibility",
+    desc: "Instant automated criteria test",
+  },
+  {
+    to: "/citizen/applications",
+    icon: FileCheck2,
+    label: "Track Application",
+    desc: "Real-time verification telemetry",
+  },
+  {
+    to: "/citizen/family",
+    icon: Users,
+    label: "My Family Tree",
+    desc: "Verified household roster",
+  },
+  {
+    to: "/citizen/documents",
+    icon: FolderOpen,
+    label: "Civil Documents",
+    desc: "Attested digital certificates",
+  },
+  {
+    to: "/citizen/benefits",
+    icon: History,
+    label: "Benefit Disbursements",
+    desc: "Direct benefit transfer logs",
+  },
+  {
+    to: "/citizen/family",
+    icon: UserPen,
+    label: "Report Life Event",
+    desc: "Birth, marriage & address changes",
+  },
+  {
+    to: "/citizen/grievances",
+    icon: MessageSquareWarning,
+    label: "Lodge Grievance",
+    desc: "Direct supervisory escalation",
+  },
 ] as const;
 
 function CitizenDashboard() {
@@ -89,7 +135,9 @@ function CitizenDashboard() {
     )
       .then((result) => {
         if (active) {
-          setDocuments(result.data.filter((doc) => doc.status !== "REVOKED").slice(0, 5));
+          setDocuments(
+            result.data.filter((doc) => doc.status !== "REVOKED").slice(0, 5),
+          );
         }
       })
       .catch(() => {
@@ -98,7 +146,7 @@ function CitizenDashboard() {
     return () => {
       active = false;
     };
-  }, [state.session?.apiToken, state.session?.apiUserId]);
+  }, [state.session]);
 
   const applications = state.applications;
   const actionRequiredApps = applications.filter(
@@ -172,11 +220,17 @@ function CitizenDashboard() {
                 <span className="font-mono text-xs font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/60">
                   {householdId}
                 </span>
-                <MiraStatus status={family?.verification_status || "Verified"} />
+                <MiraStatus
+                  status={family?.verification_status || "Verified"}
+                />
               </div>
               <p className="mt-1 text-xs text-muted-foreground leading-normal">
-                <span className="font-medium text-foreground">{memberCount} registered members</span> ·{" "}
-                {family?.bpl_status || "BPL Category A"} · {family?.income_category || "Annual Income < ₹1.2L"} · Verified via Civil Registration
+                <span className="font-medium text-foreground">
+                  {memberCount} registered members
+                </span>{" "}
+                · {family?.bpl_status || "BPL Category A"} ·{" "}
+                {family?.income_category || "Annual Income < ₹1.2L"} · Verified
+                via Civil Registration
               </p>
             </div>
           </div>
@@ -212,7 +266,9 @@ function CitizenDashboard() {
                   Officer Clarification Requested
                 </h3>
                 <p className="mt-0.5 text-xs text-amber-900/90 dark:text-amber-300/90 leading-relaxed">
-                  The verification officer has requested supporting documentation for your pending application. Review details and upload attested documents to prevent SLA delays.
+                  The verification officer has requested supporting
+                  documentation for your pending application. Review details and
+                  upload attested documents to prevent SLA delays.
                 </p>
               </div>
             </div>
@@ -269,7 +325,12 @@ function CitizenDashboard() {
               title="Active Applications"
               description="Real-time statutory status and verification progression."
               action={
-                <Button size="sm" variant="ghost" asChild className="h-7 text-xs text-muted-foreground hover:text-foreground">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  asChild
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                >
                   <Link to="/citizen/applications">
                     View all ({applications.length})
                   </Link>
@@ -308,16 +369,26 @@ function CitizenDashboard() {
                         )}
                       </div>
                       <h4 className="text-sm font-semibold text-foreground truncate">
-                        {getScheme(app.schemeId)?.name || "Welfare Assistance Scheme"}
+                        {getScheme(app.schemeId)?.name ||
+                          "Welfare Assistance Scheme"}
                       </h4>
                       <p className="text-[11px] text-muted-foreground">
-                        Updated {fmtDate(app.updatedOn)} · Assigned to district verification queue
+                        Updated {fmtDate(app.updatedOn)} · Assigned to district
+                        verification queue
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <Button size="sm" variant="outline" asChild className="h-7.5 text-xs font-medium rounded-lg">
-                        <Link to="/citizen/applications/$id" params={{ id: app.id }}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        asChild
+                        className="h-7.5 text-xs font-medium rounded-lg"
+                      >
+                        <Link
+                          to="/citizen/applications/$id"
+                          params={{ id: app.id }}
+                        >
                           View Details
                         </Link>
                       </Button>
@@ -401,11 +472,16 @@ function CitizenDashboard() {
                         {doc.original_filename}
                       </span>
                       <span className="text-[11px] text-muted-foreground">
-                        {formatBytes(doc.size_bytes)} · {new Date(doc.created_at).toLocaleDateString("en-IN")}
+                        {formatBytes(doc.size_bytes)} ·{" "}
+                        {new Date(doc.created_at).toLocaleDateString("en-IN")}
                       </span>
                     </div>
                     <MiraStatus
-                      status={doc.verification_status === "VERIFIED" ? "Verified" : "Pending"}
+                      status={
+                        doc.verification_status === "VERIFIED"
+                          ? "Verified"
+                          : "Pending"
+                      }
                     />
                   </button>
                 ))}
@@ -415,7 +491,10 @@ function CitizenDashboard() {
             <div className="mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs">
               <span className="text-muted-foreground">Verification Rate</span>
               <span className="font-semibold text-teal-600 dark:text-teal-400">
-                {documents.length ? Math.round((verifiedDocsCount / documents.length) * 100) : 100}%
+                {documents.length
+                  ? Math.round((verifiedDocsCount / documents.length) * 100)
+                  : 100}
+                %
               </span>
             </div>
           </MiraCard>
@@ -425,7 +504,9 @@ function CitizenDashboard() {
             <div className="flex items-start gap-2.5 text-xs text-muted-foreground leading-relaxed">
               <CheckCircle2 className="h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5" />
               <span>
-                Your household record is protected by statutory end-to-end audit seals. All eligibility determinations are reproducible on the public ledger.
+                Your household record is protected by statutory end-to-end audit
+                seals. All eligibility determinations are reproducible on the
+                public ledger.
               </span>
             </div>
           </MiraCard>
@@ -446,7 +527,9 @@ function CitizenDashboard() {
             )
               .then((result) =>
                 setDocuments(
-                  result.data.filter((doc) => doc.status !== "REVOKED").slice(0, 5),
+                  result.data
+                    .filter((doc) => doc.status !== "REVOKED")
+                    .slice(0, 5),
                 ),
               )
               .catch(() => undefined);

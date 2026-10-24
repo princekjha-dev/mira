@@ -15,7 +15,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -59,7 +64,7 @@ interface ApplicationDocumentLink {
 const statusLabel = (doc: ApiDocument) =>
   doc.expires_at && new Date(doc.expires_at) < new Date()
     ? "Expired"
-    : ({
+    : {
         VERIFIED: "Verified",
         ACTION_REQUIRED: "Review required",
         MISMATCH: "Mismatch detected",
@@ -67,13 +72,20 @@ const statusLabel = (doc: ApiDocument) =>
         REJECTED: "Rejected",
         MANUAL_REVIEW: "Manual review",
         PENDING_REVIEW: "Pending review",
-      }[doc.verification_status] || "Pending review");
+      }[doc.verification_status] || "Pending review";
 
-export function DocumentViewer({ document, session, onClose, onChanged }: Props) {
+export function DocumentViewer({
+  document,
+  session,
+  onClose,
+  onChanged,
+}: Props) {
   const [objectUrl, setObjectUrl] = useState("");
   const [loadError, setLoadError] = useState("");
   const [versions, setVersions] = useState<ApiDocument[]>([]);
-  const [applications, setApplications] = useState<ApplicationDocumentLink[]>([]);
+  const [applications, setApplications] = useState<ApplicationDocumentLink[]>(
+    [],
+  );
   const [extractions, setExtractions] = useState<DocumentExtraction[]>([]);
   const [page, setPage] = useState(1);
   const [pages, setPages] = useState<number | null>(null);
@@ -111,13 +123,18 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
     setPages(null);
 
     if (canPreview) {
-      fetch(apiUrl(`/api/v1/documents/${document.id}/preview?purpose=${accessPurpose}`), {
-        headers: { Authorization: `Bearer ${session.apiToken}` },
-      })
+      fetch(
+        apiUrl(
+          `/api/v1/documents/${document.id}/preview?purpose=${accessPurpose}`,
+        ),
+        {
+          headers: { Authorization: `Bearer ${session.apiToken}` },
+        },
+      )
         .then(async (response) => {
           if (!response.ok)
             throw new Error(
-              "The protected preview could not be loaded. Try downloading the file."
+              "The protected preview could not be loaded. Try downloading the file.",
             );
           const blob = await response.blob();
           if (isPdf) {
@@ -134,25 +151,28 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
           (error) =>
             active &&
             setLoadError(
-              error instanceof Error ? error.message : "Preview unavailable."
-            )
+              error instanceof Error ? error.message : "Preview unavailable.",
+            ),
         );
     }
 
-    apiRequest<{ data: ApiDocument[] }>(session, `/api/v1/documents/${document.id}/versions`)
+    apiRequest<{ data: ApiDocument[] }>(
+      session,
+      `/api/v1/documents/${document.id}/versions`,
+    )
       .then((result) => active && setVersions(result.data))
       .catch(() => active && setVersions([document]));
 
     apiRequest<{ data: ApplicationDocumentLink[] }>(
       session,
-      `/api/v1/documents/${document.id}/applications`
+      `/api/v1/documents/${document.id}/applications`,
     )
       .then((result) => active && setApplications(result.data))
       .catch(() => active && setApplications([]));
 
     apiRequest<{ data: DocumentExtraction[] }>(
       session,
-      `/api/v1/documents/${document.id}/extractions`
+      `/api/v1/documents/${document.id}/extractions`,
     )
       .then((result) => active && setExtractions(result.data))
       .catch(() => active && setExtractions([]));
@@ -162,17 +182,22 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
     };
   }, [document?.id, session.apiToken, accessPurpose]);
 
-  useEffect(() => () => {
-    if (objectUrl) URL.revokeObjectURL(objectUrl);
-  }, [objectUrl]);
+  useEffect(
+    () => () => {
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    },
+    [objectUrl],
+  );
 
   if (!document) return null;
 
   const download = async () => {
     try {
       const response = await fetch(
-        apiUrl(`/api/v1/documents/${document.id}/download?purpose=${accessPurpose}`),
-        { headers: { Authorization: `Bearer ${session.apiToken}` } }
+        apiUrl(
+          `/api/v1/documents/${document.id}/download?purpose=${accessPurpose}`,
+        ),
+        { headers: { Authorization: `Bearer ${session.apiToken}` } },
       );
       if (!response.ok) throw new Error("Download unavailable. Try again.");
       const blob = await response.blob();
@@ -189,18 +214,22 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
 
   const remove = async () => {
     try {
-      await apiRequest(session, `/api/v1/documents/${document.id}`, { method: "DELETE" });
+      await apiRequest(session, `/api/v1/documents/${document.id}`, {
+        method: "DELETE",
+      });
       toast.success("Document archived. Its audit history is preserved.");
       setConfirmDelete(false);
       onChanged();
       onClose();
     } catch (error) {
-      toast.error(error instanceof Error ? error.message : "Unable to archive document.");
+      toast.error(
+        error instanceof Error ? error.message : "Unable to archive document.",
+      );
     }
   };
 
   const handleOfficerVerify = async (
-    newStatus: "VERIFIED" | "ACTION_REQUIRED" | "REJECTED"
+    newStatus: "VERIFIED" | "ACTION_REQUIRED" | "REJECTED",
   ) => {
     setVerifying(true);
     try {
@@ -212,14 +241,16 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
             newStatus === "VERIFIED"
               ? `Verified by officer ${session.name}`
               : newStatus === "ACTION_REQUIRED"
-              ? `Officer ${session.name} flagged data mismatch / action required`
-              : `Rejected by officer ${session.name}`,
+                ? `Officer ${session.name} flagged data mismatch / action required`
+                : `Rejected by officer ${session.name}`,
         }),
       });
       toast.success(`Document marked as ${newStatus}`);
       onChanged();
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "Verification update failed.");
+      toast.error(
+        err instanceof Error ? err.message : "Verification update failed.",
+      );
     } finally {
       setVerifying(false);
     }
@@ -235,7 +266,9 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
   const hasConflict =
     document.verification_status === "ACTION_REQUIRED" ||
     document.verification_status === "MISMATCH" ||
-    extractions.some((e) => e.status === "CONFLICTING" || e.status === "REJECTED");
+    extractions.some(
+      (e) => e.status === "CONFLICTING" || e.status === "REJECTED",
+    );
 
   return (
     <>
@@ -255,7 +288,9 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                         size="icon"
                         aria-label="Previous page"
                         disabled={page <= 1}
-                        onClick={() => setPage((value) => Math.max(1, value - 1))}
+                        onClick={() =>
+                          setPage((value) => Math.max(1, value - 1))
+                        }
                       >
                         ‹
                       </Button>
@@ -280,16 +315,22 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                         variant="ghost"
                         size="icon"
                         aria-label="Zoom out"
-                        onClick={() => setZoom((value) => Math.max(50, value - 10))}
+                        onClick={() =>
+                          setZoom((value) => Math.max(50, value - 10))
+                        }
                       >
                         <Minus className="h-4 w-4" />
                       </Button>
-                      <span className="w-10 text-center text-xs tabular-nums">{zoom}%</span>
+                      <span className="w-10 text-center text-xs tabular-nums">
+                        {zoom}%
+                      </span>
                       <Button
                         variant="ghost"
                         size="icon"
                         aria-label="Zoom in"
-                        onClick={() => setZoom((value) => Math.min(200, value + 10))}
+                        onClick={() =>
+                          setZoom((value) => Math.min(200, value + 10))
+                        }
                       >
                         <Plus className="h-4 w-4" />
                       </Button>
@@ -328,15 +369,21 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                 ) : !canPreview ? (
                   <div className="max-w-sm rounded-xl border bg-white p-8 text-center">
                     <FileText className="mx-auto h-10 w-10 text-slate-400" />
-                    <p className="mt-3 font-medium">Preview is not supported for this file type</p>
-                    <p className="mt-1 text-sm text-slate-500">{document.detected_mime_type}</p>
+                    <p className="mt-3 font-medium">
+                      Preview is not supported for this file type
+                    </p>
+                    <p className="mt-1 text-sm text-slate-500">
+                      {document.detected_mime_type}
+                    </p>
                     <Button className="mt-5" onClick={download}>
                       <Download className="mr-2 h-4 w-4" />
                       Download {document.original_filename}
                     </Button>
                   </div>
                 ) : !objectUrl ? (
-                  <div className="text-sm text-slate-500">Loading secure preview…</div>
+                  <div className="text-sm text-slate-500">
+                    Loading secure preview…
+                  </div>
                 ) : isPdf ? (
                   <iframe
                     key={`${objectUrl}#page=${page}&zoom=${zoom}`}
@@ -369,9 +416,10 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                   className={`shrink-0 rounded-full px-2.5 py-1 text-xs font-medium ${
                     verified === "Verified"
                       ? "bg-emerald-50 text-emerald-700 border border-emerald-200"
-                      : verified === "Rejected" || verified === "Mismatch detected"
-                      ? "bg-red-50 text-red-700 border border-red-200"
-                      : "bg-amber-50 text-amber-800 border border-amber-200"
+                      : verified === "Rejected" ||
+                          verified === "Mismatch detected"
+                        ? "bg-red-50 text-red-700 border border-red-200"
+                        : "bg-amber-50 text-amber-800 border border-amber-200"
                   }`}
                 >
                   {verified}
@@ -386,7 +434,9 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                     <span>Cross-Validation Conflict Flagged</span>
                   </div>
                   <p className="text-[11px] text-amber-800 leading-relaxed">
-                    Preliminary OCR extractions or declared records have conflicting values. Review the extracted fields below and cross-reference with official registers.
+                    Preliminary OCR extractions or declared records have
+                    conflicting values. Review the extracted fields below and
+                    cross-reference with official registers.
                   </p>
                 </div>
               )}
@@ -440,11 +490,15 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
               <dl className="grid grid-cols-2 gap-x-3 gap-y-3 text-xs border-y py-3">
                 <div>
                   <dt className="text-slate-500">Document Type</dt>
-                  <dd className="mt-0.5 font-medium">{document.document_type}</dd>
+                  <dd className="mt-0.5 font-medium">
+                    {document.document_type}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-slate-500">File Size</dt>
-                  <dd className="mt-0.5 font-medium">{formatBytes(document.size_bytes)}</dd>
+                  <dd className="mt-0.5 font-medium">
+                    {formatBytes(document.size_bytes)}
+                  </dd>
                 </div>
                 <div>
                   <dt className="text-slate-500">Uploaded</dt>
@@ -452,13 +506,17 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                 </div>
                 <div>
                   <dt className="text-slate-500">Version</dt>
-                  <dd className="mt-0.5 font-medium">{document.version_number || 1}</dd>
+                  <dd className="mt-0.5 font-medium">
+                    {document.version_number || 1}
+                  </dd>
                 </div>
                 {document.expires_at && (
                   <div className="col-span-2">
                     <dt className="text-slate-500">Validity Expiry</dt>
                     <dd className="mt-0.5 font-medium text-destructive">
-                      {new Date(document.expires_at).toLocaleDateString("en-IN")}
+                      {new Date(document.expires_at).toLocaleDateString(
+                        "en-IN",
+                      )}
                     </dd>
                   </div>
                 )}
@@ -485,8 +543,8 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                           ex.status === "CONFLICTING"
                             ? "border-amber-300 bg-amber-50/60"
                             : ex.status === "REJECTED"
-                            ? "border-red-300 bg-red-50/60"
-                            : "border-slate-200 bg-slate-50/50"
+                              ? "border-red-300 bg-red-50/60"
+                              : "border-slate-200 bg-slate-50/50"
                         }`}
                       >
                         <div className="flex items-start justify-between gap-1">
@@ -553,7 +611,9 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
 
               {replace && (
                 <div className="mt-4 rounded-lg border p-3">
-                  <p className="mb-3 text-sm font-medium">Upload a new version</p>
+                  <p className="mb-3 text-sm font-medium">
+                    Upload a new version
+                  </p>
                   <DocumentUploader
                     session={session}
                     documentType={document.document_type}
@@ -573,7 +633,9 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                   Version History
                 </h3>
                 {versions.length <= 1 ? (
-                  <p className="mt-1 text-xs text-slate-500">No previous versions.</p>
+                  <p className="mt-1 text-xs text-slate-500">
+                    No previous versions.
+                  </p>
                 ) : (
                   <ol className="mt-2 space-y-2">
                     {versions.map((version) => (
@@ -585,7 +647,9 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                           v{version.version_number}: {version.original_filename}
                         </span>
                         <span className="shrink-0 text-slate-500">
-                          {new Date(version.created_at).toLocaleDateString("en-IN")}
+                          {new Date(version.created_at).toLocaleDateString(
+                            "en-IN",
+                          )}
                           {version.id === document.id ? " · Current" : ""}
                         </span>
                       </li>
@@ -606,7 +670,9 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                         key={`${app.application_id}-${app.document_version_id}`}
                         className="rounded border bg-slate-50/70 p-2 text-xs"
                       >
-                        <p className="font-semibold text-slate-900">{app.scheme_name}</p>
+                        <p className="font-semibold text-slate-900">
+                          {app.scheme_name}
+                        </p>
                         <p className="text-[11px] text-slate-500 mt-0.5">
                           {app.application_number} · {app.status}
                         </p>
@@ -629,7 +695,9 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
           <AlertDialogHeader>
             <AlertDialogTitle>Archive this document?</AlertDialogTitle>
             <AlertDialogDescription>
-              This file may be linked to an application. It will be removed from your active list, while its file and audit history remain preserved.
+              This file may be linked to an application. It will be removed from
+              your active list, while its file and audit history remain
+              preserved.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>

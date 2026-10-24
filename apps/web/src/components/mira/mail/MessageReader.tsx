@@ -59,7 +59,8 @@ export function MessageReader({
           Select a communication thread
         </h3>
         <p className="mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">
-          Choose an official message or query from the list to review determinations and compose replies.
+          Choose an official message or query from the list to review
+          determinations and compose replies.
         </p>
       </div>
     );
@@ -157,7 +158,7 @@ export function MessageReader({
               <Star
                 className={cn(
                   "h-4 w-4",
-                  thread.isStarred && "fill-amber-400 text-amber-500"
+                  thread.isStarred && "fill-amber-400 text-amber-500",
                 )}
               />
             </Button>
@@ -202,7 +203,9 @@ export function MessageReader({
                 <DropdownMenuSeparator />
                 <DropdownMenuItem
                   onClick={() => {
-                    toast.info(`Audit Log: Immutable event ${thread.id} timestamped.`);
+                    toast.info(
+                      `Audit Log: Immutable event ${thread.id} timestamped.`,
+                    );
                   }}
                 >
                   View Cryptographic Proof

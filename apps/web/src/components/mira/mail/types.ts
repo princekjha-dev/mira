@@ -22,7 +22,11 @@ export interface MailFilterState {
 
 export function formatMailDate(isoOrDateStr: string): string {
   try {
-    const d = new Date(isoOrDateStr.includes(" ") ? isoOrDateStr.replace(" ", "T") : isoOrDateStr);
+    const d = new Date(
+      isoOrDateStr.includes(" ")
+        ? isoOrDateStr.replace(" ", "T")
+        : isoOrDateStr,
+    );
     if (isNaN(d.getTime())) return isoOrDateStr;
     const now = new Date();
     const isToday =
@@ -41,7 +45,11 @@ export function formatMailDate(isoOrDateStr: string): string {
 
 export function formatFullMailDate(isoOrDateStr: string): string {
   try {
-    const d = new Date(isoOrDateStr.includes(" ") ? isoOrDateStr.replace(" ", "T") : isoOrDateStr);
+    const d = new Date(
+      isoOrDateStr.includes(" ")
+        ? isoOrDateStr.replace(" ", "T")
+        : isoOrDateStr,
+    );
     if (isNaN(d.getTime())) return isoOrDateStr;
     return d.toLocaleDateString([], {
       month: "short",

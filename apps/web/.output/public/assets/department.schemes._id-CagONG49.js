@@ -1,1 +1,277 @@
-import{c as e,f as t,l as n,t as r,u as i}from"./button-KmRTh43o.js";import{t as a}from"./link-gIn96cdo.js";import{t as o}from"./plus-C-ekZNzZ.js";import{D as s,Et as c,O as l,Pn as u,S as d,Tt as f,U as p,_ as m,a as h,b as g,mn as _,v,y}from"./index-B8Y-_llO.js";import{t as b}from"./checkbox-Cf1lIpXp.js";var x=e(`arrow-down`,[[`path`,{d:`M12 5v14`,key:`s699le`}],[`path`,{d:`m19 12-7 7-7-7`,key:`1idqje`}]]),S=t(i()),C=n(),w=[`Application Submitted`,`Documents Checked`,`Eligibility Verified`,`Duplicate Check`,`Officer Review`,`Decision`,`Benefit / Disbursement`];function T(){let{id:e}=h.useParams(),{state:t,addAudit:n}=_(),i=u(e),[T,E]=(0,S.useState)(i?.basis??[]),[D,O]=(0,S.useState)(i?.documents??[]),[k,A]=(0,S.useState)(``),[j,M]=(0,S.useState)(w.map(e=>({w:e,on:!0})));if(!i)return(0,C.jsx)(d,{title:`Scheme not found`,action:(0,C.jsx)(r,{asChild:!0,children:(0,C.jsx)(a,{to:`/department/schemes`,children:`Back`})})});let N=e=>{n({actor:`${t.session?.name} (${t.session?.id})`,action:`Scheme configuration updated: ${e}`,application:i.id,prev:`—`,next:e,reason:`Admin change`}),f.success(`${e} saved`,{description:`Change recorded in audit log.`})};return(0,C.jsxs)(`div`,{children:[(0,C.jsx)(s,{title:i.name,desc:i.department,crumbs:[{label:`Manage Schemes`,to:`/department/schemes`},{label:i.name}],actions:(0,C.jsx)(r,{variant:`outline`,asChild:!0,children:(0,C.jsx)(a,{to:`/department/rules`,search:{scheme:i.id},children:`Edit eligibility rules`})})}),(0,C.jsxs)(m,{defaultValue:`basis`,children:[(0,C.jsxs)(y,{children:[(0,C.jsx)(g,{value:`basis`,children:`Eligibility basis`}),(0,C.jsx)(g,{value:`docs`,children:`Required Documents`}),(0,C.jsx)(g,{value:`wf`,children:`Application Workflow`})]}),(0,C.jsx)(v,{value:`basis`,children:(0,C.jsxs)(l,{title:`Eligibility is assessed on`,children:[(0,C.jsx)(`div`,{className:`space-y-3`,children:[`Individual`,`Household`,`Property`].map(e=>(0,C.jsxs)(`label`,{className:`flex items-start gap-2 text-sm`,children:[(0,C.jsx)(b,{checked:T.includes(e),onCheckedChange:t=>E(t?[...T,e]:T.filter(t=>t!==e)),className:`mt-0.5`}),(0,C.jsxs)(`span`,{children:[(0,C.jsx)(`span`,{className:`font-medium`,children:e}),(0,C.jsx)(`span`,{className:`block text-xs text-muted-foreground`,children:e===`Individual`?`Applicant's own attributes (age, gender, enrolment)`:e===`Household`?`Household income, BPL status, and one-benefit-per-household checks`:`Land and house ownership across all household members`})]})]},e))}),(0,C.jsx)(r,{className:`mt-4`,disabled:!T.length,onClick:()=>N(`Eligibility basis: ${T.join(` + `)}`),children:`Save`})]})}),(0,C.jsx)(v,{value:`docs`,children:(0,C.jsxs)(l,{title:`Required documents`,children:[(0,C.jsx)(`ul`,{className:`space-y-2`,children:D.map(e=>(0,C.jsxs)(`li`,{className:`flex items-center justify-between rounded-md border px-3 py-2 text-sm`,children:[e,(0,C.jsx)(r,{size:`icon`,variant:`ghost`,"aria-label":`Remove ${e}`,onClick:()=>O(D.filter(t=>t!==e)),children:(0,C.jsx)(c,{className:`h-4 w-4`})})]},e))}),(0,C.jsxs)(`form`,{className:`mt-3 flex gap-2`,onSubmit:e=>{e.preventDefault(),k.trim()&&(O([...D,k.trim()]),A(``))},children:[(0,C.jsx)(p,{value:k,onChange:e=>A(e.target.value),placeholder:`Add document type`}),(0,C.jsxs)(r,{type:`submit`,variant:`outline`,children:[(0,C.jsx)(o,{className:`mr-1 h-4 w-4`}),`Add`]})]}),(0,C.jsx)(r,{className:`mt-4`,onClick:()=>N(`Required documents`),children:`Save`})]})}),(0,C.jsx)(v,{value:`wf`,children:(0,C.jsxs)(l,{title:`Application workflow`,children:[(0,C.jsx)(`ol`,{className:`space-y-1`,children:j.map((e,t)=>(0,C.jsxs)(`li`,{children:[(0,C.jsxs)(`div`,{className:`flex items-center justify-between rounded-md border bg-card px-3 py-2 text-sm`,children:[(0,C.jsxs)(`span`,{children:[(0,C.jsx)(`span`,{className:`mr-2 font-mono text-xs text-muted-foreground`,children:t+1}),e.w]}),(0,C.jsxs)(`label`,{className:`flex items-center gap-2 text-xs`,children:[(0,C.jsx)(b,{checked:e.on,disabled:[`Application Submitted`,`Officer Review`,`Decision`].includes(e.w),onCheckedChange:e=>M(j.map((n,r)=>r===t?{...n,on:!!e}:n))}),`Enabled`]})]}),t<j.length-1&&(0,C.jsx)(x,{className:`mx-auto my-0.5 h-3 w-3 text-muted-foreground`})]},e.w))}),(0,C.jsx)(`p`,{className:`mt-2 text-xs text-muted-foreground`,children:`Officer Review and Decision are mandatory: the platform never issues automatic decisions.`}),(0,C.jsx)(r,{className:`mt-4`,onClick:()=>N(`Application workflow`),children:`Save`})]})})]})]})}export{T as component};
+import { c as e, f as t, l as n, t as r, u as i } from "./button-KmRTh43o.js";
+import { t as a } from "./link-gIn96cdo.js";
+import { t as o } from "./plus-C-ekZNzZ.js";
+import {
+  D as s,
+  Et as c,
+  O as l,
+  Pn as u,
+  S as d,
+  Tt as f,
+  U as p,
+  _ as m,
+  a as h,
+  b as g,
+  mn as _,
+  v,
+  y,
+} from "./index-B8Y-_llO.js";
+import { t as b } from "./checkbox-Cf1lIpXp.js";
+var x = e(`arrow-down`, [
+    [`path`, { d: `M12 5v14`, key: `s699le` }],
+    [`path`, { d: `m19 12-7 7-7-7`, key: `1idqje` }],
+  ]),
+  S = t(i()),
+  C = n(),
+  w = [
+    `Application Submitted`,
+    `Documents Checked`,
+    `Eligibility Verified`,
+    `Duplicate Check`,
+    `Officer Review`,
+    `Decision`,
+    `Benefit / Disbursement`,
+  ];
+function T() {
+  let { id: e } = h.useParams(),
+    { state: t, addAudit: n } = _(),
+    i = u(e),
+    [T, E] = (0, S.useState)(i?.basis ?? []),
+    [D, O] = (0, S.useState)(i?.documents ?? []),
+    [k, A] = (0, S.useState)(``),
+    [j, M] = (0, S.useState)(w.map((e) => ({ w: e, on: !0 })));
+  if (!i)
+    return (0, C.jsx)(d, {
+      title: `Scheme not found`,
+      action: (0, C.jsx)(r, {
+        asChild: !0,
+        children: (0, C.jsx)(a, {
+          to: `/department/schemes`,
+          children: `Back`,
+        }),
+      }),
+    });
+  let N = (e) => {
+    (n({
+      actor: `${t.session?.name} (${t.session?.id})`,
+      action: `Scheme configuration updated: ${e}`,
+      application: i.id,
+      prev: `—`,
+      next: e,
+      reason: `Admin change`,
+    }),
+      f.success(`${e} saved`, {
+        description: `Change recorded in audit log.`,
+      }));
+  };
+  return (0, C.jsxs)(`div`, {
+    children: [
+      (0, C.jsx)(s, {
+        title: i.name,
+        desc: i.department,
+        crumbs: [
+          { label: `Manage Schemes`, to: `/department/schemes` },
+          { label: i.name },
+        ],
+        actions: (0, C.jsx)(r, {
+          variant: `outline`,
+          asChild: !0,
+          children: (0, C.jsx)(a, {
+            to: `/department/rules`,
+            search: { scheme: i.id },
+            children: `Edit eligibility rules`,
+          }),
+        }),
+      }),
+      (0, C.jsxs)(m, {
+        defaultValue: `basis`,
+        children: [
+          (0, C.jsxs)(y, {
+            children: [
+              (0, C.jsx)(g, { value: `basis`, children: `Eligibility basis` }),
+              (0, C.jsx)(g, { value: `docs`, children: `Required Documents` }),
+              (0, C.jsx)(g, { value: `wf`, children: `Application Workflow` }),
+            ],
+          }),
+          (0, C.jsx)(v, {
+            value: `basis`,
+            children: (0, C.jsxs)(l, {
+              title: `Eligibility is assessed on`,
+              children: [
+                (0, C.jsx)(`div`, {
+                  className: `space-y-3`,
+                  children: [`Individual`, `Household`, `Property`].map((e) =>
+                    (0, C.jsxs)(
+                      `label`,
+                      {
+                        className: `flex items-start gap-2 text-sm`,
+                        children: [
+                          (0, C.jsx)(b, {
+                            checked: T.includes(e),
+                            onCheckedChange: (t) =>
+                              E(t ? [...T, e] : T.filter((t) => t !== e)),
+                            className: `mt-0.5`,
+                          }),
+                          (0, C.jsxs)(`span`, {
+                            children: [
+                              (0, C.jsx)(`span`, {
+                                className: `font-medium`,
+                                children: e,
+                              }),
+                              (0, C.jsx)(`span`, {
+                                className: `block text-xs text-muted-foreground`,
+                                children:
+                                  e === `Individual`
+                                    ? `Applicant's own attributes (age, gender, enrolment)`
+                                    : e === `Household`
+                                      ? `Household income, BPL status, and one-benefit-per-household checks`
+                                      : `Land and house ownership across all household members`,
+                              }),
+                            ],
+                          }),
+                        ],
+                      },
+                      e,
+                    ),
+                  ),
+                }),
+                (0, C.jsx)(r, {
+                  className: `mt-4`,
+                  disabled: !T.length,
+                  onClick: () => N(`Eligibility basis: ${T.join(` + `)}`),
+                  children: `Save`,
+                }),
+              ],
+            }),
+          }),
+          (0, C.jsx)(v, {
+            value: `docs`,
+            children: (0, C.jsxs)(l, {
+              title: `Required documents`,
+              children: [
+                (0, C.jsx)(`ul`, {
+                  className: `space-y-2`,
+                  children: D.map((e) =>
+                    (0, C.jsxs)(
+                      `li`,
+                      {
+                        className: `flex items-center justify-between rounded-md border px-3 py-2 text-sm`,
+                        children: [
+                          e,
+                          (0, C.jsx)(r, {
+                            size: `icon`,
+                            variant: `ghost`,
+                            "aria-label": `Remove ${e}`,
+                            onClick: () => O(D.filter((t) => t !== e)),
+                            children: (0, C.jsx)(c, { className: `h-4 w-4` }),
+                          }),
+                        ],
+                      },
+                      e,
+                    ),
+                  ),
+                }),
+                (0, C.jsxs)(`form`, {
+                  className: `mt-3 flex gap-2`,
+                  onSubmit: (e) => {
+                    (e.preventDefault(),
+                      k.trim() && (O([...D, k.trim()]), A(``)));
+                  },
+                  children: [
+                    (0, C.jsx)(p, {
+                      value: k,
+                      onChange: (e) => A(e.target.value),
+                      placeholder: `Add document type`,
+                    }),
+                    (0, C.jsxs)(r, {
+                      type: `submit`,
+                      variant: `outline`,
+                      children: [
+                        (0, C.jsx)(o, { className: `mr-1 h-4 w-4` }),
+                        `Add`,
+                      ],
+                    }),
+                  ],
+                }),
+                (0, C.jsx)(r, {
+                  className: `mt-4`,
+                  onClick: () => N(`Required documents`),
+                  children: `Save`,
+                }),
+              ],
+            }),
+          }),
+          (0, C.jsx)(v, {
+            value: `wf`,
+            children: (0, C.jsxs)(l, {
+              title: `Application workflow`,
+              children: [
+                (0, C.jsx)(`ol`, {
+                  className: `space-y-1`,
+                  children: j.map((e, t) =>
+                    (0, C.jsxs)(
+                      `li`,
+                      {
+                        children: [
+                          (0, C.jsxs)(`div`, {
+                            className: `flex items-center justify-between rounded-md border bg-card px-3 py-2 text-sm`,
+                            children: [
+                              (0, C.jsxs)(`span`, {
+                                children: [
+                                  (0, C.jsx)(`span`, {
+                                    className: `mr-2 font-mono text-xs text-muted-foreground`,
+                                    children: t + 1,
+                                  }),
+                                  e.w,
+                                ],
+                              }),
+                              (0, C.jsxs)(`label`, {
+                                className: `flex items-center gap-2 text-xs`,
+                                children: [
+                                  (0, C.jsx)(b, {
+                                    checked: e.on,
+                                    disabled: [
+                                      `Application Submitted`,
+                                      `Officer Review`,
+                                      `Decision`,
+                                    ].includes(e.w),
+                                    onCheckedChange: (e) =>
+                                      M(
+                                        j.map((n, r) =>
+                                          r === t ? { ...n, on: !!e } : n,
+                                        ),
+                                      ),
+                                  }),
+                                  `Enabled`,
+                                ],
+                              }),
+                            ],
+                          }),
+                          t < j.length - 1 &&
+                            (0, C.jsx)(x, {
+                              className: `mx-auto my-0.5 h-3 w-3 text-muted-foreground`,
+                            }),
+                        ],
+                      },
+                      e.w,
+                    ),
+                  ),
+                }),
+                (0, C.jsx)(`p`, {
+                  className: `mt-2 text-xs text-muted-foreground`,
+                  children: `Officer Review and Decision are mandatory: the platform never issues automatic decisions.`,
+                }),
+                (0, C.jsx)(r, {
+                  className: `mt-4`,
+                  onClick: () => N(`Application workflow`),
+                  children: `Save`,
+                }),
+              ],
+            }),
+          }),
+        ],
+      }),
+    ],
+  });
+}
+export { T as component };

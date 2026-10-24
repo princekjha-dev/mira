@@ -30,7 +30,9 @@ impl DuplicateComparator {
         // 1. Scope and Target Unit Comparison
         let (unit_matches, unit_field, source_val, existing_val) = match scope {
             BenefitScope::Individual => {
-                let s_id = application.target_person_id.unwrap_or(application.applicant_person_id);
+                let s_id = application
+                    .target_person_id
+                    .unwrap_or(application.applicant_person_id);
                 let e_id = benefit.person_id;
                 let matches = e_id.map_or(false, |id| id == s_id);
                 (
@@ -63,8 +65,10 @@ impl DuplicateComparator {
                 )
             }
             BenefitScope::Composite => {
-                let p_matches = application.target_person_id.is_some() && application.target_person_id == benefit.person_id;
-                let h_matches = application.target_household_id.is_some() && application.target_household_id == benefit.household_id;
+                let p_matches = application.target_person_id.is_some()
+                    && application.target_person_id == benefit.person_id;
+                let h_matches = application.target_household_id.is_some()
+                    && application.target_household_id == benefit.household_id;
                 (p_matches || h_matches, "composite_unit", None, None)
             }
         };
@@ -114,7 +118,8 @@ impl DuplicateComparator {
                 existing_value: Some(benefit.scheme_id.to_string()),
                 result: "SUPPORTS_MATCH".to_string(),
                 weight: 0.30,
-                explanation: "Both claims pertain to the identical public benefit scheme.".to_string(),
+                explanation: "Both claims pertain to the identical public benefit scheme."
+                    .to_string(),
                 created_at: chrono::Utc::now(),
             });
         } else {
@@ -126,14 +131,18 @@ impl DuplicateComparator {
                 existing_value: Some(benefit.scheme_id.to_string()),
                 result: "CONTRADICTS_MATCH".to_string(),
                 weight: 0.30,
-                explanation: "Different public schemes (independent benefit entitlements).".to_string(),
+                explanation: "Different public schemes (independent benefit entitlements)."
+                    .to_string(),
                 created_at: chrono::Utc::now(),
             });
         }
 
         // 3. Temporal Overlap Comparison
         let is_overlapping = match benefit.valid_to {
-            Some(end_date) => application.application_date >= benefit.valid_from && application.application_date <= end_date,
+            Some(end_date) => {
+                application.application_date >= benefit.valid_from
+                    && application.application_date <= end_date
+            }
             None => application.application_date >= benefit.valid_from,
         };
 
@@ -163,11 +172,14 @@ impl DuplicateComparator {
                 existing_value: Some(format!(
                     "{} to {}",
                     benefit.valid_from,
-                    benefit.valid_to.map_or("indefinite".to_string(), |d| d.to_string())
+                    benefit
+                        .valid_to
+                        .map_or("indefinite".to_string(), |d| d.to_string())
                 )),
                 result: "NEUTRAL".to_string(),
                 weight: 0.10,
-                explanation: "Non-overlapping benefit periods (existing benefit has expired).".to_string(),
+                explanation: "Non-overlapping benefit periods (existing benefit has expired)."
+                    .to_string(),
                 created_at: chrono::Utc::now(),
             });
         }

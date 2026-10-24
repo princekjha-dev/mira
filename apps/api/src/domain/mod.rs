@@ -59,7 +59,10 @@ impl RoleType {
     pub fn can_view_audit_logs(&self) -> bool {
         matches!(
             self,
-            RoleType::Auditor | RoleType::DepartmentAdmin | RoleType::SuperAdmin | RoleType::Supervisor
+            RoleType::Auditor
+                | RoleType::DepartmentAdmin
+                | RoleType::SuperAdmin
+                | RoleType::Supervisor
         )
     }
 
@@ -847,6 +850,6 @@ pub struct Notification {
     pub created_at: DateTime<Utc>,
 }
 
-pub mod entity_resolution;
 pub mod benefit_duplicate;
 pub mod document;
+pub mod entity_resolution;

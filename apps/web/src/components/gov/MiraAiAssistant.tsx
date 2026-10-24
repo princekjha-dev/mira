@@ -21,7 +21,9 @@ export function MiraAiAssistant() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const [isOpen, setIsOpen] = useState(false);
   const [prompt, setPrompt] = useState("");
-  const [chatLog, setChatLog] = useState<Array<{ sender: "user" | "mira"; text: string }>>([]);
+  const [chatLog, setChatLog] = useState<
+    Array<{ sender: "user" | "mira"; text: string }>
+  >([]);
 
   const role = state.session?.role || "citizen";
 
@@ -51,21 +53,35 @@ export function MiraAiAssistant() {
     const q = userQuery.trim().toLowerCase();
     let reply = "";
 
-    if (q.includes("why is my application waiting") || q.includes("status") || q.includes("waiting")) {
-      const activeApp = state.applications.find((a) => a.status === "Additional Evidence Required" || a.status === "Verification Required") || state.applications[0];
+    if (
+      q.includes("why is my application waiting") ||
+      q.includes("status") ||
+      q.includes("waiting")
+    ) {
+      const activeApp =
+        state.applications.find(
+          (a) =>
+            a.status === "Additional Evidence Required" ||
+            a.status === "Verification Required",
+        ) || state.applications[0];
       if (activeApp) {
         reply = `Your application ${activeApp.id} for ${activeApp.schemeId} is in stage "${activeApp.status}". Verification Officer Neha Verma requested an updated income certificate with a clear seal on 22 Oct 2026. Once uploaded, the verification cell will proceed with sanction review.`;
       } else {
-        reply = "You do not have any applications currently awaiting clarification. All your active filings are progressing through regular intake.";
+        reply =
+          "You do not have any applications currently awaiting clarification. All your active filings are progressing through regular intake.";
       }
     } else if (q.includes("mismatch") || q.includes("duplicate")) {
-      reply = "Mira flagged an investigation signal on duplicate alert DA-2026-10483 regarding an existing district ration entitlement. Under human-in-the-loop policy, this is NOT treated as fraud; it is marked for officer review to confirm household transition.";
+      reply =
+        "Mira flagged an investigation signal on duplicate alert DA-2026-10483 regarding an existing district ration entitlement. Under human-in-the-loop policy, this is NOT treated as fraud; it is marked for officer review to confirm household transition.";
     } else if (q.includes("rule") || q.includes("eligibility")) {
-      reply = "Rural Housing Assistance Scheme is currently on Rule Version 3.2. Requirements: Household income under ₹1,50,000, no existing pucca dwelling, and verified resident of state.";
+      reply =
+        "Rural Housing Assistance Scheme is currently on Rule Version 3.2. Requirements: Household income under ₹1,50,000, no existing pucca dwelling, and verified resident of state.";
     } else if (q.includes("family") || q.includes("household")) {
-      reply = "Household MIRA-FAM-10482 (Sharma Family) has 5 verified members (Rajesh, Sunita, Meena, Ananya, Aarav). All relationships are attested against civil registration records.";
+      reply =
+        "Household MIRA-FAM-10482 (Sharma Family) has 5 verified members (Rajesh, Sunita, Meena, Ananya, Aarav). All relationships are attested against civil registration records.";
     } else if (q.includes("audit") || q.includes("decided")) {
-      reply = "Every consequential state transition is recorded in the immutable audit log with cryptographic hash. Auditors have read-only inspection access without mutation permissions.";
+      reply =
+        "Every consequential state transition is recorded in the immutable audit log with cryptographic hash. Auditors have read-only inspection access without mutation permissions.";
     } else {
       reply = `I am Mira, your verified public service assistant. I can help explain status for ${role} workspace records, statutory criteria, and required documents. Try asking: "Why is my application waiting?" or "Explain duplicate signals".`;
     }
@@ -128,7 +144,8 @@ export function MiraAiAssistant() {
             {chatLog.length === 0 ? (
               <div className="space-y-2 py-2">
                 <p className="text-slate-600 text-xs leading-relaxed">
-                  Namaste! I have live context on your active workspace. What can I clarify for you?
+                  Namaste! I have live context on your active workspace. What
+                  can I clarify for you?
                 </p>
                 <div className="space-y-1.5 pt-1">
                   {[

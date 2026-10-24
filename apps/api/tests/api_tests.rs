@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
@@ -10,11 +9,14 @@ use mira_api::{
     database::{create_pool, run_migrations, seed_database, DEMO_PASSWORD},
 };
 use serde_json::Value;
+use std::sync::Arc;
 use tower::ServiceExt;
 
 async fn setup_test_app() -> (axum::Router, sqlx::PgPool, AppConfig) {
     let mut config = AppConfig::from_env();
-    config.database_url = "postgres://postgres@127.0.0.1:5433/mira_test".to_string();
+    config.database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        "postgres://postgres:postgrespassword@127.0.0.1:5433/mira_test".to_string()
+    });
     config.demo_mode = true;
 
     let pool = create_pool(&config.database_url)
@@ -42,14 +44,17 @@ async fn test_demo_authentication_can_be_disabled_server_side() {
         config: Arc::new(config),
     });
 
-    let response = app.oneshot(
-        Request::builder()
-            .uri("/api/v1/auth/demo-login")
-            .method(Method::POST)
-            .header(header::CONTENT_TYPE, "application/json")
-            .body(Body::from(r#"{"role":"citizen"}"#))
-            .unwrap(),
-    ).await.unwrap();
+    let response = app
+        .oneshot(
+            Request::builder()
+                .uri("/api/v1/auth/demo-login")
+                .method(Method::POST)
+                .header(header::CONTENT_TYPE, "application/json")
+                .body(Body::from(r#"{"role":"citizen"}"#))
+                .unwrap(),
+        )
+        .await
+        .unwrap();
 
     assert_eq!(response.status(), StatusCode::NOT_FOUND);
 }
@@ -88,7 +93,8 @@ async fn test_demo_user_authentication_flow() {
         "password": DEMO_PASSWORD
     });
 
-    let response = app.clone()
+    let response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/auth/login")
@@ -110,7 +116,8 @@ async fn test_demo_user_authentication_flow() {
     assert_eq!(body["user"]["is_demo"], true);
 
     // Access protected /api/v1/auth/me
-    let me_response = app.clone()
+    let me_response = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/auth/me")
@@ -141,21 +148,37 @@ async fn test_demo_login_issues_database_backed_roles_for_all_demo_accounts() {
     ];
 
     for (selected_role, expected_role) in demo_accounts {
-        let response = app.clone().oneshot(
-            Request::builder()
-                .uri("/api/v1/auth/demo-login")
-                .method(Method::POST)
-                .header(header::CONTENT_TYPE, "application/json")
-                .body(Body::from(serde_json::json!({ "role": selected_role }).to_string()))
-                .unwrap(),
-        ).await.unwrap();
+        let response = app
+            .clone()
+            .oneshot(
+                Request::builder()
+                    .uri("/api/v1/auth/demo-login")
+                    .method(Method::POST)
+                    .header(header::CONTENT_TYPE, "application/json")
+                    .body(Body::from(
+                        serde_json::json!({ "role": selected_role }).to_string(),
+                    ))
+                    .unwrap(),
+            )
+            .await
+            .unwrap();
 
-        assert_eq!(response.status(), StatusCode::OK, "demo role {selected_role}");
+        assert_eq!(
+            response.status(),
+            StatusCode::OK,
+            "demo role {selected_role}"
+        );
         let bytes = response.into_body().collect().await.unwrap().to_bytes();
         let body: Value = serde_json::from_slice(&bytes).unwrap();
-        assert!(body["token"].as_str().is_some_and(|token| !token.is_empty()));
+        assert!(body["token"]
+            .as_str()
+            .is_some_and(|token| !token.is_empty()));
         assert_eq!(body["user"]["is_demo"], true);
-        assert!(body["user"]["roles"].as_array().unwrap().iter().any(|role| role == expected_role));
+        assert!(body["user"]["roles"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .any(|role| role == expected_role));
     }
 }
 
@@ -171,7 +194,8 @@ async fn test_mandatory_multi_user_isolation_and_idor_protection() {
         "display_name": "Citizen User A"
     });
 
-    let res_a = app.clone()
+    let res_a = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/auth/register")
@@ -184,7 +208,8 @@ async fn test_mandatory_multi_user_isolation_and_idor_protection() {
         .unwrap();
 
     assert_eq!(res_a.status(), StatusCode::CREATED);
-    let body_a: Value = serde_json::from_slice(&res_a.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let body_a: Value =
+        serde_json::from_slice(&res_a.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let token_a = body_a["token"].as_str().unwrap();
     let user_a_id = body_a["user"]["id"].as_str().unwrap();
 
@@ -196,7 +221,8 @@ async fn test_mandatory_multi_user_isolation_and_idor_protection() {
         "display_name": "Citizen User B"
     });
 
-    let res_b = app.clone()
+    let res_b = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/auth/register")
@@ -209,11 +235,13 @@ async fn test_mandatory_multi_user_isolation_and_idor_protection() {
         .unwrap();
 
     assert_eq!(res_b.status(), StatusCode::CREATED);
-    let body_b: Value = serde_json::from_slice(&res_b.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let body_b: Value =
+        serde_json::from_slice(&res_b.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let user_b_id = body_b["user"]["id"].as_str().unwrap();
 
     // 1. User A accesses their OWN profile by ID -> MUST SUCCEED (200 OK)
-    let self_access_res = app.clone()
+    let self_access_res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri(format!("/api/v1/profile/{}", user_a_id))
@@ -229,7 +257,8 @@ async fn test_mandatory_multi_user_isolation_and_idor_protection() {
 
     // 2. User A attempts to access User B's profile by ID -> MUST BE FORBIDDEN (403 FORBIDDEN)
     // Mandatory IDOR test
-    let idor_attempt_res = app.clone()
+    let idor_attempt_res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri(format!("/api/v1/profile/{}", user_b_id))
@@ -242,11 +271,19 @@ async fn test_mandatory_multi_user_isolation_and_idor_protection() {
         .unwrap();
 
     assert_eq!(idor_attempt_res.status(), StatusCode::FORBIDDEN);
-    let err_bytes = idor_attempt_res.into_body().collect().await.unwrap().to_bytes();
+    let err_bytes = idor_attempt_res
+        .into_body()
+        .collect()
+        .await
+        .unwrap()
+        .to_bytes();
     let err_body: Value = serde_json::from_slice(&err_bytes).unwrap();
 
     assert_eq!(err_body["error"]["code"], "FORBIDDEN");
-    assert!(err_body["error"]["message"].as_str().unwrap().contains("insufficient permissions"));
+    assert!(err_body["error"]["message"]
+        .as_str()
+        .unwrap()
+        .contains("insufficient permissions"));
     assert!(err_body["error"]["request_id"].is_string());
 }
 
@@ -260,7 +297,8 @@ async fn test_profile_preference_and_language_update() {
         "password": DEMO_PASSWORD
     });
 
-    let res = app.clone()
+    let res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/auth/login")
@@ -272,7 +310,8 @@ async fn test_profile_preference_and_language_update() {
         .await
         .unwrap();
 
-    let body: Value = serde_json::from_slice(&res.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let body: Value =
+        serde_json::from_slice(&res.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let token = body["token"].as_str().unwrap();
 
     // Update preferred language to Hindi ('hi') and display name
@@ -281,7 +320,8 @@ async fn test_profile_preference_and_language_update() {
         "preferred_language": "hi"
     });
 
-    let update_res = app.clone()
+    let update_res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/profile/preferences")
@@ -295,7 +335,9 @@ async fn test_profile_preference_and_language_update() {
         .unwrap();
 
     assert_eq!(update_res.status(), StatusCode::OK);
-    let updated_body: Value = serde_json::from_slice(&update_res.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let updated_body: Value =
+        serde_json::from_slice(&update_res.into_body().collect().await.unwrap().to_bytes())
+            .unwrap();
     assert_eq!(updated_body["data"]["preferred_language"], "hi");
 
     // Attempt to set invalid language 'fr' -> validation error
@@ -303,14 +345,17 @@ async fn test_profile_preference_and_language_update() {
         "preferred_language": "fr"
     });
 
-    let invalid_res = app.clone()
+    let invalid_res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/profile/preferences")
                 .method(Method::PUT)
                 .header(header::AUTHORIZATION, format!("Bearer {}", token))
                 .header(header::CONTENT_TYPE, "application/json")
-                .body(Body::from(serde_json::to_vec(&invalid_lang_payload).unwrap()))
+                .body(Body::from(
+                    serde_json::to_vec(&invalid_lang_payload).unwrap(),
+                ))
                 .unwrap(),
         )
         .await
@@ -329,7 +374,8 @@ async fn test_role_based_audit_access() {
         "password": DEMO_PASSWORD
     });
 
-    let res = app.clone()
+    let res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/auth/login")
@@ -340,11 +386,13 @@ async fn test_role_based_audit_access() {
         )
         .await
         .unwrap();
-    let body: Value = serde_json::from_slice(&res.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let body: Value =
+        serde_json::from_slice(&res.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let citizen_token = body["token"].as_str().unwrap();
 
     // Citizen tries to access audit events -> 403 Forbidden
-    let audit_res = app.clone()
+    let audit_res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/audit/events")
@@ -362,7 +410,8 @@ async fn test_role_based_audit_access() {
         "email": "auditor@mira.local",
         "password": DEMO_PASSWORD
     });
-    let a_res = app.clone()
+    let a_res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/auth/login")
@@ -373,11 +422,13 @@ async fn test_role_based_audit_access() {
         )
         .await
         .unwrap();
-    let a_body: Value = serde_json::from_slice(&a_res.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let a_body: Value =
+        serde_json::from_slice(&a_res.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let auditor_token = a_body["token"].as_str().unwrap();
 
     // Auditor accesses audit events -> 200 OK
-    let auditor_access_res = app.clone()
+    let auditor_access_res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/audit/events")

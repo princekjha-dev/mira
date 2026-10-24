@@ -81,7 +81,12 @@ export function AuditorFamily360Page() {
                 className="h-8 pl-8 text-xs font-mono bg-white dark:bg-slate-900"
               />
             </div>
-            <Button type="submit" size="sm" variant="outline" className="h-8 text-xs">
+            <Button
+              type="submit"
+              size="sm"
+              variant="outline"
+              className="h-8 text-xs"
+            >
               Audit
             </Button>
           </form>

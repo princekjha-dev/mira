@@ -15,12 +15,33 @@ export const DOCUMENT_UPLOAD_CONFIG = {
     "application/vnd.openxmlformats-officedocument.wordprocessingml.document",
     "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
   ],
-  ALLOWED_EXTENSIONS: ["pdf", "png", "jpg", "jpeg", "webp", "txt", "csv", "docx", "xlsx"],
+  ALLOWED_EXTENSIONS: [
+    "pdf",
+    "png",
+    "jpg",
+    "jpeg",
+    "webp",
+    "txt",
+    "csv",
+    "docx",
+    "xlsx",
+  ],
 } as const;
 
 export const DOCUMENT_CATEGORIES = [
-  "Identity", "Address", "Income", "BPL / Economic Status", "Education", "Birth", "Marriage",
-  "Property", "Land", "Bank", "Employment", "Scheme-specific", "Other",
+  "Identity",
+  "Address",
+  "Income",
+  "BPL / Economic Status",
+  "Education",
+  "Birth",
+  "Marriage",
+  "Property",
+  "Land",
+  "Bank",
+  "Employment",
+  "Scheme-specific",
+  "Other",
 ] as const;
 
 export const DOCUMENT_TYPE_VALUES: Record<string, string> = {

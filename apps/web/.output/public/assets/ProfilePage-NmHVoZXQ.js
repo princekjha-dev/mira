@@ -1,1 +1,522 @@
-import{c as e,l as t,t as n}from"./button-KmRTh43o.js";import{t as r}from"./link-gIn96cdo.js";import{t as i}from"./role-config-SRjM_HxE.js";import{t as a}from"./mail-BPXI5_FF.js";import{n as o,t as s}from"./ProfileSection-Byb9vkPr.js";import{Cn as c,Dn as l,Gt as u,In as d,J as f,Kt as p,Mt as m,Qt as h,Rn as g,Tt as _,Vt as v,Zt as y,_t as b,dn as x,gt as S,ht as C,kt as w,ln as T,mn as E,mt as D,qt as O,un as k,vt as A,yn as j,yt as M}from"./index-B8Y-_llO.js";var N=e(`key-round`,[[`path`,{d:`M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z`,key:`1s6t7t`}],[`circle`,{cx:`16.5`,cy:`7.5`,r:`.5`,fill:`currentColor`,key:`w0ekpg`}]]),P=e(`laptop`,[[`path`,{d:`M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z`,key:`1pdavp`}],[`path`,{d:`M20.054 15.987H3.946`,key:`14rxg9`}]]),F=e(`phone`,[[`path`,{d:`M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384`,key:`9njp5v`}]]),I=e(`sliders-vertical`,[[`path`,{d:`M10 8h4`,key:`1sr2af`}],[`path`,{d:`M12 21v-9`,key:`17s77i`}],[`path`,{d:`M12 8V3`,key:`13r4qs`}],[`path`,{d:`M17 16h4`,key:`h1uq16`}],[`path`,{d:`M19 12V3`,key:`o1uvq1`}],[`path`,{d:`M19 21v-5`,key:`qua636`}],[`path`,{d:`M3 14h4`,key:`bcjad9`}],[`path`,{d:`M5 10V3`,key:`cb8scm`}],[`path`,{d:`M5 21v-7`,key:`1w1uti`}]]),L=t();function R({roleSpecificSection:e}){let{state:t,set:R,logout:z}=E(),B=g(),V=t.session?.role||`citizen`,H=i(V),U=t.session?.name||H.defaultIdentity.name,W=t.session?.email||(V===`citizen`?l.email:H.demoEmail),G=V===`citizen`?l.mobile:`+91 94150 82910`,K=t.session?.department||H.defaultIdentity.organization,q=t.session?.id||H.defaultIdentity.idBadge,J=c.find(e=>e.code===t.lang)??c[0],Y=e=>{let t=e.trim().split(` `);return t.length>=2?`${t[0][0]}${t[1][0]}`.toUpperCase():(e[0]||`U`).toUpperCase()},X=()=>{z(),_.success(`Signed out successfully`),B({to:`/`})},{data:Z=[],isLoading:Q}=d({queryKey:[`my-audit-activity`,t.session?.apiUserId],queryFn:()=>j(t.session),enabled:!!t.session,staleTime:3e4});return(0,L.jsxs)(`div`,{className:`mx-auto max-w-4xl space-y-6 pb-12`,children:[(0,L.jsx)(`header`,{className:`rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900`,children:(0,L.jsxs)(`div`,{className:`flex flex-col sm:flex-row sm:items-center justify-between gap-5`,children:[(0,L.jsxs)(`div`,{className:`flex items-center gap-4`,children:[(0,L.jsxs)(`div`,{className:`relative flex h-16 w-16 sm:h-18 sm:w-18 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xl font-bold shadow-xs shrink-0`,children:[Y(U),(0,L.jsx)(`span`,{className:`absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900`,title:`Active Account`})]}),(0,L.jsxs)(`div`,{className:`space-y-1`,children:[(0,L.jsxs)(`div`,{className:`flex flex-wrap items-center gap-2`,children:[(0,L.jsx)(`h1`,{className:`text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight`,children:U}),(0,L.jsxs)(`span`,{className:`inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 border border-emerald-500/20`,children:[(0,L.jsx)(`span`,{className:`h-1.5 w-1.5 rounded-full bg-emerald-500`}),`Active account`]})]}),(0,L.jsx)(`p`,{className:`text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300`,children:H.label}),(0,L.jsxs)(`div`,{className:`flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground pt-0.5`,children:[(0,L.jsx)(`span`,{children:K}),(0,L.jsx)(`span`,{className:`text-slate-300 dark:text-slate-700`,children:`·`}),(0,L.jsx)(`span`,{className:`font-mono text-[11px] text-gov font-medium`,children:q})]})]})]}),(0,L.jsx)(`div`,{className:`flex sm:flex-col items-center sm:items-end gap-2 shrink-0`,children:(0,L.jsxs)(n,{variant:`outline`,size:`sm`,onClick:()=>{_.success(`Security token refreshed & synchronized`)},className:`text-xs h-8 gap-1.5`,children:[(0,L.jsx)(m,{className:`h-3.5 w-3.5 text-emerald-600`}),(0,L.jsx)(`span`,{children:`Verify Token`})]})})]})}),(0,L.jsxs)(s,{title:`Account Identity`,description:`Official credentials recorded in state directory`,children:[(0,L.jsx)(o,{icon:w,title:`Full Name`,description:`Verified citizen or government official name`,value:U}),(0,L.jsx)(o,{icon:m,title:`Assigned Role`,description:`Statutory authorization level within Mira`,value:(0,L.jsx)(`span`,{className:`capitalize`,children:H.label})}),(0,L.jsx)(o,{icon:T,title:`Jurisdiction / Office`,description:`Designated ministry, tehsil, or district unit`,value:K}),(0,L.jsx)(o,{icon:u,title:`Officer / Profile ID`,description:`Cryptographically anchored identity badge`,value:(0,L.jsx)(`span`,{className:`font-mono`,children:q}),isLast:!0})]}),(0,L.jsxs)(s,{title:`Contact Information`,description:`Channels for official dispatches and OTP verification`,children:[(0,L.jsx)(o,{icon:a,title:`Official Email`,description:`Used for alerts, determinations, and communications`,value:W}),(0,L.jsx)(o,{icon:F,title:`Mobile Number`,description:`Linked with Aadhaar / State directory for SMS OTP`,value:G,isLast:!0})]}),(0,L.jsxs)(s,{title:`Preferences & Appearance`,description:`Language localization and workstation accessibility`,children:[(0,L.jsx)(o,{icon:O,title:`Interface Language`,description:`Currently rendered language across forms and records`,value:(0,L.jsxs)(D,{children:[(0,L.jsx)(M,{asChild:!0,children:(0,L.jsxs)(n,{variant:`ghost`,size:`sm`,className:`h-7 text-xs font-semibold gap-1`,children:[(0,L.jsx)(`span`,{children:J.label}),(0,L.jsx)(`span`,{className:`text-slate-400`,children:`▾`})]})}),(0,L.jsxs)(C,{align:`end`,className:`w-44 text-xs`,children:[(0,L.jsx)(b,{className:`text-[10px] uppercase font-mono text-muted-foreground`,children:`Select Language`}),(0,L.jsx)(A,{}),c.map(e=>(0,L.jsxs)(S,{onClick:()=>{R({lang:e.code}),_.success(`Language changed to ${e.label}`)},className:`flex justify-between text-xs cursor-pointer`,children:[(0,L.jsx)(`span`,{children:e.label}),t.lang===e.code&&(0,L.jsx)(`span`,{className:`text-gov font-bold`,children:`✓`})]},e.code))]})]})}),(0,L.jsx)(o,{icon:k,title:`In-App & Email Notifications`,description:`Receive dispatch notifications and clarification alerts`,action:(0,L.jsx)(f,{checked:t.notifPrefs.app,onCheckedChange:e=>{R(t=>({notifPrefs:{...t.notifPrefs,app:e,email:e}})),_.success(`Notification preferences saved`)}})}),(0,L.jsx)(o,{icon:y,title:`High Contrast Accessibility`,description:`Enhances text contrast and visual element separation`,action:(0,L.jsx)(f,{checked:t.highContrast,onCheckedChange:e=>{R({highContrast:e}),document.documentElement.classList.toggle(`hc`,e),_.success(e?`High contrast enabled`:`High contrast disabled`)}})}),(0,L.jsx)(o,{icon:I,title:`Reduced Motion`,description:`Disables layout shifts and animated transitions`,action:(0,L.jsx)(f,{checked:t.reducedMotion,onCheckedChange:e=>{R({reducedMotion:e}),document.documentElement.classList.toggle(`reduce-motion`,e),_.success(e?`Reduced motion enabled`:`Standard motion enabled`)}}),isLast:!0})]}),e,(0,L.jsxs)(s,{title:`Security & Authentication`,description:`Cryptographic tokens, sign-in sessions, and audit status`,children:[(0,L.jsx)(o,{icon:N,title:`Sign-In Mechanism`,description:`Statutory non-repudiation and verification standard`,value:V===`citizen`?`Aadhaar e-KYC (Demo Mode)`:V===`auditor`?`CAG Forensic Token · RSA-4096`:`Gov Cloud SSO · Multi-Factor`}),(0,L.jsx)(o,{icon:P,title:`Active Sessions`,description:`Current workstation connection from verified IP`,value:`1 Active Device (This Browser)`,action:(0,L.jsx)(n,{variant:`outline`,size:`sm`,onClick:()=>_.success(`Signed out of all other devices`),className:`h-7 text-xs`,children:`Sign out others`}),isLast:!0})]}),(0,L.jsx)(s,{title:`My Audit Activity`,description:`Immutable record of authentication, profile access, and transaction history`,children:(0,L.jsx)(`div`,{className:`p-4 sm:p-5`,children:Q?(0,L.jsxs)(`div`,{className:`flex items-center gap-2 py-4 text-xs text-muted-foreground`,children:[(0,L.jsx)(`div`,{className:`h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent dark:border-slate-100`}),(0,L.jsx)(`span`,{children:`Loading personal audit trail...`})]}):Z.length===0?(0,L.jsx)(`p`,{className:`text-xs text-muted-foreground py-2`,children:`No recent audit events recorded for this session.`}):(0,L.jsxs)(`div`,{className:`space-y-3`,children:[(0,L.jsx)(`div`,{className:`divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-slate-50/50 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/50`,children:Z.slice(0,6).map(e=>(0,L.jsxs)(`div`,{className:`flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 text-xs`,children:[(0,L.jsxs)(`div`,{className:`flex items-center gap-2.5`,children:[(0,L.jsx)(`div`,{className:`flex h-7 w-7 items-center justify-center rounded-lg bg-white shadow-2xs dark:bg-slate-800 text-slate-700 dark:text-slate-300`,children:(0,L.jsx)(p,{className:`h-3.5 w-3.5`})}),(0,L.jsxs)(`div`,{children:[(0,L.jsx)(`span`,{className:`font-semibold text-slate-900 dark:text-slate-100 font-mono text-[11px]`,children:e.event_type}),(0,L.jsxs)(`p`,{className:`text-[10px] text-muted-foreground`,children:[`Request: `,e.request_id?`${e.request_id.slice(0,8)}...`:`System-anchored`]})]})]}),(0,L.jsxs)(`div`,{className:`flex items-center gap-2 text-[11px] font-mono text-muted-foreground`,children:[(0,L.jsx)(h,{className:`h-3 w-3`}),(0,L.jsx)(`span`,{children:new Date(e.created_at).toLocaleString()})]})]},e.id))}),V===`citizen`?(0,L.jsx)(`p`,{className:`text-[11px] text-muted-foreground pt-1`,children:`Showing authenticated personal operations. Institutional system audit records are restricted under Section 8 of the Welfare Information Act.`}):(0,L.jsxs)(`div`,{className:`mt-2 flex items-center justify-between rounded-lg bg-gov/5 p-3 border border-gov/15 text-xs`,children:[(0,L.jsxs)(`div`,{className:`flex items-center gap-2`,children:[(0,L.jsx)(m,{className:`h-4 w-4 text-gov`}),(0,L.jsx)(`span`,{className:`font-medium text-slate-900 dark:text-slate-100`,children:`Authorized Operational Access: Full Audit Ledger Available`})]}),(0,L.jsx)(n,{asChild:!0,size:`sm`,variant:`outline`,className:`h-7 text-xs gap-1 font-semibold`,children:(0,L.jsxs)(r,{to:V===`auditor`?`/auditor/audit`:V===`verifier`?`/verifier/audit`:`/officer/audit`,children:[(0,L.jsx)(`span`,{children:`Open Ledger`}),(0,L.jsx)(x,{className:`h-3 w-3`})]})})]})]})})}),(0,L.jsx)(s,{title:`Account Session`,description:`Terminate your authenticated session`,children:(0,L.jsx)(o,{icon:v,title:`Sign Out of Mira`,description:`Safely end your workstation session and purge memory tokens`,action:(0,L.jsxs)(n,{variant:`destructive`,size:`sm`,onClick:X,className:`h-8 text-xs font-semibold gap-1.5`,children:[(0,L.jsx)(v,{className:`h-3.5 w-3.5`}),`Sign Out`]}),destructive:!0,isLast:!0})})]})}export{R as t};
+import { c as e, l as t, t as n } from "./button-KmRTh43o.js";
+import { t as r } from "./link-gIn96cdo.js";
+import { t as i } from "./role-config-SRjM_HxE.js";
+import { t as a } from "./mail-BPXI5_FF.js";
+import { n as o, t as s } from "./ProfileSection-Byb9vkPr.js";
+import {
+  Cn as c,
+  Dn as l,
+  Gt as u,
+  In as d,
+  J as f,
+  Kt as p,
+  Mt as m,
+  Qt as h,
+  Rn as g,
+  Tt as _,
+  Vt as v,
+  Zt as y,
+  _t as b,
+  dn as x,
+  gt as S,
+  ht as C,
+  kt as w,
+  ln as T,
+  mn as E,
+  mt as D,
+  qt as O,
+  un as k,
+  vt as A,
+  yn as j,
+  yt as M,
+} from "./index-B8Y-_llO.js";
+var N = e(`key-round`, [
+    [
+      `path`,
+      {
+        d: `M2.586 17.414A2 2 0 0 0 2 18.828V21a1 1 0 0 0 1 1h3a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h1a1 1 0 0 0 1-1v-1a1 1 0 0 1 1-1h.172a2 2 0 0 0 1.414-.586l.814-.814a6.5 6.5 0 1 0-4-4z`,
+        key: `1s6t7t`,
+      },
+    ],
+    [
+      `circle`,
+      { cx: `16.5`, cy: `7.5`, r: `.5`, fill: `currentColor`, key: `w0ekpg` },
+    ],
+  ]),
+  P = e(`laptop`, [
+    [
+      `path`,
+      {
+        d: `M18 5a2 2 0 0 1 2 2v8.526a2 2 0 0 0 .212.897l1.068 2.127a1 1 0 0 1-.9 1.45H3.62a1 1 0 0 1-.9-1.45l1.068-2.127A2 2 0 0 0 4 15.526V7a2 2 0 0 1 2-2z`,
+        key: `1pdavp`,
+      },
+    ],
+    [`path`, { d: `M20.054 15.987H3.946`, key: `14rxg9` }],
+  ]),
+  F = e(`phone`, [
+    [
+      `path`,
+      {
+        d: `M13.832 16.568a1 1 0 0 0 1.213-.303l.355-.465A2 2 0 0 1 17 15h3a2 2 0 0 1 2 2v3a2 2 0 0 1-2 2A18 18 0 0 1 2 4a2 2 0 0 1 2-2h3a2 2 0 0 1 2 2v3a2 2 0 0 1-.8 1.6l-.468.351a1 1 0 0 0-.292 1.233 14 14 0 0 0 6.392 6.384`,
+        key: `9njp5v`,
+      },
+    ],
+  ]),
+  I = e(`sliders-vertical`, [
+    [`path`, { d: `M10 8h4`, key: `1sr2af` }],
+    [`path`, { d: `M12 21v-9`, key: `17s77i` }],
+    [`path`, { d: `M12 8V3`, key: `13r4qs` }],
+    [`path`, { d: `M17 16h4`, key: `h1uq16` }],
+    [`path`, { d: `M19 12V3`, key: `o1uvq1` }],
+    [`path`, { d: `M19 21v-5`, key: `qua636` }],
+    [`path`, { d: `M3 14h4`, key: `bcjad9` }],
+    [`path`, { d: `M5 10V3`, key: `cb8scm` }],
+    [`path`, { d: `M5 21v-7`, key: `1w1uti` }],
+  ]),
+  L = t();
+function R({ roleSpecificSection: e }) {
+  let { state: t, set: R, logout: z } = E(),
+    B = g(),
+    V = t.session?.role || `citizen`,
+    H = i(V),
+    U = t.session?.name || H.defaultIdentity.name,
+    W = t.session?.email || (V === `citizen` ? l.email : H.demoEmail),
+    G = V === `citizen` ? l.mobile : `+91 94150 82910`,
+    K = t.session?.department || H.defaultIdentity.organization,
+    q = t.session?.id || H.defaultIdentity.idBadge,
+    J = c.find((e) => e.code === t.lang) ?? c[0],
+    Y = (e) => {
+      let t = e.trim().split(` `);
+      return t.length >= 2
+        ? `${t[0][0]}${t[1][0]}`.toUpperCase()
+        : (e[0] || `U`).toUpperCase();
+    },
+    X = () => {
+      (z(), _.success(`Signed out successfully`), B({ to: `/` }));
+    },
+    { data: Z = [], isLoading: Q } = d({
+      queryKey: [`my-audit-activity`, t.session?.apiUserId],
+      queryFn: () => j(t.session),
+      enabled: !!t.session,
+      staleTime: 3e4,
+    });
+  return (0, L.jsxs)(`div`, {
+    className: `mx-auto max-w-4xl space-y-6 pb-12`,
+    children: [
+      (0, L.jsx)(`header`, {
+        className: `rounded-2xl border border-slate-200/80 bg-white p-6 shadow-2xs dark:border-slate-800 dark:bg-slate-900`,
+        children: (0, L.jsxs)(`div`, {
+          className: `flex flex-col sm:flex-row sm:items-center justify-between gap-5`,
+          children: [
+            (0, L.jsxs)(`div`, {
+              className: `flex items-center gap-4`,
+              children: [
+                (0, L.jsxs)(`div`, {
+                  className: `relative flex h-16 w-16 sm:h-18 sm:w-18 items-center justify-center rounded-2xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900 text-xl font-bold shadow-xs shrink-0`,
+                  children: [
+                    Y(U),
+                    (0, L.jsx)(`span`, {
+                      className: `absolute -bottom-1 -right-1 h-4 w-4 rounded-full border-2 border-white bg-emerald-500 dark:border-slate-900`,
+                      title: `Active Account`,
+                    }),
+                  ],
+                }),
+                (0, L.jsxs)(`div`, {
+                  className: `space-y-1`,
+                  children: [
+                    (0, L.jsxs)(`div`, {
+                      className: `flex flex-wrap items-center gap-2`,
+                      children: [
+                        (0, L.jsx)(`h1`, {
+                          className: `text-xl sm:text-2xl font-bold text-slate-900 dark:text-slate-100 tracking-tight`,
+                          children: U,
+                        }),
+                        (0, L.jsxs)(`span`, {
+                          className: `inline-flex items-center gap-1 rounded-full bg-emerald-500/10 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 border border-emerald-500/20`,
+                          children: [
+                            (0, L.jsx)(`span`, {
+                              className: `h-1.5 w-1.5 rounded-full bg-emerald-500`,
+                            }),
+                            `Active account`,
+                          ],
+                        }),
+                      ],
+                    }),
+                    (0, L.jsx)(`p`, {
+                      className: `text-xs sm:text-sm font-medium text-slate-700 dark:text-slate-300`,
+                      children: H.label,
+                    }),
+                    (0, L.jsxs)(`div`, {
+                      className: `flex flex-wrap items-center gap-x-2 text-xs text-muted-foreground pt-0.5`,
+                      children: [
+                        (0, L.jsx)(`span`, { children: K }),
+                        (0, L.jsx)(`span`, {
+                          className: `text-slate-300 dark:text-slate-700`,
+                          children: `·`,
+                        }),
+                        (0, L.jsx)(`span`, {
+                          className: `font-mono text-[11px] text-gov font-medium`,
+                          children: q,
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            (0, L.jsx)(`div`, {
+              className: `flex sm:flex-col items-center sm:items-end gap-2 shrink-0`,
+              children: (0, L.jsxs)(n, {
+                variant: `outline`,
+                size: `sm`,
+                onClick: () => {
+                  _.success(`Security token refreshed & synchronized`);
+                },
+                className: `text-xs h-8 gap-1.5`,
+                children: [
+                  (0, L.jsx)(m, { className: `h-3.5 w-3.5 text-emerald-600` }),
+                  (0, L.jsx)(`span`, { children: `Verify Token` }),
+                ],
+              }),
+            }),
+          ],
+        }),
+      }),
+      (0, L.jsxs)(s, {
+        title: `Account Identity`,
+        description: `Official credentials recorded in state directory`,
+        children: [
+          (0, L.jsx)(o, {
+            icon: w,
+            title: `Full Name`,
+            description: `Verified citizen or government official name`,
+            value: U,
+          }),
+          (0, L.jsx)(o, {
+            icon: m,
+            title: `Assigned Role`,
+            description: `Statutory authorization level within Mira`,
+            value: (0, L.jsx)(`span`, {
+              className: `capitalize`,
+              children: H.label,
+            }),
+          }),
+          (0, L.jsx)(o, {
+            icon: T,
+            title: `Jurisdiction / Office`,
+            description: `Designated ministry, tehsil, or district unit`,
+            value: K,
+          }),
+          (0, L.jsx)(o, {
+            icon: u,
+            title: `Officer / Profile ID`,
+            description: `Cryptographically anchored identity badge`,
+            value: (0, L.jsx)(`span`, { className: `font-mono`, children: q }),
+            isLast: !0,
+          }),
+        ],
+      }),
+      (0, L.jsxs)(s, {
+        title: `Contact Information`,
+        description: `Channels for official dispatches and OTP verification`,
+        children: [
+          (0, L.jsx)(o, {
+            icon: a,
+            title: `Official Email`,
+            description: `Used for alerts, determinations, and communications`,
+            value: W,
+          }),
+          (0, L.jsx)(o, {
+            icon: F,
+            title: `Mobile Number`,
+            description: `Linked with Aadhaar / State directory for SMS OTP`,
+            value: G,
+            isLast: !0,
+          }),
+        ],
+      }),
+      (0, L.jsxs)(s, {
+        title: `Preferences & Appearance`,
+        description: `Language localization and workstation accessibility`,
+        children: [
+          (0, L.jsx)(o, {
+            icon: O,
+            title: `Interface Language`,
+            description: `Currently rendered language across forms and records`,
+            value: (0, L.jsxs)(D, {
+              children: [
+                (0, L.jsx)(M, {
+                  asChild: !0,
+                  children: (0, L.jsxs)(n, {
+                    variant: `ghost`,
+                    size: `sm`,
+                    className: `h-7 text-xs font-semibold gap-1`,
+                    children: [
+                      (0, L.jsx)(`span`, { children: J.label }),
+                      (0, L.jsx)(`span`, {
+                        className: `text-slate-400`,
+                        children: `▾`,
+                      }),
+                    ],
+                  }),
+                }),
+                (0, L.jsxs)(C, {
+                  align: `end`,
+                  className: `w-44 text-xs`,
+                  children: [
+                    (0, L.jsx)(b, {
+                      className: `text-[10px] uppercase font-mono text-muted-foreground`,
+                      children: `Select Language`,
+                    }),
+                    (0, L.jsx)(A, {}),
+                    c.map((e) =>
+                      (0, L.jsxs)(
+                        S,
+                        {
+                          onClick: () => {
+                            (R({ lang: e.code }),
+                              _.success(`Language changed to ${e.label}`));
+                          },
+                          className: `flex justify-between text-xs cursor-pointer`,
+                          children: [
+                            (0, L.jsx)(`span`, { children: e.label }),
+                            t.lang === e.code &&
+                              (0, L.jsx)(`span`, {
+                                className: `text-gov font-bold`,
+                                children: `✓`,
+                              }),
+                          ],
+                        },
+                        e.code,
+                      ),
+                    ),
+                  ],
+                }),
+              ],
+            }),
+          }),
+          (0, L.jsx)(o, {
+            icon: k,
+            title: `In-App & Email Notifications`,
+            description: `Receive dispatch notifications and clarification alerts`,
+            action: (0, L.jsx)(f, {
+              checked: t.notifPrefs.app,
+              onCheckedChange: (e) => {
+                (R((t) => ({
+                  notifPrefs: { ...t.notifPrefs, app: e, email: e },
+                })),
+                  _.success(`Notification preferences saved`));
+              },
+            }),
+          }),
+          (0, L.jsx)(o, {
+            icon: y,
+            title: `High Contrast Accessibility`,
+            description: `Enhances text contrast and visual element separation`,
+            action: (0, L.jsx)(f, {
+              checked: t.highContrast,
+              onCheckedChange: (e) => {
+                (R({ highContrast: e }),
+                  document.documentElement.classList.toggle(`hc`, e),
+                  _.success(
+                    e ? `High contrast enabled` : `High contrast disabled`,
+                  ));
+              },
+            }),
+          }),
+          (0, L.jsx)(o, {
+            icon: I,
+            title: `Reduced Motion`,
+            description: `Disables layout shifts and animated transitions`,
+            action: (0, L.jsx)(f, {
+              checked: t.reducedMotion,
+              onCheckedChange: (e) => {
+                (R({ reducedMotion: e }),
+                  document.documentElement.classList.toggle(`reduce-motion`, e),
+                  _.success(
+                    e ? `Reduced motion enabled` : `Standard motion enabled`,
+                  ));
+              },
+            }),
+            isLast: !0,
+          }),
+        ],
+      }),
+      e,
+      (0, L.jsxs)(s, {
+        title: `Security & Authentication`,
+        description: `Cryptographic tokens, sign-in sessions, and audit status`,
+        children: [
+          (0, L.jsx)(o, {
+            icon: N,
+            title: `Sign-In Mechanism`,
+            description: `Statutory non-repudiation and verification standard`,
+            value:
+              V === `citizen`
+                ? `Aadhaar e-KYC (Demo Mode)`
+                : V === `auditor`
+                  ? `CAG Forensic Token · RSA-4096`
+                  : `Gov Cloud SSO · Multi-Factor`,
+          }),
+          (0, L.jsx)(o, {
+            icon: P,
+            title: `Active Sessions`,
+            description: `Current workstation connection from verified IP`,
+            value: `1 Active Device (This Browser)`,
+            action: (0, L.jsx)(n, {
+              variant: `outline`,
+              size: `sm`,
+              onClick: () => _.success(`Signed out of all other devices`),
+              className: `h-7 text-xs`,
+              children: `Sign out others`,
+            }),
+            isLast: !0,
+          }),
+        ],
+      }),
+      (0, L.jsx)(s, {
+        title: `My Audit Activity`,
+        description: `Immutable record of authentication, profile access, and transaction history`,
+        children: (0, L.jsx)(`div`, {
+          className: `p-4 sm:p-5`,
+          children: Q
+            ? (0, L.jsxs)(`div`, {
+                className: `flex items-center gap-2 py-4 text-xs text-muted-foreground`,
+                children: [
+                  (0, L.jsx)(`div`, {
+                    className: `h-4 w-4 animate-spin rounded-full border-2 border-slate-900 border-t-transparent dark:border-slate-100`,
+                  }),
+                  (0, L.jsx)(`span`, {
+                    children: `Loading personal audit trail...`,
+                  }),
+                ],
+              })
+            : Z.length === 0
+              ? (0, L.jsx)(`p`, {
+                  className: `text-xs text-muted-foreground py-2`,
+                  children: `No recent audit events recorded for this session.`,
+                })
+              : (0, L.jsxs)(`div`, {
+                  className: `space-y-3`,
+                  children: [
+                    (0, L.jsx)(`div`, {
+                      className: `divide-y divide-slate-100 rounded-xl border border-slate-200/80 bg-slate-50/50 dark:divide-slate-800 dark:border-slate-800 dark:bg-slate-900/50`,
+                      children: Z.slice(0, 6).map((e) =>
+                        (0, L.jsxs)(
+                          `div`,
+                          {
+                            className: `flex flex-col sm:flex-row sm:items-center justify-between gap-2 p-3 text-xs`,
+                            children: [
+                              (0, L.jsxs)(`div`, {
+                                className: `flex items-center gap-2.5`,
+                                children: [
+                                  (0, L.jsx)(`div`, {
+                                    className: `flex h-7 w-7 items-center justify-center rounded-lg bg-white shadow-2xs dark:bg-slate-800 text-slate-700 dark:text-slate-300`,
+                                    children: (0, L.jsx)(p, {
+                                      className: `h-3.5 w-3.5`,
+                                    }),
+                                  }),
+                                  (0, L.jsxs)(`div`, {
+                                    children: [
+                                      (0, L.jsx)(`span`, {
+                                        className: `font-semibold text-slate-900 dark:text-slate-100 font-mono text-[11px]`,
+                                        children: e.event_type,
+                                      }),
+                                      (0, L.jsxs)(`p`, {
+                                        className: `text-[10px] text-muted-foreground`,
+                                        children: [
+                                          `Request: `,
+                                          e.request_id
+                                            ? `${e.request_id.slice(0, 8)}...`
+                                            : `System-anchored`,
+                                        ],
+                                      }),
+                                    ],
+                                  }),
+                                ],
+                              }),
+                              (0, L.jsxs)(`div`, {
+                                className: `flex items-center gap-2 text-[11px] font-mono text-muted-foreground`,
+                                children: [
+                                  (0, L.jsx)(h, { className: `h-3 w-3` }),
+                                  (0, L.jsx)(`span`, {
+                                    children: new Date(
+                                      e.created_at,
+                                    ).toLocaleString(),
+                                  }),
+                                ],
+                              }),
+                            ],
+                          },
+                          e.id,
+                        ),
+                      ),
+                    }),
+                    V === `citizen`
+                      ? (0, L.jsx)(`p`, {
+                          className: `text-[11px] text-muted-foreground pt-1`,
+                          children: `Showing authenticated personal operations. Institutional system audit records are restricted under Section 8 of the Welfare Information Act.`,
+                        })
+                      : (0, L.jsxs)(`div`, {
+                          className: `mt-2 flex items-center justify-between rounded-lg bg-gov/5 p-3 border border-gov/15 text-xs`,
+                          children: [
+                            (0, L.jsxs)(`div`, {
+                              className: `flex items-center gap-2`,
+                              children: [
+                                (0, L.jsx)(m, {
+                                  className: `h-4 w-4 text-gov`,
+                                }),
+                                (0, L.jsx)(`span`, {
+                                  className: `font-medium text-slate-900 dark:text-slate-100`,
+                                  children: `Authorized Operational Access: Full Audit Ledger Available`,
+                                }),
+                              ],
+                            }),
+                            (0, L.jsx)(n, {
+                              asChild: !0,
+                              size: `sm`,
+                              variant: `outline`,
+                              className: `h-7 text-xs gap-1 font-semibold`,
+                              children: (0, L.jsxs)(r, {
+                                to:
+                                  V === `auditor`
+                                    ? `/auditor/audit`
+                                    : V === `verifier`
+                                      ? `/verifier/audit`
+                                      : `/officer/audit`,
+                                children: [
+                                  (0, L.jsx)(`span`, {
+                                    children: `Open Ledger`,
+                                  }),
+                                  (0, L.jsx)(x, { className: `h-3 w-3` }),
+                                ],
+                              }),
+                            }),
+                          ],
+                        }),
+                  ],
+                }),
+        }),
+      }),
+      (0, L.jsx)(s, {
+        title: `Account Session`,
+        description: `Terminate your authenticated session`,
+        children: (0, L.jsx)(o, {
+          icon: v,
+          title: `Sign Out of Mira`,
+          description: `Safely end your workstation session and purge memory tokens`,
+          action: (0, L.jsxs)(n, {
+            variant: `destructive`,
+            size: `sm`,
+            onClick: X,
+            className: `h-8 text-xs font-semibold gap-1.5`,
+            children: [(0, L.jsx)(v, { className: `h-3.5 w-3.5` }), `Sign Out`],
+          }),
+          destructive: !0,
+          isLast: !0,
+        }),
+      }),
+    ],
+  });
+}
+export { R as t };

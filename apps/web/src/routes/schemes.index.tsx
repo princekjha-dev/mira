@@ -154,13 +154,20 @@ function Schemes() {
                 placeholder="Search schemes by name or keyword"
                 className="h-9"
               />
-              <Button size="icon" type="submit" aria-label="Search" className="h-9 w-9 shrink-0 tactile-btn">
+              <Button
+                size="icon"
+                type="submit"
+                aria-label="Search"
+                className="h-9 w-9 shrink-0 tactile-btn"
+              >
                 <Search className="h-4 w-4" />
               </Button>
             </div>
           </form>
           <div>
-            <Label className="text-xs font-medium text-foreground">Scheme category</Label>
+            <Label className="text-xs font-medium text-foreground">
+              Scheme category
+            </Label>
             <Select
               value={category}
               onValueChange={(v) =>
@@ -202,7 +209,10 @@ function Schemes() {
             STATES.slice(1).map((s) => [s, s]),
           )}
           <div>
-            <Label htmlFor="age" className="text-xs font-medium text-foreground">
+            <Label
+              htmlFor="age"
+              className="text-xs font-medium text-foreground"
+            >
               Age
             </Label>
             <Input

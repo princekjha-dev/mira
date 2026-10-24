@@ -64,7 +64,7 @@ export function MailFilter({
             "h-8 px-2.5 text-xs font-medium gap-1.5 transition-colors",
             activeCount > 0
               ? "border-gov/50 text-gov bg-gov/5 hover:bg-gov/10"
-              : "text-slate-700 dark:text-slate-300 hover:text-slate-900"
+              : "text-slate-700 dark:text-slate-300 hover:text-slate-900",
           )}
         >
           <SlidersHorizontal className="h-3.5 w-3.5" />
@@ -77,7 +77,10 @@ export function MailFilter({
         </Button>
       </PopoverTrigger>
 
-      <PopoverContent align="end" className="w-72 p-4 text-xs space-y-4 rounded-xl border border-border/80 shadow-lg">
+      <PopoverContent
+        align="end"
+        className="w-72 p-4 text-xs space-y-4 rounded-xl border border-border/80 shadow-lg"
+      >
         <div className="flex items-center justify-between border-b pb-2">
           <span className="font-semibold text-slate-900 dark:text-slate-100 flex items-center gap-1.5">
             <Filter className="h-3.5 w-3.5 text-gov" />
@@ -110,7 +113,7 @@ export function MailFilter({
                 "flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors",
                 filter.unreadOnly
                   ? "bg-slate-100 dark:bg-slate-800 font-medium text-slate-900 dark:text-slate-100"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50",
               )}
             >
               <span className="flex items-center gap-2">
@@ -129,14 +132,16 @@ export function MailFilter({
                 "flex items-center justify-between px-2.5 py-1.5 rounded-lg text-left transition-colors",
                 filter.hasAttachment
                   ? "bg-slate-100 dark:bg-slate-800 font-medium text-slate-900 dark:text-slate-100"
-                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50"
+                  : "text-slate-600 dark:text-slate-400 hover:bg-slate-50 dark:hover:bg-slate-800/50",
               )}
             >
               <span className="flex items-center gap-2">
                 <Paperclip className="h-3.5 w-3.5 text-slate-500" />
                 Has Attached Files
               </span>
-              {filter.hasAttachment && <Check className="h-3.5 w-3.5 text-gov" />}
+              {filter.hasAttachment && (
+                <Check className="h-3.5 w-3.5 text-gov" />
+              )}
             </button>
           </div>
         </div>
@@ -163,7 +168,7 @@ export function MailFilter({
                     "text-[11px] px-2.5 py-1 rounded-md border transition-all duration-150 font-medium",
                     isSelected
                       ? "border-gov bg-gov/10 text-gov dark:bg-gov/20"
-                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400"
+                      : "border-slate-200 bg-white text-slate-600 hover:border-slate-300 dark:border-slate-800 dark:bg-slate-900 dark:text-slate-400",
                   )}
                 >
                   {tag}
@@ -196,7 +201,7 @@ export function MailFilter({
                       "text-[10px] font-mono px-2 py-0.5 rounded border transition-colors",
                       isSelected
                         ? "border-gov bg-gov text-white font-bold"
-                        : "border-border bg-slate-50 text-muted-foreground hover:border-slate-400"
+                        : "border-border bg-slate-50 text-muted-foreground hover:border-slate-400",
                     )}
                   >
                     {appId}

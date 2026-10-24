@@ -1,9 +1,9 @@
-use chrono::{DateTime, Utc};
-use serde::{Deserialize, Serialize};
-use uuid::Uuid;
 use crate::domain::document::consistency::CaseConsistencyReport;
 use crate::domain::document::matching::DocumentEntityMatchResult;
 use crate::domain::document::models::{Document, DocumentExtraction, DocumentVerification};
+use chrono::{DateTime, Utc};
+use serde::{Deserialize, Serialize};
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct CaseTimelineEvent {
@@ -87,29 +87,36 @@ impl EvidencePackBuilder {
 
         // Construct timeline
         let now = Utc::now();
-        let mut timeline = vec![
-            CaseTimelineEvent {
-                timestamp: now - chrono::Duration::hours(2),
-                stage: "APPLICATION_SUBMISSION".to_string(),
-                title: "Application Submitted".to_string(),
-                description: format!("Application for scheme '{}' initiated by applicant.", scheme_name),
-                actor: applicant_name.clone(),
-            },
-        ];
+        let mut timeline = vec![CaseTimelineEvent {
+            timestamp: now - chrono::Duration::hours(2),
+            stage: "APPLICATION_SUBMISSION".to_string(),
+            title: "Application Submitted".to_string(),
+            description: format!(
+                "Application for scheme '{}' initiated by applicant.",
+                scheme_name
+            ),
+            actor: applicant_name.clone(),
+        }];
 
         for doc in &documents {
             timeline.push(CaseTimelineEvent {
                 timestamp: doc.created_at,
                 stage: "DOCUMENT_UPLOAD".to_string(),
                 title: format!("Document Uploaded: {}", doc.document_type),
-                description: format!("File '{}' ({} bytes, sha256: {}...) ingested securely.", doc.original_filename, doc.size_bytes, &doc.sha256[..8]),
+                description: format!(
+                    "File '{}' ({} bytes, sha256: {}...) ingested securely.",
+                    doc.original_filename,
+                    doc.size_bytes,
+                    &doc.sha256[..8]
+                ),
                 actor: "Citizen/Field Official".to_string(),
             });
             timeline.push(CaseTimelineEvent {
                 timestamp: doc.created_at + chrono::Duration::seconds(5),
                 stage: "OCR_AND_EXTRACTION".to_string(),
                 title: "OCR & Field Extraction Completed".to_string(),
-                description: "Extracted normalized structured fields and bounded regions.".to_string(),
+                description: "Extracted normalized structured fields and bounded regions."
+                    .to_string(),
                 actor: "Mira Document Engine".to_string(),
             });
         }
@@ -119,7 +126,9 @@ impl EvidencePackBuilder {
                 timestamp: now - chrono::Duration::minutes(15),
                 stage: "DISCREPANCY_FLAGGED".to_string(),
                 title: "Cross-Document Discrepancy Detected".to_string(),
-                description: "Consistency engine surfaced conflicting records requiring manual inspection.".to_string(),
+                description:
+                    "Consistency engine surfaced conflicting records requiring manual inspection."
+                        .to_string(),
                 actor: "Mira Consistency Engine".to_string(),
             });
         }
@@ -129,7 +138,13 @@ impl EvidencePackBuilder {
                 timestamp: v.verified_at,
                 stage: "HUMAN_VERIFICATION".to_string(),
                 title: format!("Officer Action: {}", v.decision),
-                description: format!("Field '{}' reviewed. Rationale: {}", v.field, v.reason.as_deref().unwrap_or("Verified by authorized officer.")),
+                description: format!(
+                    "Field '{}' reviewed. Rationale: {}",
+                    v.field,
+                    v.reason
+                        .as_deref()
+                        .unwrap_or("Verified by authorized officer.")
+                ),
                 actor: format!("Officer UUID: {}", v.verified_by),
             });
         }

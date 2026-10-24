@@ -96,7 +96,9 @@ export function FamilyPage() {
   const [eventCertNo, setEventCertNo] = useState("");
 
   // Dispute Form
-  const [disputeCategory, setDisputeCategory] = useState("Relationship Correction");
+  const [disputeCategory, setDisputeCategory] = useState(
+    "Relationship Correction",
+  );
   const [disputeDesc, setDisputeDesc] = useState("");
   const [disputeDocRef, setDisputeDocRef] = useState("");
 
@@ -187,7 +189,9 @@ export function FamilyPage() {
   const handleAddMemberSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     if (!newFirstName.trim() || !newLastName.trim() || !newDob) {
-      toast.error("Please fill in legal first name, last name, and date of birth.");
+      toast.error(
+        "Please fill in legal first name, last name, and date of birth.",
+      );
       return;
     }
     addMemberMutation.mutate({
@@ -261,11 +265,7 @@ export function FamilyPage() {
           <p className="mt-1 text-sm text-slate-600">
             {error instanceof Error ? error.message : "Connection failed."}
           </p>
-          <Button
-            onClick={() => refetch()}
-            variant="outline"
-            className="mt-4"
-          >
+          <Button onClick={() => refetch()} variant="outline" className="mt-4">
             Retry Connection
           </Button>
         </div>
@@ -283,7 +283,10 @@ export function FamilyPage() {
   );
   const children = members.filter((m) => m.relationship === "CHILD");
   const dependentsAndOthers = members.filter(
-    (m) => m.relationship !== "HEAD" && m.relationship !== "SPOUSE" && m.relationship !== "CHILD",
+    (m) =>
+      m.relationship !== "HEAD" &&
+      m.relationship !== "SPOUSE" &&
+      m.relationship !== "CHILD",
   );
 
   return (
@@ -307,7 +310,9 @@ export function FamilyPage() {
             disabled={isFetching}
             className="h-8 gap-1 text-xs"
           >
-            <RefreshCw className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`} />
+            <RefreshCw
+              className={`h-3.5 w-3.5 ${isFetching ? "animate-spin" : ""}`}
+            />
             Refresh
           </Button>
         </div>
@@ -344,21 +349,33 @@ export function FamilyPage() {
 
         <dl className="grid gap-4 text-sm sm:grid-cols-2 lg:grid-cols-4">
           <div>
-            <dt className="text-xs font-medium text-muted-foreground">BPL Category</dt>
-            <dd className="font-semibold text-slate-800 mt-0.5">{familyData.bpl_status}</dd>
+            <dt className="text-xs font-medium text-muted-foreground">
+              BPL Category
+            </dt>
+            <dd className="font-semibold text-slate-800 mt-0.5">
+              {familyData.bpl_status}
+            </dd>
           </div>
           <div>
-            <dt className="text-xs font-medium text-muted-foreground">Income Tier</dt>
-            <dd className="font-semibold text-slate-800 mt-0.5">{familyData.income_category}</dd>
+            <dt className="text-xs font-medium text-muted-foreground">
+              Income Tier
+            </dt>
+            <dd className="font-semibold text-slate-800 mt-0.5">
+              {familyData.income_category}
+            </dd>
           </div>
           <div className="sm:col-span-2">
-            <dt className="text-xs font-medium text-muted-foreground">Verified Property</dt>
+            <dt className="text-xs font-medium text-muted-foreground">
+              Verified Property
+            </dt>
             <dd className="text-slate-800 mt-0.5 text-xs leading-relaxed">
               {familyData.property_summary}
             </dd>
           </div>
           <div className="sm:col-span-2 lg:col-span-4">
-            <dt className="text-xs font-medium text-muted-foreground">Current Residence Address</dt>
+            <dt className="text-xs font-medium text-muted-foreground">
+              Current Residence Address
+            </dt>
             <dd className="flex items-start gap-1.5 text-slate-800 mt-0.5 text-xs">
               <MapPin className="mt-0.5 h-3.5 w-3.5 shrink-0 text-slate-500" />
               <span>{familyData.address}</span>
@@ -370,9 +387,12 @@ export function FamilyPage() {
       {/* Action Bar for Life Events & Modifications */}
       <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border bg-slate-50 p-4">
         <div>
-          <h3 className="text-sm font-semibold text-navy">Family Actions & Life Events</h3>
+          <h3 className="text-sm font-semibold text-navy">
+            Family Actions & Life Events
+          </h3>
           <p className="text-xs text-muted-foreground">
-            Report births, marriages, or address changes. Consequential updates create officer review signals.
+            Report births, marriages, or address changes. Consequential updates
+            create officer review signals.
           </p>
         </div>
         <div className="flex flex-wrap items-center gap-2">
@@ -413,7 +433,9 @@ export function FamilyPage() {
           </TabsTrigger>
           <TabsTrigger value="tree">Tiered Tree</TabsTrigger>
           <TabsTrigger value="members">Members ({members.length})</TabsTrigger>
-          <TabsTrigger value="timeline">Timeline ({timeline.length})</TabsTrigger>
+          <TabsTrigger value="timeline">
+            Timeline ({timeline.length})
+          </TabsTrigger>
         </TabsList>
 
         {/* TAB 0: FAMILY360 MULTI-GENERATIONAL GRAPH */}
@@ -428,7 +450,8 @@ export function FamilyPage() {
         <TabsContent value="tree" className="space-y-6 pt-4">
           <Panel title="Data-Driven Family Tree & Relationships">
             <p className="text-xs text-muted-foreground mb-6">
-              Relationships are computed dynamically from verifiable civil registry entries and verified relationships in the database.
+              Relationships are computed dynamically from verifiable civil
+              registry entries and verified relationships in the database.
             </p>
 
             <div className="space-y-8">
@@ -449,7 +472,9 @@ export function FamilyPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <p className="text-sm font-semibold text-navy">{m.name}</p>
+                            <p className="text-sm font-semibold text-navy">
+                              {m.name}
+                            </p>
                             <p className="text-xs text-slate-500 font-mono mt-0.5">
                               {m.public_id} · DOB {m.dob}
                             </p>
@@ -460,7 +485,8 @@ export function FamilyPage() {
                         </div>
                         <div className="mt-3 flex items-center justify-between text-xs pt-2 border-t border-slate-100">
                           <span className="text-teal font-medium flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3" /> Identity {m.identity}
+                            <CheckCircle2 className="h-3 w-3" /> Identity{" "}
+                            {m.identity}
                           </span>
                           <span className="text-slate-500">{m.gender}</span>
                         </div>
@@ -487,7 +513,9 @@ export function FamilyPage() {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <p className="text-base font-bold text-navy">{m.name}</p>
+                            <p className="text-base font-bold text-navy">
+                              {m.name}
+                            </p>
                             {m.relationship === "HEAD" && (
                               <span className="rounded bg-gov text-white text-[10px] font-bold px-1.5 py-0.5">
                                 HEAD
@@ -535,7 +563,9 @@ export function FamilyPage() {
                       >
                         <div className="flex items-start justify-between">
                           <div>
-                            <p className="text-sm font-semibold text-navy">{m.name}</p>
+                            <p className="text-sm font-semibold text-navy">
+                              {m.name}
+                            </p>
                             <p className="text-xs text-slate-500 font-mono mt-0.5">
                               {m.public_id} · DOB {m.dob}
                             </p>
@@ -546,7 +576,8 @@ export function FamilyPage() {
                         </div>
                         <div className="mt-3 flex items-center justify-between text-xs pt-2 border-t border-teal/10">
                           <span className="text-teal font-medium flex items-center gap-1">
-                            <CheckCircle2 className="h-3 w-3" /> Identity {m.identity}
+                            <CheckCircle2 className="h-3 w-3" /> Identity{" "}
+                            {m.identity}
                           </span>
                           <span className="text-slate-500">{m.gender}</span>
                         </div>
@@ -575,14 +606,20 @@ export function FamilyPage() {
                     <tbody className="divide-y text-slate-700">
                       {relationships.map((rel) => (
                         <tr key={rel.id} className="hover:bg-slate-50/50">
-                          <td className="p-3 font-semibold text-navy">{rel.person_a_name}</td>
+                          <td className="p-3 font-semibold text-navy">
+                            {rel.person_a_name}
+                          </td>
                           <td className="p-3">
                             <span className="rounded bg-slate-100 font-mono px-2 py-0.5 text-[11px] text-slate-800">
                               {rel.relationship_type}
                             </span>
                           </td>
-                          <td className="p-3 font-semibold text-navy">{rel.person_b_name}</td>
-                          <td className="p-3 text-slate-500 font-mono">{rel.valid_from || "—"}</td>
+                          <td className="p-3 font-semibold text-navy">
+                            {rel.person_b_name}
+                          </td>
+                          <td className="p-3 text-slate-500 font-mono">
+                            {rel.valid_from || "—"}
+                          </td>
                           <td className="p-3">
                             <span className="rounded bg-teal/15 text-teal px-1.5 py-0.5 text-[10px] font-semibold">
                               {rel.verification_status}
@@ -638,7 +675,9 @@ export function FamilyPage() {
                       </span>
                     ))
                   ) : (
-                    <span className="text-muted-foreground">No active sanctions</span>
+                    <span className="text-muted-foreground">
+                      No active sanctions
+                    </span>
                   )}
                 </div>
                 <Button
@@ -659,7 +698,8 @@ export function FamilyPage() {
         <TabsContent value="timeline" className="pt-4">
           <Panel title="Family Lifecycle History (Chronological)">
             <p className="text-xs text-muted-foreground mb-4">
-              Events are immutable records from civil registries and attested documents. Historical events are never deleted.
+              Events are immutable records from civil registries and attested
+              documents. Historical events are never deleted.
             </p>
 
             <div className="relative pl-6 space-y-6 before:absolute before:bottom-0 before:top-2 before:left-2 before:w-0.5 before:bg-slate-200">
@@ -675,7 +715,9 @@ export function FamilyPage() {
                         <span className="rounded bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-800">
                           {item.event_type}
                         </span>
-                        <h4 className="text-sm font-semibold text-navy">{item.title}</h4>
+                        <h4 className="text-sm font-semibold text-navy">
+                          {item.title}
+                        </h4>
                       </div>
                       <span className="rounded bg-teal/15 px-2 py-0.5 text-[10px] font-semibold text-teal">
                         {item.verification_status}
@@ -705,7 +747,8 @@ export function FamilyPage() {
           <DialogHeader>
             <DialogTitle>Add Family Member</DialogTitle>
             <DialogDescription>
-              Record a new member in household {familyData.household_public_id}. All added members persist in the relational database.
+              Record a new member in household {familyData.household_public_id}.
+              All added members persist in the relational database.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleAddMemberSubmit} className="space-y-4">
@@ -734,15 +777,22 @@ export function FamilyPage() {
 
             <div className="space-y-1">
               <Label htmlFor="mem-relationship">Relationship to Head</Label>
-              <Select value={newRelationship} onValueChange={setNewRelationship}>
+              <Select
+                value={newRelationship}
+                onValueChange={setNewRelationship}
+              >
                 <SelectTrigger id="mem-relationship">
                   <SelectValue placeholder="Select relationship" />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="CHILD">Child (Son / Daughter)</SelectItem>
                   <SelectItem value="SPOUSE">Spouse</SelectItem>
-                  <SelectItem value="PARENT">Parent (Father / Mother)</SelectItem>
-                  <SelectItem value="DEPENDENT">Dependent / Relative</SelectItem>
+                  <SelectItem value="PARENT">
+                    Parent (Father / Mother)
+                  </SelectItem>
+                  <SelectItem value="DEPENDENT">
+                    Dependent / Relative
+                  </SelectItem>
                   <SelectItem value="GUARDIAN">Legal Guardian</SelectItem>
                 </SelectContent>
               </Select>
@@ -800,7 +850,8 @@ export function FamilyPage() {
           <DialogHeader>
             <DialogTitle>Report Life Event</DialogTitle>
             <DialogDescription>
-              Log a birth, marriage, divorce, or address change to the chronological family timeline.
+              Log a birth, marriage, divorce, or address change to the
+              chronological family timeline.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleReportEventSubmit} className="space-y-4">
@@ -815,8 +866,12 @@ export function FamilyPage() {
                   <SelectItem value="MARRIAGE">Marriage</SelectItem>
                   <SelectItem value="DIVORCE">Divorce / Separation</SelectItem>
                   <SelectItem value="DEATH">Death of Family Member</SelectItem>
-                  <SelectItem value="ADDRESS_CHANGE">Change of Residence</SelectItem>
-                  <SelectItem value="ADOPTION">Adoption / Guardianship</SelectItem>
+                  <SelectItem value="ADDRESS_CHANGE">
+                    Change of Residence
+                  </SelectItem>
+                  <SelectItem value="ADOPTION">
+                    Adoption / Guardianship
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -877,7 +932,9 @@ export function FamilyPage() {
                 className="bg-gov hover:bg-gov/90 text-white"
                 disabled={reportEventMutation.isPending}
               >
-                {reportEventMutation.isPending ? "Submitting…" : "Record Life Event"}
+                {reportEventMutation.isPending
+                  ? "Submitting…"
+                  : "Record Life Event"}
               </Button>
             </DialogFooter>
           </form>
@@ -890,27 +947,41 @@ export function FamilyPage() {
           <DialogHeader>
             <DialogTitle>Raise Record Correction or Dispute</DialogTitle>
             <DialogDescription>
-              Submit an official correction for misspelled names, erroneous relationships, or address conflicts.
+              Submit an official correction for misspelled names, erroneous
+              relationships, or address conflicts.
             </DialogDescription>
           </DialogHeader>
           <form onSubmit={handleDisputeSubmit} className="space-y-4">
             <div className="space-y-1">
               <Label htmlFor="disp-category">Category</Label>
-              <Select value={disputeCategory} onValueChange={setDisputeCategory}>
+              <Select
+                value={disputeCategory}
+                onValueChange={setDisputeCategory}
+              >
                 <SelectTrigger id="disp-category">
                   <SelectValue placeholder="Category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Relationship Correction">Relationship Correction</SelectItem>
-                  <SelectItem value="Address Correction">Address Discrepancy</SelectItem>
-                  <SelectItem value="Identity Mismatch">Name / DOB Spelling Error</SelectItem>
-                  <SelectItem value="Duplicate Clarification">Duplicate Claim Clarification</SelectItem>
+                  <SelectItem value="Relationship Correction">
+                    Relationship Correction
+                  </SelectItem>
+                  <SelectItem value="Address Correction">
+                    Address Discrepancy
+                  </SelectItem>
+                  <SelectItem value="Identity Mismatch">
+                    Name / DOB Spelling Error
+                  </SelectItem>
+                  <SelectItem value="Duplicate Clarification">
+                    Duplicate Claim Clarification
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
 
             <div className="space-y-1">
-              <Label htmlFor="disp-doc">Supporting Document Ref (Optional)</Label>
+              <Label htmlFor="disp-doc">
+                Supporting Document Ref (Optional)
+              </Label>
               <Input
                 id="disp-doc"
                 placeholder="e.g. DOC-ELEC-2026 or Certificate No."
@@ -967,24 +1038,38 @@ export function FamilyPage() {
               <div className="grid grid-cols-2 gap-2 bg-slate-50 p-3 rounded-lg border">
                 <div>
                   <span className="text-muted-foreground">Relationship:</span>
-                  <p className="font-semibold text-navy">{selectedMemberHistory.relationship}</p>
+                  <p className="font-semibold text-navy">
+                    {selectedMemberHistory.relationship}
+                  </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Date of Birth:</span>
-                  <p className="font-semibold text-navy">{selectedMemberHistory.dob}</p>
+                  <p className="font-semibold text-navy">
+                    {selectedMemberHistory.dob}
+                  </p>
                 </div>
                 <div>
                   <span className="text-muted-foreground">Gender:</span>
-                  <p className="font-semibold text-navy">{selectedMemberHistory.gender}</p>
+                  <p className="font-semibold text-navy">
+                    {selectedMemberHistory.gender}
+                  </p>
                 </div>
                 <div>
-                  <span className="text-muted-foreground">Identity Status:</span>
-                  <p className="font-semibold text-teal">{selectedMemberHistory.identity}</p>
+                  <span className="text-muted-foreground">
+                    Identity Status:
+                  </span>
+                  <p className="font-semibold text-teal">
+                    {selectedMemberHistory.identity}
+                  </p>
                 </div>
               </div>
               <p className="text-slate-600">
-                All civil registry connections for this individual are verified under Household{" "}
-                <span className="font-mono">{familyData.household_public_id}</span>.
+                All civil registry connections for this individual are verified
+                under Household{" "}
+                <span className="font-mono">
+                  {familyData.household_public_id}
+                </span>
+                .
               </p>
             </div>
           )}

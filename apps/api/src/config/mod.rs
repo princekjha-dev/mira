@@ -17,11 +17,13 @@ impl AppConfig {
     pub fn from_env() -> Self {
         dotenvy::dotenv().ok();
 
-        let database_url = env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "postgres://postgres@127.0.0.1:5433/mira_dev".to_string());
+        let database_url = env::var("DATABASE_URL").unwrap_or_else(|_| {
+            "postgres://postgres:postgrespassword@127.0.0.1:5433/mira_dev".to_string()
+        });
 
-        let jwt_secret = env::var("JWT_SECRET")
-            .unwrap_or_else(|_| "mira-v1-foundation-secure-jwt-secret-key-minimum-32-chars".to_string());
+        let jwt_secret = env::var("JWT_SECRET").unwrap_or_else(|_| {
+            "mira-v1-foundation-secure-jwt-secret-key-minimum-32-chars".to_string()
+        });
 
         let jwt_expiration_hours = env::var("JWT_EXPIRATION_HOURS")
             .ok()
@@ -54,8 +56,8 @@ impl AppConfig {
             .map(|s| s.trim().to_string())
             .filter(|s| !s.is_empty());
 
-        let groq_model = env::var("GROQ_MODEL")
-            .unwrap_or_else(|_| "llama-3.3-70b-versatile".to_string());
+        let groq_model =
+            env::var("GROQ_MODEL").unwrap_or_else(|_| "llama-3.3-70b-versatile".to_string());
 
         Self {
             database_url,

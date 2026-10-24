@@ -12,7 +12,10 @@ export const Route = createFileRoute("/auditor/applications")({
   head: () => ({
     meta: [
       { title: "Applications Audit — Forensic Inspection" },
-      { name: "description", content: "Read-only application audit inspection." },
+      {
+        name: "description",
+        content: "Read-only application audit inspection.",
+      },
     ],
   }),
   component: AuditorApplicationsPage,
@@ -39,7 +42,10 @@ function AuditorApplicationsPage() {
       <PageHeader
         title="Application Records Audit Inspection"
         desc="Examine complete application data trails, stage transitions, and verification evidence without write locks."
-        crumbs={[{ label: "Auditor", to: "/auditor/dashboard" }, { label: "Applications" }]}
+        crumbs={[
+          { label: "Auditor", to: "/auditor/dashboard" },
+          { label: "Applications" },
+        ]}
       />
 
       <div className="flex items-center max-w-md">
@@ -67,12 +73,18 @@ function AuditorApplicationsPage() {
             <tbody className="divide-y divide-border">
               {apps.map((a) => (
                 <tr key={a.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="p-3.5 pl-4 font-mono font-semibold text-primary">{a.id}</td>
+                  <td className="p-3.5 pl-4 font-mono font-semibold text-primary">
+                    {a.id}
+                  </td>
                   <td className="p-3.5">
                     <div className="font-medium">{a.applicant}</div>
-                    <div className="text-[11px] text-muted-foreground">{a.householdId}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {a.householdId}
+                    </div>
                   </td>
-                  <td className="p-3.5 text-muted-foreground">{getScheme(a.schemeId)?.name || "Welfare Assistance"}</td>
+                  <td className="p-3.5 text-muted-foreground">
+                    {getScheme(a.schemeId)?.name || "Welfare Assistance"}
+                  </td>
                   <td className="p-3.5">
                     <StatusBadge s={a.status} />
                   </td>
@@ -82,8 +94,16 @@ function AuditorApplicationsPage() {
                     </span>
                   </td>
                   <td className="p-3.5 pr-4 text-right">
-                    <Button size="sm" variant="outline" asChild className="h-7 text-xs">
-                      <Link to="/officer/applications/$id" params={{ id: a.id }}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      asChild
+                      className="h-7 text-xs"
+                    >
+                      <Link
+                        to="/officer/applications/$id"
+                        params={{ id: a.id }}
+                      >
                         <Eye className="mr-1 h-3 w-3" /> View Provenance
                       </Link>
                     </Button>

@@ -110,13 +110,18 @@ export function PageHeader({
             {crumbs.map((c, i) => (
               <span key={i} className="flex items-center gap-1.5">
                 {c.to ? (
-                  <Link to={c.to} className="hover:text-foreground transition-colors">
+                  <Link
+                    to={c.to}
+                    className="hover:text-foreground transition-colors"
+                  >
                     {c.label}
                   </Link>
                 ) : (
                   <span className="font-medium text-foreground">{c.label}</span>
                 )}
-                {i < crumbs.length - 1 && <span className="text-muted-foreground/50">/</span>}
+                {i < crumbs.length - 1 && (
+                  <span className="text-muted-foreground/50">/</span>
+                )}
               </span>
             ))}
           </nav>
@@ -135,7 +140,9 @@ export function PageHeader({
           </p>
         )}
       </div>
-      {actions && <div className="flex flex-wrap items-center gap-2">{actions}</div>}
+      {actions && (
+        <div className="flex flex-wrap items-center gap-2">{actions}</div>
+      )}
     </div>
   );
 }
@@ -160,7 +167,9 @@ export function Panel({
     >
       {title && (
         <div className="flex items-center justify-between border-b border-border/60 px-5 py-3.5">
-          <h2 className="text-sm font-semibold tracking-tight text-foreground">{title}</h2>
+          <h2 className="text-sm font-semibold tracking-tight text-foreground">
+            {title}
+          </h2>
           {actions}
         </div>
       )}
@@ -345,11 +354,15 @@ export function Timeline({ app }: { app: Application }) {
                         : "Currently Under Active Evaluation"
                       : "Awaiting Prior Stage Attestation"}
               </p>
-              {state === "current" && (app.status === "Verification Required" || app.status === "Additional Evidence Required") && (
-                <div className="mt-2 rounded bg-amber-50 border border-amber-200 p-2 text-xs text-amber-900">
-                  <strong>Officer Note:</strong> Address proof discrepancy between municipal records and uploaded electricity bill. Please upload recent utility bill.
-                </div>
-              )}
+              {state === "current" &&
+                (app.status === "Verification Required" ||
+                  app.status === "Additional Evidence Required") && (
+                  <div className="mt-2 rounded bg-amber-50 border border-amber-200 p-2 text-xs text-amber-900">
+                    <strong>Officer Note:</strong> Address proof discrepancy
+                    between municipal records and uploaded electricity bill.
+                    Please upload recent utility bill.
+                  </div>
+                )}
             </div>
           </li>
         );

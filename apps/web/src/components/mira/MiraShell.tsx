@@ -21,9 +21,19 @@ import { GlobalSearchDialog } from "@/components/gov/GlobalSearchDialog";
 import { MiraAIOrb } from "@/components/mira/MiraAIOrb";
 import { AccountMenu } from "@/components/mira/profile/AccountMenu";
 import { LanguageMenu } from "@/components/gov/SiteHeader";
-import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+} from "@/components/ui/sheet";
 import { Button } from "@/components/ui/button";
-import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 
 export interface MiraShellProps {
@@ -33,7 +43,12 @@ export interface MiraShellProps {
   isReadOnly?: boolean;
 }
 
-export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps) {
+export function MiraShell({
+  children,
+  title,
+  items,
+  isReadOnly,
+}: MiraShellProps) {
   const { state, logout } = useApp();
   const nav = useNavigate();
   const location = useLocation();
@@ -47,12 +62,15 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
 
   const navItems = items || roleConfig.navItems;
   const workspaceTitle = title || roleConfig.workspaceTitle;
-  const isAuditorMode = isReadOnly ?? (role === "auditor" || roleConfig.isReadOnly);
+  const isAuditorMode =
+    isReadOnly ?? (role === "auditor" || roleConfig.isReadOnly);
 
   // Unread badge counters
-  const unreadMessages = state.messages?.filter((m) => m.status === "unread").length || 0;
+  const unreadMessages =
+    state.messages?.filter((m) => m.status === "unread").length || 0;
   const unreadNotifs = state.notifications?.filter((n) => !n.read).length || 0;
-  const mismatchesCount = state.applications?.filter((a) => !!a.mismatch).length || 0;
+  const mismatchesCount =
+    state.applications?.filter((a) => !!a.mismatch).length || 0;
 
   // Global Keyboard Shortcut (⌘K / Ctrl+K)
   useEffect(() => {
@@ -79,7 +97,9 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
         const badgeCount = getBadgeCount(item.badge);
         const isActive =
           location.pathname === item.to ||
-          (item.to !== "/" && !item.exact && location.pathname.startsWith(item.to));
+          (item.to !== "/" &&
+            !item.exact &&
+            location.pathname.startsWith(item.to));
 
         const linkEl = (
           <Link
@@ -91,7 +111,7 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
               isMini ? "h-11 w-11 justify-center px-0" : "h-10 px-3",
               isActive
                 ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-950"
-                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground",
             )}
             activeOptions={{ exact: item.exact }}
           >
@@ -103,7 +123,9 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
             <item.icon
               className={cn(
                 "h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-105",
-                isActive ? "text-white dark:text-slate-950" : "text-muted-foreground group-hover:text-foreground"
+                isActive
+                  ? "text-white dark:text-slate-950"
+                  : "text-muted-foreground group-hover:text-foreground",
               )}
             />
 
@@ -116,7 +138,7 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
                   "flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold",
                   isActive
                     ? "bg-white/20 text-white dark:bg-slate-900 dark:text-white"
-                    : "bg-primary/10 text-primary"
+                    : "bg-primary/10 text-primary",
                 )}
               >
                 {badgeCount}
@@ -129,7 +151,10 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
           return (
             <Tooltip key={item.id} delayDuration={100}>
               <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
-              <TooltipContent side="right" className="text-xs font-medium flex items-center gap-2">
+              <TooltipContent
+                side="right"
+                className="text-xs font-medium flex items-center gap-2"
+              >
                 <span>{item.label}</span>
                 {badgeCount > 0 && (
                   <span className="rounded-full bg-primary/20 px-1.5 py-0.2 text-[10px] text-primary">
@@ -159,22 +184,35 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
           <aside
             className={cn(
               "flex h-full flex-col rounded-2xl border border-border/80 bg-card/90 shadow-sm backdrop-blur-md transition-all duration-200",
-              expanded ? "w-60" : "w-15 items-center"
+              expanded ? "w-60" : "w-15 items-center",
             )}
           >
             {/* Brand Logo & Context */}
             <div
               className={cn(
                 "flex h-14 items-center border-b border-border/70",
-                expanded ? "w-full justify-between px-3.5" : "w-full justify-center px-0"
+                expanded
+                  ? "w-full justify-between px-3.5"
+                  : "w-full justify-center px-0",
               )}
             >
-              <Link to="/" className="flex items-center gap-2.5 transition-transform active:scale-95">
-                <img src="/miraicon.svg" alt="Mira" className="h-8 w-8 rounded-xl object-contain shadow-2xs" />
+              <Link
+                to="/"
+                className="flex items-center gap-2.5 transition-transform active:scale-95"
+              >
+                <img
+                  src="/miraicon.svg"
+                  alt="Mira"
+                  className="h-8 w-8 rounded-xl object-contain shadow-2xs"
+                />
                 {expanded && (
                   <div className="min-w-0 leading-tight">
-                    <span className="block font-bold tracking-tight text-sm text-foreground">Mira</span>
-                    <span className="block truncate text-[10px] text-muted-foreground">Unified Platform</span>
+                    <span className="block font-bold tracking-tight text-sm text-foreground">
+                      Mira
+                    </span>
+                    <span className="block truncate text-[10px] text-muted-foreground">
+                      Unified Platform
+                    </span>
                   </div>
                 )}
               </Link>
@@ -192,9 +230,13 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
                 onClick={() => setExpanded(!expanded)}
                 className={cn(
                   "flex h-10 w-full items-center rounded-xl text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors text-xs font-medium",
-                  expanded ? "px-3 gap-2" : "justify-center"
+                  expanded ? "px-3 gap-2" : "justify-center",
                 )}
-                aria-label={expanded ? "Collapse navigation rail" : "Expand navigation rail"}
+                aria-label={
+                  expanded
+                    ? "Collapse navigation rail"
+                    : "Expand navigation rail"
+                }
               >
                 {expanded ? (
                   <>
@@ -223,8 +265,14 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
           <SheetContent side="left" className="w-68 bg-card p-0">
             <SheetHeader className="border-b border-border/80 p-4">
               <div className="flex items-center gap-2.5">
-                <img src="/miraicon.svg" alt="Mira" className="h-8 w-8 rounded-xl object-contain" />
-                <SheetTitle className="text-left text-sm font-bold">{workspaceTitle}</SheetTitle>
+                <img
+                  src="/miraicon.svg"
+                  alt="Mira"
+                  className="h-8 w-8 rounded-xl object-contain"
+                />
+                <SheetTitle className="text-left text-sm font-bold">
+                  {workspaceTitle}
+                </SheetTitle>
               </div>
             </SheetHeader>
             <div className="overflow-y-auto py-2">
@@ -242,9 +290,14 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
             <div className="flex items-center justify-between border-b border-amber-300/40 bg-amber-500/10 px-4 py-1.5 text-xs font-medium text-amber-800 dark:border-amber-500/30 dark:bg-amber-950/40 dark:text-amber-300">
               <div className="flex items-center gap-2">
                 <ShieldAlert className="h-4 w-4 text-amber-600 dark:text-amber-400 shrink-0" />
-                <span>FORENSIC AUDIT WORKSPACE — STRICT READ-ONLY ACCESS (APPLICATION STATE MUTATIONS DISABLED)</span>
+                <span>
+                  FORENSIC AUDIT WORKSPACE — STRICT READ-ONLY ACCESS
+                  (APPLICATION STATE MUTATIONS DISABLED)
+                </span>
               </div>
-              <span className="hidden font-mono text-[10px] opacity-75 sm:inline">ISO/IEC 27001 COMPLIANCE</span>
+              <span className="hidden font-mono text-[10px] opacity-75 sm:inline">
+                ISO/IEC 27001 COMPLIANCE
+              </span>
             </div>
           )}
 
@@ -263,9 +316,13 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
 
             {/* Workspace Context Tag */}
             <div className="hidden items-center gap-2 lg:flex">
-              <span className="text-xs font-bold tracking-tight text-foreground">{workspaceTitle}</span>
+              <span className="text-xs font-bold tracking-tight text-foreground">
+                {workspaceTitle}
+              </span>
               <span className="text-muted-foreground/40">/</span>
-              <span className="text-[11px] text-muted-foreground">{roleConfig.subtitle}</span>
+              <span className="text-[11px] text-muted-foreground">
+                {roleConfig.subtitle}
+              </span>
             </div>
 
             {/* Global Search Center Button */}
@@ -288,8 +345,16 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
               {/* Notification Bell */}
               <Tooltip delayDuration={150}>
                 <TooltipTrigger asChild>
-                  <Button variant="ghost" size="icon" asChild className="relative h-9 w-9 rounded-xl">
-                    <Link to="/citizen/notifications" aria-label="Notifications">
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    asChild
+                    className="relative h-9 w-9 rounded-xl"
+                  >
+                    <Link
+                      to="/citizen/notifications"
+                      aria-label="Notifications"
+                    >
                       <Bell className="h-4 w-4" />
                       {unreadNotifs > 0 && (
                         <span className="absolute right-1.5 top-1.5 flex h-3.5 w-3.5 items-center justify-center rounded-full bg-primary text-[8px] font-bold text-primary-foreground">
@@ -299,7 +364,9 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
                     </Link>
                   </Button>
                 </TooltipTrigger>
-                <TooltipContent className="text-xs">Notifications</TooltipContent>
+                <TooltipContent className="text-xs">
+                  Notifications
+                </TooltipContent>
               </Tooltip>
 
               {/* Interactive User Account Menu */}
@@ -310,7 +377,10 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
           </header>
 
           {/* Workspace Canvas */}
-          <main id="main" className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8 animate-in fade-in duration-150">
+          <main
+            id="main"
+            className="mx-auto w-full max-w-7xl flex-1 p-4 sm:p-6 lg:p-8 animate-in fade-in duration-150"
+          >
             {children}
           </main>
         </div>

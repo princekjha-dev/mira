@@ -15,17 +15,19 @@ export function ConversationThread({
   onAttachmentPreview,
 }: ConversationThreadProps) {
   // If multiple messages, keep all except the last one collapsible (default collapsed if >= 2)
-  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>(() => {
-    const init: Record<string, boolean> = {};
-    if (messages.length > 1) {
-      // expand the latest message by default
-      const latest = messages[messages.length - 1];
-      if (latest) init[latest.id] = true;
-    } else if (messages[0]) {
-      init[messages[0].id] = true;
-    }
-    return init;
-  });
+  const [expandedIds, setExpandedIds] = useState<Record<string, boolean>>(
+    () => {
+      const init: Record<string, boolean> = {};
+      if (messages.length > 1) {
+        // expand the latest message by default
+        const latest = messages[messages.length - 1];
+        if (latest) init[latest.id] = true;
+      } else if (messages[0]) {
+        init[messages[0].id] = true;
+      }
+      return init;
+    },
+  );
 
   const toggleExpand = (id: string) => {
     setExpandedIds((prev) => ({ ...prev, [id]: !prev[id] }));
@@ -83,7 +85,9 @@ export function ConversationThread({
               </div>
 
               <div className="flex items-center gap-2 shrink-0 text-muted-foreground">
-                {hasAttachments && <Paperclip className="h-3 w-3 text-slate-400" />}
+                {hasAttachments && (
+                  <Paperclip className="h-3 w-3 text-slate-400" />
+                )}
                 <span className="text-[11px] font-mono tabular-nums">
                   {formatFullMailDate(msg.timestamp)}
                 </span>
@@ -101,7 +105,7 @@ export function ConversationThread({
               "rounded-2xl border transition-all duration-150 p-5 space-y-3",
               isLatest
                 ? "bg-white dark:bg-slate-900/90 border-slate-200/80 dark:border-slate-800 shadow-2xs"
-                : "bg-slate-50/40 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60"
+                : "bg-slate-50/40 dark:bg-slate-900/40 border-slate-200/60 dark:border-slate-800/60",
             )}
           >
             {/* Sender and timestamp header */}
@@ -118,7 +122,7 @@ export function ConversationThread({
                     <span
                       className={cn(
                         "rounded px-1.5 py-0.2 text-[10px] font-mono uppercase font-medium border",
-                        getRoleBadge(msg.senderRole)
+                        getRoleBadge(msg.senderRole),
                       )}
                     >
                       {msg.senderRole}

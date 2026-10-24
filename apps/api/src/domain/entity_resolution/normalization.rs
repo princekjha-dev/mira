@@ -1,5 +1,5 @@
-use chrono::{Datelike, NaiveDate};
 use crate::domain::entity_resolution::models::EvidenceDirection;
+use chrono::{Datelike, NaiveDate};
 
 /// Normalizes general text strings by:
 /// 1. Trimming leading/trailing whitespace
@@ -32,14 +32,13 @@ pub fn normalize_text(input: &str) -> String {
 pub fn normalize_name(name: &str) -> String {
     let text = normalize_text(name);
     let titles = ["shri", "smt", "srimati", "mr", "mrs", "ms", "dr"];
-    
+
     let tokens: Vec<&str> = text.split_whitespace().collect();
     let token_count = tokens.len();
     let filtered: Vec<&str> = tokens
         .into_iter()
         .filter(|&t| !titles.contains(&t) || token_count == 1)
         .collect();
-
 
     if filtered.is_empty() {
         text
@@ -58,7 +57,6 @@ pub fn transliterate_devanagari_to_latin(input: &str) -> String {
     let mut result = String::with_capacity(preprocessed.len() * 2);
     let chars: Vec<char> = preprocessed.chars().collect();
     let mut i = 0;
-
 
     while i < chars.len() {
         let c = chars[i];
@@ -111,7 +109,6 @@ pub fn transliterate_devanagari_to_latin(input: &str) -> String {
             'स' => result.push_str(handle_consonant("s", &chars, i)),
             'ह' => result.push_str(handle_consonant("h", &chars, i)),
 
-
             // Matras (Vowel signs)
             'ा' => result.push('a'),
             'ि' => result.push('i'),
@@ -127,7 +124,7 @@ pub fn transliterate_devanagari_to_latin(input: &str) -> String {
             'ं' => result.push('n'),
             'ँ' => result.push('n'),
             'ः' => result.push('h'),
-            '्' => {}, // Virama (halant) already handled by consonant lookahead
+            '्' => {} // Virama (halant) already handled by consonant lookahead
 
             // Non-Devanagari characters (Latin, spaces, punctuation)
             other => result.push(other),
@@ -189,7 +186,10 @@ fn handle_consonant(base: &'static str, chars: &[char], i: usize) -> &'static st
 }
 
 fn is_matra(c: char) -> bool {
-    matches!(c, 'ा' | 'ि' | 'ी' | 'ु' | 'ू' | 'ृ' | 'े' | 'ै' | 'ो' | 'ौ' | 'ं' | 'ँ' | 'ः')
+    matches!(
+        c,
+        'ा' | 'ि' | 'ी' | 'ु' | 'ू' | 'ृ' | 'े' | 'ै' | 'ो' | 'ौ' | 'ं' | 'ँ' | 'ः'
+    )
 }
 
 /// Normalizes phone numbers to digits only and extracts standard suffix
@@ -205,7 +205,10 @@ pub fn normalize_phone(phone: &str) -> String {
 /// Normalizes address for token overlap
 pub fn normalize_address(address: &str) -> Vec<String> {
     let norm = normalize_text(address);
-    let common_words = ["village", "vill", "po", "ps", "dist", "district", "near", "road", "street", "house", "no", "flat"];
+    let common_words = [
+        "village", "vill", "po", "ps", "dist", "district", "near", "road", "street", "house", "no",
+        "flat",
+    ];
     norm.split_whitespace()
         .filter(|w| !common_words.contains(w) && w.len() > 1)
         .map(|w| w.to_string())
@@ -228,15 +231,37 @@ pub fn compare_dates(d1: Option<NaiveDate>, d2: Option<NaiveDate>) -> (f64, bool
             if a == b {
                 (1.0, false, format!("Exact date of birth match ({})", a))
             } else if a.year() == b.year() && a.month() == b.month() {
-                (0.9, false, format!("Same birth month and year ({} vs {})", a, b))
+                (
+                    0.9,
+                    false,
+                    format!("Same birth month and year ({} vs {})", a, b),
+                )
             } else if a.year() == b.year() {
-                (0.75, false, format!("Same birth year ({}) with minor day/month discrepancy", a.year()))
+                (
+                    0.75,
+                    false,
+                    format!(
+                        "Same birth year ({}) with minor day/month discrepancy",
+                        a.year()
+                    ),
+                )
             } else {
                 let diff_years = (a.year() - b.year()).abs();
-                (0.0, true, format!("Significant date of birth conflict: {} vs {} (difference of {} years)", a, b, diff_years))
+                (
+                    0.0,
+                    true,
+                    format!(
+                        "Significant date of birth conflict: {} vs {} (difference of {} years)",
+                        a, b, diff_years
+                    ),
+                )
             }
         }
-        _ => (0.5, false, "Date of birth missing in one or both records (neutral)".to_string()),
+        _ => (
+            0.5,
+            false,
+            "Date of birth missing in one or both records (neutral)".to_string(),
+        ),
     }
 }
 
@@ -248,22 +273,44 @@ pub fn compare_dates_with_conflict(
     match (d1, d2) {
         (Some(a), Some(b)) => {
             if a == b {
-                (EvidenceDirection::SupportsMatch, 0.0, format!("Exact date of birth match ({})", a))
+                (
+                    EvidenceDirection::SupportsMatch,
+                    0.0,
+                    format!("Exact date of birth match ({})", a),
+                )
             } else if a.year() == b.year() && a.month() == b.month() {
-                (EvidenceDirection::SupportsMatch, 0.0, format!("Same birth year and month ({} vs {})", a, b))
+                (
+                    EvidenceDirection::SupportsMatch,
+                    0.0,
+                    format!("Same birth year and month ({} vs {})", a, b),
+                )
             } else if a.year() == b.year() {
-                (EvidenceDirection::SupportsMatch, 0.0, format!("Same birth year ({}) with minor day/month discrepancy", a.year()))
+                (
+                    EvidenceDirection::SupportsMatch,
+                    0.0,
+                    format!(
+                        "Same birth year ({}) with minor day/month discrepancy",
+                        a.year()
+                    ),
+                )
             } else {
                 let diff_years = (a.year() - b.year()).abs();
                 let penalty = if diff_years >= 5 { 1.0 } else { 0.6 };
                 (
                     EvidenceDirection::ContradictsMatch,
                     penalty,
-                    format!("Significant date of birth conflict: {} vs {} (difference of {} years)", a, b, diff_years),
+                    format!(
+                        "Significant date of birth conflict: {} vs {} (difference of {} years)",
+                        a, b, diff_years
+                    ),
                 )
             }
         }
-        _ => (EvidenceDirection::Neutral, 0.0, "Date of birth missing in one or both records (treated as neutral).".to_string()),
+        _ => (
+            EvidenceDirection::Neutral,
+            0.0,
+            "Date of birth missing in one or both records (treated as neutral).".to_string(),
+        ),
     }
 }
 
@@ -284,7 +331,10 @@ mod tests {
         assert_eq!(transliterate_devanagari_to_latin("राहुल"), "rahul");
         assert_eq!(transliterate_devanagari_to_latin("सुनीता"), "sunita");
         assert_eq!(transliterate_devanagari_to_latin("देवी"), "devi");
-        assert_eq!(transliterate_devanagari_to_latin("सुनीता देवी"), "sunita devi");
+        assert_eq!(
+            transliterate_devanagari_to_latin("सुनीता देवी"),
+            "sunita devi"
+        );
         assert_eq!(transliterate_devanagari_to_latin("रमेश"), "ramesh");
         assert_eq!(transliterate_devanagari_to_latin("अमित"), "amit");
     }

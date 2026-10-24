@@ -30,7 +30,8 @@ export const Route = createFileRoute("/verifier/dashboard")({
       { title: "Verification Workstation — Vikram Malhotra · Mira" },
       {
         name: "description",
-        content: "High-density verification operations console, mismatch resolution, and determination queue.",
+        content:
+          "High-density verification operations console, mismatch resolution, and determination queue.",
       },
     ],
   }),
@@ -97,7 +98,10 @@ export function VerifierDashboardPage() {
           value={mismatches.length}
           subtext="Registry discrepancies found"
           icon={AlertTriangle}
-          trend={{ label: "Requires Action", tone: mismatches.length > 0 ? "warning" : "positive" }}
+          trend={{
+            label: "Requires Action",
+            tone: mismatches.length > 0 ? "warning" : "positive",
+          }}
         />
         <MiraStatCard
           title="Mean Turnaround (SLA)"
@@ -124,7 +128,12 @@ export function VerifierDashboardPage() {
               title="Priority Applications"
               description="Awaiting primary document cross-check and field correlation."
               action={
-                <Button size="sm" variant="ghost" asChild className="h-7 text-xs text-muted-foreground hover:text-foreground">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  asChild
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                >
                   <Link to="/verifier/queue">
                     Open Full Queue ({queueApps.length})
                   </Link>
@@ -166,17 +175,29 @@ export function VerifierDashboardPage() {
                       <div className="flex items-center gap-2 text-xs font-medium text-foreground">
                         <span>{app.applicant}</span>
                         <span className="text-muted-foreground">·</span>
-                        <span className="font-mono text-muted-foreground">{app.householdId}</span>
+                        <span className="font-mono text-muted-foreground">
+                          {app.householdId}
+                        </span>
                       </div>
 
                       <p className="text-[11px] text-muted-foreground">
-                        {getScheme(app.schemeId)?.name || "Welfare Assistance Scheme"} · Updated {fmtDate(app.updatedOn)}
+                        {getScheme(app.schemeId)?.name ||
+                          "Welfare Assistance Scheme"}{" "}
+                        · Updated {fmtDate(app.updatedOn)}
                       </p>
                     </div>
 
                     <div className="flex items-center gap-2 shrink-0">
-                      <Button size="sm" variant="outline" asChild className="h-7.5 text-xs font-medium rounded-lg">
-                        <Link to="/verifier/applications/$id" params={{ id: app.id }}>
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        asChild
+                        className="h-7.5 text-xs font-medium rounded-lg"
+                      >
+                        <Link
+                          to="/verifier/applications/$id"
+                          params={{ id: app.id }}
+                        >
                           Inspect Case
                           <ArrowRight className="ml-1 h-3 w-3" />
                         </Link>
@@ -198,8 +219,12 @@ export function VerifierDashboardPage() {
                 <AlertTriangle className="h-4 w-4" />
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
               </div>
-              <h4 className="mt-2 text-xs font-semibold text-foreground">Mismatch Resolution</h4>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Resolve discrepancy claims</p>
+              <h4 className="mt-2 text-xs font-semibold text-foreground">
+                Mismatch Resolution
+              </h4>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Resolve discrepancy claims
+              </p>
             </Link>
 
             <Link
@@ -210,8 +235,12 @@ export function VerifierDashboardPage() {
                 <FileCheck2 className="h-4 w-4" />
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
               </div>
-              <h4 className="mt-2 text-xs font-semibold text-foreground">Document OCR Vault</h4>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Inspect cryptographic attestations</p>
+              <h4 className="mt-2 text-xs font-semibold text-foreground">
+                Document OCR Vault
+              </h4>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Inspect cryptographic attestations
+              </p>
             </Link>
 
             <Link
@@ -222,8 +251,12 @@ export function VerifierDashboardPage() {
                 <ShieldCheck className="h-4 w-4" />
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
               </div>
-              <h4 className="mt-2 text-xs font-semibold text-foreground">Audit Trail</h4>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Officer determination ledger</p>
+              <h4 className="mt-2 text-xs font-semibold text-foreground">
+                Audit Trail
+              </h4>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Officer determination ledger
+              </p>
             </Link>
           </div>
         </div>
@@ -237,25 +270,33 @@ export function VerifierDashboardPage() {
             />
             <div className="mt-2 space-y-2.5 text-xs">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">UIDAI Aadhaar Vault:</span>
+                <span className="text-muted-foreground">
+                  UIDAI Aadhaar Vault:
+                </span>
                 <span className="flex items-center text-teal-600 dark:text-teal-400 font-medium">
                   <CheckCircle2 className="mr-1 h-3 w-3" /> Connected
                 </span>
               </div>
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">State Land Records (Bhulekh):</span>
+                <span className="text-muted-foreground">
+                  State Land Records (Bhulekh):
+                </span>
                 <span className="flex items-center text-teal-600 dark:text-teal-400 font-medium">
                   <CheckCircle2 className="mr-1 h-3 w-3" /> Live Sync
                 </span>
               </div>
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">Revenue Dept (Income Registry):</span>
+                <span className="text-muted-foreground">
+                  Revenue Dept (Income Registry):
+                </span>
                 <span className="flex items-center text-teal-600 dark:text-teal-400 font-medium">
                   <CheckCircle2 className="mr-1 h-3 w-3" /> Live Sync
                 </span>
               </div>
               <div className="flex items-center justify-between pb-1">
-                <span className="text-muted-foreground">Public Distribution (NFSA):</span>
+                <span className="text-muted-foreground">
+                  Public Distribution (NFSA):
+                </span>
                 <span className="flex items-center text-teal-600 dark:text-teal-400 font-medium">
                   <CheckCircle2 className="mr-1 h-3 w-3" /> Live Sync
                 </span>
@@ -271,7 +312,11 @@ export function VerifierDashboardPage() {
                   Verifier Statutory Guidance
                 </span>
                 <p className="text-muted-foreground leading-relaxed">
-                  Section 14(2) of Public Verification Act requires all adverse determinations to record a reasoned note citing the exact registry discrepancy. No application may be rejected without at least one citizen opportunity to furnish clarifying evidence.
+                  Section 14(2) of Public Verification Act requires all adverse
+                  determinations to record a reasoned note citing the exact
+                  registry discrepancy. No application may be rejected without
+                  at least one citizen opportunity to furnish clarifying
+                  evidence.
                 </p>
               </div>
             </div>

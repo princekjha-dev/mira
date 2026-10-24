@@ -46,13 +46,37 @@ export function MailSidebar({
   workflowCounts,
 }: MailSidebarProps) {
   const mailFolders = [
-    { id: "inbox" as const, label: "Inbox", icon: Inbox, count: folderCounts.inbox },
-    { id: "starred" as const, label: "Starred", icon: Star, count: folderCounts.starred },
-    { id: "sent" as const, label: "Sent", icon: Send, count: folderCounts.sent },
-    { id: "archived" as const, label: "Archived", icon: Archive, count: folderCounts.archived },
+    {
+      id: "inbox" as const,
+      label: "Inbox",
+      icon: Inbox,
+      count: folderCounts.inbox,
+    },
+    {
+      id: "starred" as const,
+      label: "Starred",
+      icon: Star,
+      count: folderCounts.starred,
+    },
+    {
+      id: "sent" as const,
+      label: "Sent",
+      icon: Send,
+      count: folderCounts.sent,
+    },
+    {
+      id: "archived" as const,
+      label: "Archived",
+      icon: Archive,
+      count: folderCounts.archived,
+    },
   ];
 
-  const workflowItems: { id: WorkflowFilter; label: string; icon: typeof AlertCircle }[] = [
+  const workflowItems: {
+    id: WorkflowFilter;
+    label: string;
+    icon: typeof AlertCircle;
+  }[] = [
     { id: "Action Required", label: "Action Required", icon: AlertCircle },
     { id: "Evidence", label: "Evidence", icon: FileCheck2 },
     { id: "Field Visit", label: "Field Visit", icon: Navigation },
@@ -61,7 +85,10 @@ export function MailSidebar({
   ];
 
   return (
-    <nav className="flex flex-col gap-5 p-3 text-xs w-full" aria-label="Mail folders and workflows">
+    <nav
+      className="flex flex-col gap-5 p-3 text-xs w-full"
+      aria-label="Mail folders and workflows"
+    >
       {/* Mail Section */}
       <div className="space-y-1">
         <span className="block px-2 text-[10px] font-mono uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500">
@@ -82,7 +109,7 @@ export function MailSidebar({
                   "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg font-medium transition-colors text-left",
                   isActive
                     ? "bg-slate-200/60 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold shadow-2xs"
-                    : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200"
+                    : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200",
                 )}
               >
                 <div className="flex items-center gap-2.5 truncate">
@@ -91,7 +118,7 @@ export function MailSidebar({
                       "h-3.5 w-3.5 shrink-0",
                       isActive
                         ? "text-gov"
-                        : "text-slate-400 dark:text-slate-500"
+                        : "text-slate-400 dark:text-slate-500",
                     )}
                   />
                   <span className="truncate">{f.label}</span>
@@ -103,7 +130,7 @@ export function MailSidebar({
                       "rounded-full px-1.5 py-0.2 text-[10px] font-mono tabular-nums",
                       isActive
                         ? "bg-gov/15 text-gov font-bold"
-                        : "bg-slate-200/60 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                        : "bg-slate-200/60 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
                     )}
                   >
                     {f.count}
@@ -135,7 +162,7 @@ export function MailSidebar({
                   "w-full flex items-center justify-between px-2.5 py-1.5 rounded-lg font-medium transition-colors text-left",
                   isActive
                     ? "bg-slate-200/60 dark:bg-slate-800 text-slate-900 dark:text-slate-100 font-semibold shadow-2xs"
-                    : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200"
+                    : "text-slate-600 hover:bg-slate-100/70 hover:text-slate-900 dark:text-slate-400 dark:hover:bg-slate-800/50 dark:hover:text-slate-200",
                 )}
               >
                 <div className="flex items-center gap-2.5 truncate">
@@ -144,7 +171,7 @@ export function MailSidebar({
                       "h-3.5 w-3.5 shrink-0",
                       isActive
                         ? "text-gov"
-                        : "text-slate-400 dark:text-slate-500"
+                        : "text-slate-400 dark:text-slate-500",
                     )}
                   />
                   <span className="truncate">{wf.label}</span>
@@ -156,7 +183,7 @@ export function MailSidebar({
                       "rounded-full px-1.5 py-0.2 text-[10px] font-mono tabular-nums",
                       isActive
                         ? "bg-gov/15 text-gov font-bold"
-                        : "bg-slate-200/60 text-slate-600 dark:bg-slate-800 dark:text-slate-400"
+                        : "bg-slate-200/60 text-slate-600 dark:bg-slate-800 dark:text-slate-400",
                     )}
                   >
                     {count}

@@ -1,6 +1,6 @@
-use serde::{Deserialize, Serialize};
 use crate::domain::document::models::DocumentType;
 use crate::errors::AppError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct GroundedEvidenceSummary {
@@ -85,7 +85,10 @@ impl AIProvider for LocalGroundedAIProvider {
 
         let doc_type_name = doc_type.as_str().replace('_', " ");
         let mut parts = Vec::new();
-        parts.push(format!("This document was classified as a {}.", doc_type_name));
+        parts.push(format!(
+            "This document was classified as a {}.",
+            doc_type_name
+        ));
 
         for (field, val, conf) in extracted_fields {
             if *conf < 0.70 {
@@ -94,19 +97,31 @@ impl AIProvider for LocalGroundedAIProvider {
 
             match field.as_str() {
                 "NAME" => {
-                    parts.push(format!("Extracted applicant name is '{}'. [Source: {}, Page 1]", val, doc_type_name));
+                    parts.push(format!(
+                        "Extracted applicant name is '{}'. [Source: {}, Page 1]",
+                        val, doc_type_name
+                    ));
                     citations.push(format!("{}: Name = {}", doc_type_name, val));
                 }
                 "DATE_OF_BIRTH" => {
-                    parts.push(format!("Stated date of birth is '{}'. [Source: {}, Page 1]", val, doc_type_name));
+                    parts.push(format!(
+                        "Stated date of birth is '{}'. [Source: {}, Page 1]",
+                        val, doc_type_name
+                    ));
                     citations.push(format!("{}: DOB = {}", doc_type_name, val));
                 }
                 "AMOUNT" => {
-                    parts.push(format!("Document declares annual income/amount as ₹{}. [Source: {}, Page 1]", val, doc_type_name));
+                    parts.push(format!(
+                        "Document declares annual income/amount as ₹{}. [Source: {}, Page 1]",
+                        val, doc_type_name
+                    ));
                     citations.push(format!("{}: Stated Amount = ₹{}", doc_type_name, val));
                 }
                 "PROPERTY_ID" => {
-                    parts.push(format!("Document references property ID '{}'. [Source: {}, Page 1]", val, doc_type_name));
+                    parts.push(format!(
+                        "Document references property ID '{}'. [Source: {}, Page 1]",
+                        val, doc_type_name
+                    ));
                     citations.push(format!("{}: Property ID = {}", doc_type_name, val));
                 }
                 _ => {}
@@ -114,11 +129,17 @@ impl AIProvider for LocalGroundedAIProvider {
         }
 
         if let Some(person) = matched_person {
-            parts.push(format!("Candidate person profile linked via V4 Entity Resolution: '{}'.", person));
+            parts.push(format!(
+                "Candidate person profile linked via V4 Entity Resolution: '{}'.",
+                person
+            ));
         }
 
         if let Some(prop) = matched_property {
-            parts.push(format!("Matched property in civic asset registry: '{}'.", prop));
+            parts.push(format!(
+                "Matched property in civic asset registry: '{}'.",
+                prop
+            ));
         }
 
         if !conflicts.is_empty() {

@@ -319,14 +319,17 @@ impl ProfileService {
             let clean_lang = lang.trim().to_lowercase();
             if clean_lang != "en" && clean_lang != "hi" {
                 return Err(AppError::Validation(
-                    "Unsupported language. Supported languages in V1 are 'en' and 'hi'.".to_string(),
+                    "Unsupported language. Supported languages in V1 are 'en' and 'hi'."
+                        .to_string(),
                 ));
             }
         }
 
         if let Some(ref name) = req.display_name {
             if name.trim().is_empty() {
-                return Err(AppError::Validation("Display name cannot be empty".to_string()));
+                return Err(AppError::Validation(
+                    "Display name cannot be empty".to_string(),
+                ));
             }
         }
 
@@ -396,7 +399,9 @@ impl ProfileService {
         .fetch_optional(pool)
         .await?;
 
-        if person_row.is_none() && (caller.email == "demo.citizen@mira.demo" || caller.email == "citizen@mira.local") {
+        if person_row.is_none()
+            && (caller.email == "demo.citizen@mira.demo" || caller.email == "citizen@mira.local")
+        {
             person_row = sqlx::query(
                 "SELECT id, public_id, first_name, last_name, date_of_birth, gender, email FROM persons WHERE public_id = 'P-10482-01' LIMIT 1"
             )
@@ -415,7 +420,11 @@ impl ProfileService {
                 let user_display: String = user_row.get("display_name");
                 let parts: Vec<&str> = user_display.split_whitespace().collect();
                 let first = parts.first().copied().unwrap_or("Citizen");
-                let last = if parts.len() > 1 { parts.last().copied().unwrap_or("Resident") } else { "Resident" };
+                let last = if parts.len() > 1 {
+                    parts.last().copied().unwrap_or("Resident")
+                } else {
+                    "Resident"
+                };
                 let new_pid = Uuid::new_v4();
                 let new_pub_id = format!("P-{}", &new_pid.to_string()[..8].to_uppercase());
 
@@ -440,24 +449,25 @@ impl ProfileService {
 
         // 2. Find Household: either where person is a member, or created_by caller, or Sharma Family for demo citizen
         let mut hh_id_opt: Option<Uuid> = sqlx::query_scalar(
-            "SELECT household_id FROM household_memberships WHERE person_id = $1 LIMIT 1"
+            "SELECT household_id FROM household_memberships WHERE person_id = $1 LIMIT 1",
         )
         .bind(caller_person_id)
         .fetch_optional(pool)
         .await?;
 
         if hh_id_opt.is_none() {
-            hh_id_opt = sqlx::query_scalar(
-                "SELECT id FROM households WHERE created_by = $1 LIMIT 1"
-            )
-            .bind(caller.id)
-            .fetch_optional(pool)
-            .await?;
+            hh_id_opt =
+                sqlx::query_scalar("SELECT id FROM households WHERE created_by = $1 LIMIT 1")
+                    .bind(caller.id)
+                    .fetch_optional(pool)
+                    .await?;
         }
 
-        if hh_id_opt.is_none() && (caller.email == "demo.citizen@mira.demo" || caller.email == "citizen@mira.local") {
+        if hh_id_opt.is_none()
+            && (caller.email == "demo.citizen@mira.demo" || caller.email == "citizen@mira.local")
+        {
             hh_id_opt = sqlx::query_scalar(
-                "SELECT id FROM households WHERE public_id = 'MIRA-FAM-10482' LIMIT 1"
+                "SELECT id FROM households WHERE public_id = 'MIRA-FAM-10482' LIMIT 1",
             )
             .fetch_optional(pool)
             .await?;
@@ -466,13 +476,16 @@ impl ProfileService {
         let household_id = match hh_id_opt {
             Some(id) => id,
             None => {
-                let pub_id = format!("MIRA-FAM-{}", &Uuid::new_v4().to_string()[..5].to_uppercase());
+                let pub_id = format!(
+                    "MIRA-FAM-{}",
+                    &Uuid::new_v4().to_string()[..5].to_uppercase()
+                );
                 let row = sqlx::query(
                     r#"
                     INSERT INTO households (id, public_id, name, status, created_by)
                     VALUES (gen_random_uuid(), $1, 'Resident Family', 'ACTIVE', $2)
                     RETURNING id
-                    "#
+                    "#,
                 )
                 .bind(&pub_id)
                 .bind(caller.id)
@@ -498,12 +511,11 @@ impl ProfileService {
         };
 
         // 3. Fetch Household details
-        let hh_row = sqlx::query(
-            "SELECT id, public_id, name, status FROM households WHERE id = $1"
-        )
-        .bind(household_id)
-        .fetch_one(pool)
-        .await?;
+        let hh_row =
+            sqlx::query("SELECT id, public_id, name, status FROM households WHERE id = $1")
+                .bind(household_id)
+                .fetch_one(pool)
+                .await?;
 
         let hh_pub_id: String = hh_row.get("public_id");
         let hh_name: String = hh_row.get("name");
@@ -516,7 +528,7 @@ impl ProfileService {
             JOIN properties p ON p.id = pa.property_id
             WHERE pa.household_id = $1
             LIMIT 1
-            "#
+            "#,
         )
         .bind(household_id)
         .fetch_optional(pool)
@@ -529,12 +541,18 @@ impl ProfileService {
                 let st: String = pr.get("state");
                 let pin: String = pr.get("postal_code");
                 let ptype: String = pr.get("property_type");
-                (format!("{}, {}, {} — {}", al, dist, st, pin), format!("Pucca residential dwelling ({}) verified in municipal records", ptype))
+                (
+                    format!("{}, {}, {} — {}", al, dist, st, pin),
+                    format!(
+                        "Pucca residential dwelling ({}) verified in municipal records",
+                        ptype
+                    ),
+                )
             }
             None => (
                 "House No. 42, Ward 7, Demo District, Uttar Pradesh — 201001".to_string(),
                 "Dwelling unit on residential plot (record under verification)".to_string(),
-            )
+            ),
         };
 
         // 4. Fetch Members
@@ -548,7 +566,7 @@ impl ProfileService {
             JOIN persons p ON p.id = hm.person_id
             WHERE hm.household_id = $1
             ORDER BY hm.valid_from ASC
-            "#
+            "#,
         )
         .bind(household_id)
         .fetch_all(pool)
@@ -585,11 +603,25 @@ impl ProfileService {
                 name,
                 relationship: role.clone(),
                 membership_role: role,
-                dob: dob.map(|d| d.format("%Y-%m-%d").to_string()).unwrap_or_else(|| "1985-01-01".to_string()),
+                dob: dob
+                    .map(|d| d.format("%Y-%m-%d").to_string())
+                    .unwrap_or_else(|| "1985-01-01".to_string()),
                 gender,
-                identity: if vstatus == "VERIFIED" { "Verified".to_string() } else { "Pending".to_string() },
-                membership: if is_current { "Active".to_string() } else { "Former".to_string() },
-                income: if pid == caller_person_id { Some("Annual ₹1,40,000".to_string()) } else { None },
+                identity: if vstatus == "VERIFIED" {
+                    "Verified".to_string()
+                } else {
+                    "Pending".to_string()
+                },
+                membership: if is_current {
+                    "Active".to_string()
+                } else {
+                    "Former".to_string()
+                },
+                income: if pid == caller_person_id {
+                    Some("Annual ₹1,40,000".to_string())
+                } else {
+                    None
+                },
                 benefits: b_rows,
                 is_current,
             });
@@ -609,15 +641,23 @@ impl ProfileService {
                 JOIN persons pa ON pa.id = pr.person_a_id
                 JOIN persons pb ON pb.id = pr.person_b_id
                 WHERE pr.person_a_id = ANY($1) OR pr.person_b_id = ANY($1)
-                "#
+                "#,
             )
             .bind(&person_ids)
             .fetch_all(pool)
             .await?;
 
             for rr in rel_rows {
-                let pa_name = format!("{} {}", rr.get::<String, _>("pa_first"), rr.get::<String, _>("pa_last"));
-                let pb_name = format!("{} {}", rr.get::<String, _>("pb_first"), rr.get::<String, _>("pb_last"));
+                let pa_name = format!(
+                    "{} {}",
+                    rr.get::<String, _>("pa_first"),
+                    rr.get::<String, _>("pa_last")
+                );
+                let pb_name = format!(
+                    "{} {}",
+                    rr.get::<String, _>("pb_first"),
+                    rr.get::<String, _>("pb_last")
+                );
                 let vfrom: NaiveDate = rr.get("valid_from");
 
                 relationships.push(FamilyRelationshipDto {
@@ -642,7 +682,7 @@ impl ProfileService {
             LEFT JOIN persons p ON p.id = le.person_id
             WHERE le.household_id = $1 OR le.person_id = $2
             ORDER BY le.effective_date ASC
-            "#
+            "#,
         )
         .bind(household_id)
         .bind(caller_person_id)
@@ -656,19 +696,23 @@ impl ProfileService {
             let meta: serde_json::Value = ler.get("metadata");
             let cat: chrono::DateTime<Utc> = ler.get("created_at");
 
-            let desc = meta.get("description")
+            let desc = meta
+                .get("description")
                 .and_then(|v| v.as_str())
                 .unwrap_or("Event recorded in public records")
                 .to_string();
-            let source = meta.get("source_name")
+            let source = meta
+                .get("source_name")
                 .and_then(|v| v.as_str())
                 .unwrap_or("Civil Registration System")
                 .to_string();
-            let vstatus = meta.get("verification_status")
+            let vstatus = meta
+                .get("verification_status")
                 .and_then(|v| v.as_str())
                 .unwrap_or("VERIFIED")
                 .to_string();
-            let vby = meta.get("verified_by")
+            let vby = meta
+                .get("verified_by")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string());
 
@@ -689,7 +733,10 @@ impl ProfileService {
                 title,
                 description: desc,
                 source,
-                evidence: meta.get("certificate_no").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                evidence: meta
+                    .get("certificate_no")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
                 verification_status: vstatus,
                 verified_by: vby,
                 timestamp: cat.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
@@ -715,7 +762,10 @@ impl ProfileService {
             let rtype: String = rr.get("event_type");
             let rdate: NaiveDate = rr.get("effective_date");
             let rmeta: serde_json::Value = rr.get("metadata");
-            let details = rmeta.get("details").and_then(|v| v.as_str()).unwrap_or("Request submitted for verification");
+            let details = rmeta
+                .get("details")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Request submitted for verification");
 
             requests.push(FamilyRequestDto {
                 id: format!("FR-{}", &rid.to_string()[..8].to_uppercase()),
@@ -757,13 +807,14 @@ impl ProfileService {
             .unwrap_or(false);
 
         // Fetch Household details
-        let hh_row = sqlx::query(
-            "SELECT id, public_id, name, status FROM households WHERE id = $1"
-        )
-        .bind(household_id)
-        .fetch_optional(pool)
-        .await?
-        .ok_or_else(|| AppError::NotFound(format!("Household {} not found", household_id)))?;
+        let hh_row =
+            sqlx::query("SELECT id, public_id, name, status FROM households WHERE id = $1")
+                .bind(household_id)
+                .fetch_optional(pool)
+                .await?
+                .ok_or_else(|| {
+                    AppError::NotFound(format!("Household {} not found", household_id))
+                })?;
 
         let hh_pub_id: String = hh_row.get("public_id");
         let hh_name: String = hh_row.get("name");
@@ -776,7 +827,7 @@ impl ProfileService {
             JOIN properties p ON p.id = pa.property_id
             WHERE pa.household_id = $1
             LIMIT 1
-            "#
+            "#,
         )
         .bind(household_id)
         .fetch_optional(pool)
@@ -789,12 +840,18 @@ impl ProfileService {
                 let st: String = pr.get("state");
                 let pin: String = pr.get("postal_code");
                 let ptype: String = pr.get("property_type");
-                (format!("{}, {}, {} — {}", al, dist, st, pin), format!("Pucca residential dwelling ({}) verified in municipal records", ptype))
+                (
+                    format!("{}, {}, {} — {}", al, dist, st, pin),
+                    format!(
+                        "Pucca residential dwelling ({}) verified in municipal records",
+                        ptype
+                    ),
+                )
             }
             None => (
                 "House No. 42, Ward 7, Demo District, Uttar Pradesh — 201001".to_string(),
                 "Dwelling unit on residential plot (record under verification)".to_string(),
-            )
+            ),
         };
 
         // Fetch Members
@@ -808,7 +865,7 @@ impl ProfileService {
             JOIN persons p ON p.id = hm.person_id
             WHERE hm.household_id = $1
             ORDER BY hm.valid_from ASC
-            "#
+            "#,
         )
         .bind(household_id)
         .fetch_all(pool)
@@ -845,10 +902,20 @@ impl ProfileService {
                 name,
                 relationship: role.clone(),
                 membership_role: role,
-                dob: dob.map(|d| d.format("%Y-%m-%d").to_string()).unwrap_or_else(|| "1985-01-01".to_string()),
+                dob: dob
+                    .map(|d| d.format("%Y-%m-%d").to_string())
+                    .unwrap_or_else(|| "1985-01-01".to_string()),
                 gender,
-                identity: if vstatus == "VERIFIED" { "Verified".to_string() } else { "Pending".to_string() },
-                membership: if is_current { "Active".to_string() } else { "Former".to_string() },
+                identity: if vstatus == "VERIFIED" {
+                    "Verified".to_string()
+                } else {
+                    "Pending".to_string()
+                },
+                membership: if is_current {
+                    "Active".to_string()
+                } else {
+                    "Former".to_string()
+                },
                 income: None,
                 benefits: b_rows,
                 is_current,
@@ -869,15 +936,23 @@ impl ProfileService {
                 JOIN persons pa ON pa.id = pr.person_a_id
                 JOIN persons pb ON pb.id = pr.person_b_id
                 WHERE pr.person_a_id = ANY($1) OR pr.person_b_id = ANY($1)
-                "#
+                "#,
             )
             .bind(&person_ids)
             .fetch_all(pool)
             .await?;
 
             for rr in rel_rows {
-                let pa_name = format!("{} {}", rr.get::<String, _>("pa_first"), rr.get::<String, _>("pa_last"));
-                let pb_name = format!("{} {}", rr.get::<String, _>("pb_first"), rr.get::<String, _>("pb_last"));
+                let pa_name = format!(
+                    "{} {}",
+                    rr.get::<String, _>("pa_first"),
+                    rr.get::<String, _>("pa_last")
+                );
+                let pb_name = format!(
+                    "{} {}",
+                    rr.get::<String, _>("pb_first"),
+                    rr.get::<String, _>("pb_last")
+                );
                 let vfrom: NaiveDate = rr.get("valid_from");
 
                 relationships.push(FamilyRelationshipDto {
@@ -902,7 +977,7 @@ impl ProfileService {
             LEFT JOIN persons p ON p.id = le.person_id
             WHERE le.household_id = $1
             ORDER BY le.effective_date ASC
-            "#
+            "#,
         )
         .bind(household_id)
         .fetch_all(pool)
@@ -915,19 +990,23 @@ impl ProfileService {
             let meta: serde_json::Value = ler.get("metadata");
             let cat: chrono::DateTime<Utc> = ler.get("created_at");
 
-            let desc = meta.get("description")
+            let desc = meta
+                .get("description")
                 .and_then(|v| v.as_str())
                 .unwrap_or("Event recorded in public records")
                 .to_string();
-            let source = meta.get("source_name")
+            let source = meta
+                .get("source_name")
                 .and_then(|v| v.as_str())
                 .unwrap_or("Civil Registration System")
                 .to_string();
-            let vstatus = meta.get("verification_status")
+            let vstatus = meta
+                .get("verification_status")
                 .and_then(|v| v.as_str())
                 .unwrap_or("VERIFIED")
                 .to_string();
-            let vby = meta.get("verified_by")
+            let vby = meta
+                .get("verified_by")
                 .and_then(|v| v.as_str())
                 .map(|s| s.to_string());
 
@@ -948,7 +1027,10 @@ impl ProfileService {
                 title,
                 description: desc,
                 source,
-                evidence: meta.get("certificate_no").and_then(|v| v.as_str()).map(|s| s.to_string()),
+                evidence: meta
+                    .get("certificate_no")
+                    .and_then(|v| v.as_str())
+                    .map(|s| s.to_string()),
                 verification_status: vstatus,
                 verified_by: vby,
                 timestamp: cat.format("%Y-%m-%dT%H:%M:%SZ").to_string(),
@@ -974,7 +1056,10 @@ impl ProfileService {
             let rtype: String = rr.get("event_type");
             let rdate: NaiveDate = rr.get("effective_date");
             let rmeta: serde_json::Value = rr.get("metadata");
-            let details = rmeta.get("details").and_then(|v| v.as_str()).unwrap_or("Request submitted for verification");
+            let details = rmeta
+                .get("details")
+                .and_then(|v| v.as_str())
+                .unwrap_or("Request submitted for verification");
 
             requests.push(FamilyRequestDto {
                 id: format!("FR-{}", &rid.to_string()[..8].to_uppercase()),
@@ -1046,7 +1131,7 @@ impl ProfileService {
             JOIN households h ON h.id = hm.household_id
             WHERE hm.person_id = $1
             LIMIT 1
-            "#
+            "#,
         )
         .bind(person_id)
         .fetch_optional(pool)
@@ -1060,7 +1145,13 @@ impl ProfileService {
                 r.get::<String, _>("membership_role"),
                 r.get::<String, _>("verification_status"),
             ),
-            None => (None, "MIRA-FAM-10482".to_string(), "Sharma Family".to_string(), "MEMBER".to_string(), "VERIFIED".to_string()),
+            None => (
+                None,
+                "MIRA-FAM-10482".to_string(),
+                "Sharma Family".to_string(),
+                "MEMBER".to_string(),
+                "VERIFIED".to_string(),
+            ),
         };
 
         let rel_rows = sqlx::query(
@@ -1188,7 +1279,7 @@ impl ProfileService {
             WHERE le.person_id = $1 OR le.household_id = $2
             ORDER BY le.effective_date DESC
             LIMIT 5
-            "#
+            "#,
         )
         .bind(person_id)
         .bind(household_id)
@@ -1236,7 +1327,7 @@ impl ProfileService {
                 "explanation": "Active coverage up to ₹5,00,000/year under Golden Protection Card BEN-2026-10486.",
                 "satisfied_conditions": ["SECC Deprivation Depictor", "Aadhaar Identity Authenticated"],
                 "unmet_conditions": []
-            })
+            }),
         ];
 
         Ok(serde_json::json!({
@@ -1274,11 +1365,15 @@ impl ProfileService {
         let first = req.first_name.trim();
         let last = req.last_name.trim();
         if first.is_empty() || last.is_empty() {
-            return Err(AppError::Validation("First name and last name are required".to_string()));
+            return Err(AppError::Validation(
+                "First name and last name are required".to_string(),
+            ));
         }
 
-        let dob = NaiveDate::parse_from_str(req.date_of_birth.trim(), "%Y-%m-%d")
-            .map_err(|_| AppError::Validation("Date of birth must be in YYYY-MM-DD format".to_string()))?;
+        let dob =
+            NaiveDate::parse_from_str(req.date_of_birth.trim(), "%Y-%m-%d").map_err(|_| {
+                AppError::Validation("Date of birth must be in YYYY-MM-DD format".to_string())
+            })?;
 
         let family = Self::get_family_for_user(pool, caller).await?;
 
@@ -1472,16 +1567,22 @@ impl ProfileService {
             return Err(AppError::Validation("Description is required".to_string()));
         }
 
-        let ref_id = format!("GRV-2026-{}", &Uuid::new_v4().to_string()[..5].to_uppercase());
+        let ref_id = format!(
+            "GRV-2026-{}",
+            &Uuid::new_v4().to_string()[..5].to_uppercase()
+        );
 
         let _ = sqlx::query(
             r#"
             INSERT INTO notifications (id, user_id, title, message, notification_type, action_link)
             VALUES (gen_random_uuid(), $1, 'Dispute Registered', $2, 'INFO', '/citizen/grievances')
-            "#
+            "#,
         )
         .bind(caller.id)
-        .bind(format!("Grievance {} registered for category '{}'. Assigned to department verification team.", ref_id, cat))
+        .bind(format!(
+            "Grievance {} registered for category '{}'. Assigned to department verification team.",
+            ref_id, cat
+        ))
         .execute(pool)
         .await;
 
@@ -1528,16 +1629,22 @@ impl AuthService {
     ) -> Result<AuthResponse, AppError> {
         let email = req.email.trim().to_lowercase();
         if email.is_empty() || !email.contains('@') {
-            return Err(AppError::Validation("A valid email address is required.".to_string()));
+            return Err(AppError::Validation(
+                "A valid email address is required.".to_string(),
+            ));
         }
 
         if req.password.len() < 8 {
-            return Err(AppError::Validation("Password must be at least 8 characters.".to_string()));
+            return Err(AppError::Validation(
+                "Password must be at least 8 characters.".to_string(),
+            ));
         }
 
         let display_name = req.display_name.trim();
         if display_name.is_empty() {
-            return Err(AppError::Validation("Display name is required.".to_string()));
+            return Err(AppError::Validation(
+                "Display name is required.".to_string(),
+            ));
         }
 
         let language = req
@@ -1552,7 +1659,9 @@ impl AuthService {
             .await?;
 
         if existing.is_some() {
-            return Err(AppError::Conflict("An account with this email already exists.".to_string()));
+            return Err(AppError::Conflict(
+                "An account with this email already exists.".to_string(),
+            ));
         }
 
         let password_hash = PasswordService::hash(&req.password)?;
@@ -1682,7 +1791,9 @@ impl AuthService {
                     serde_json::json!({ "email": email, "reason": "user_not_found_or_inactive" }),
                 )
                 .await;
-                return Err(AppError::Unauthorized("Invalid email or password.".to_string()));
+                return Err(AppError::Unauthorized(
+                    "Invalid email or password.".to_string(),
+                ));
             }
         };
 
@@ -1705,7 +1816,9 @@ impl AuthService {
                 serde_json::json!({ "email": email, "reason": "invalid_credentials" }),
             )
             .await;
-            return Err(AppError::Unauthorized("Invalid email or password.".to_string()));
+            return Err(AppError::Unauthorized(
+                "Invalid email or password.".to_string(),
+            ));
         }
 
         let role_rows = sqlx::query(
@@ -1804,7 +1917,11 @@ impl HealthService {
         let db_connected = sqlx::query("SELECT 1").execute(pool).await.is_ok();
 
         SystemStatus {
-            status: if db_connected { "healthy".to_string() } else { "degraded".to_string() },
+            status: if db_connected {
+                "healthy".to_string()
+            } else {
+                "degraded".to_string()
+            },
             api_version: "v1".to_string(),
             database_connected: db_connected,
             auth_system: "Argon2id + JWT + Temporal Authorization".to_string(),
@@ -1959,17 +2076,26 @@ impl PersonService {
         req: CreatePersonRequest,
         caller: &AuthenticatedUser,
     ) -> Result<Person, AppError> {
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         let first = req.first_name.trim();
         let last = req.last_name.trim();
         if first.is_empty() || last.is_empty() {
-            return Err(AppError::Validation("First name and last name are required".to_string()));
+            return Err(AppError::Validation(
+                "First name and last name are required".to_string(),
+            ));
         }
 
-        let pub_id = req.public_id.unwrap_or_else(|| format!("P-{}", &Uuid::new_v4().to_string()[..8].to_uppercase()));
+        let pub_id = req
+            .public_id
+            .unwrap_or_else(|| format!("P-{}", &Uuid::new_v4().to_string()[..8].to_uppercase()));
         let status = req.status.unwrap_or_else(|| "ACTIVE".to_string());
 
         let row = sqlx::query(
@@ -2031,8 +2157,13 @@ impl PersonService {
     ) -> Result<Person, AppError> {
         let existing = Self::get_person_by_id(pool, person_id, caller).await?;
 
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         let is_privileged = caller.roles.iter().any(|r| {
@@ -2163,7 +2294,8 @@ impl PersonService {
             .map(|row| {
                 let p_a: Uuid = row.get("person_a_id");
                 let rel_type_str: String = row.get("relationship_type");
-                let base_type = RelationshipType::from_str(&rel_type_str).unwrap_or(RelationshipType::Dependent);
+                let base_type = RelationshipType::from_str(&rel_type_str)
+                    .unwrap_or(RelationshipType::Dependent);
 
                 let is_inverse = p_a != person_id;
                 let effective_rel_type = if is_inverse {
@@ -2215,8 +2347,13 @@ impl PersonService {
     ) -> Result<PersonRelationship, AppError> {
         let _ = Self::get_person_by_id(pool, person_a_id, caller).await?;
 
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         let is_privileged = caller.roles.iter().any(|r| {
@@ -2232,7 +2369,9 @@ impl PersonService {
         }
 
         if person_a_id == req.person_b_id {
-            return Err(AppError::Validation("A person cannot have a relationship with themselves".to_string()));
+            return Err(AppError::Validation(
+                "A person cannot have a relationship with themselves".to_string(),
+            ));
         }
 
         let rel_type = RelationshipType::from_str(&req.relationship_type)
@@ -2455,16 +2594,25 @@ impl HouseholdService {
         req: CreateHouseholdRequest,
         caller: &AuthenticatedUser,
     ) -> Result<Household, AppError> {
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         let name = req.name.trim();
         if name.is_empty() {
-            return Err(AppError::Validation("Household name is required".to_string()));
+            return Err(AppError::Validation(
+                "Household name is required".to_string(),
+            ));
         }
 
-        let pub_id = req.public_id.unwrap_or_else(|| format!("HH-{}", &Uuid::new_v4().to_string()[..6].to_uppercase()));
+        let pub_id = req
+            .public_id
+            .unwrap_or_else(|| format!("HH-{}", &Uuid::new_v4().to_string()[..6].to_uppercase()));
         let status = req.status.unwrap_or_else(|| "ACTIVE".to_string());
 
         let row = sqlx::query(
@@ -2514,8 +2662,13 @@ impl HouseholdService {
     ) -> Result<Household, AppError> {
         let existing = Self::get_household_by_id(pool, household_id, caller).await?;
 
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         let name = req.name.unwrap_or(existing.name);
@@ -2642,8 +2795,13 @@ impl HouseholdService {
     ) -> Result<HouseholdMembership, AppError> {
         let _ = Self::get_household_by_id(pool, household_id, caller).await?;
 
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         let role = req.membership_role.unwrap_or_else(|| "OTHER".to_string());
@@ -2706,8 +2864,13 @@ impl HouseholdService {
         req: SplitHouseholdRequest,
         caller: &AuthenticatedUser,
     ) -> Result<Household, AppError> {
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         let mut tx = pool.begin().await?;
@@ -2725,8 +2888,12 @@ impl HouseholdService {
         let target_household_id = if let Some(tid) = req.target_household_id {
             tid
         } else {
-            let pub_id = req.new_household_public_id.unwrap_or_else(|| format!("HH-{}", &Uuid::new_v4().to_string()[..6].to_uppercase()));
-            let name = req.new_household_name.unwrap_or_else(|| format!("Household (Split from {})", src_name));
+            let pub_id = req.new_household_public_id.unwrap_or_else(|| {
+                format!("HH-{}", &Uuid::new_v4().to_string()[..6].to_uppercase())
+            });
+            let name = req
+                .new_household_name
+                .unwrap_or_else(|| format!("Household (Split from {})", src_name));
 
             let new_h_row = sqlx::query(
                 r#"
@@ -2893,7 +3060,10 @@ impl HouseholdService {
             };
 
             let title = match etype.as_str() {
-                "HOUSEHOLD_SEPARATION" => format!("Household Separation: {}", pname.as_deref().unwrap_or("Member")),
+                "HOUSEHOLD_SEPARATION" => format!(
+                    "Household Separation: {}",
+                    pname.as_deref().unwrap_or("Member")
+                ),
                 "MARRIAGE" => "Marriage Event Recorded".to_string(),
                 "BIRTH" => "Birth Event Recorded".to_string(),
                 _ => format!("Event: {}", etype),
@@ -3009,8 +3179,13 @@ impl PropertyService {
         req: CreatePropertyRequest,
         caller: &AuthenticatedUser,
     ) -> Result<Property, AppError> {
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         let addr = req.address_line.trim();
@@ -3018,7 +3193,9 @@ impl PropertyService {
             return Err(AppError::Validation("Address line is required".to_string()));
         }
 
-        let pub_id = req.public_id.unwrap_or_else(|| format!("PROP-{}", &Uuid::new_v4().to_string()[..6].to_uppercase()));
+        let pub_id = req
+            .public_id
+            .unwrap_or_else(|| format!("PROP-{}", &Uuid::new_v4().to_string()[..6].to_uppercase()));
         let ptype = req.property_type.unwrap_or_else(|| "HOUSE".to_string());
 
         let row = sqlx::query(
@@ -3078,12 +3255,19 @@ impl PropertyService {
         req: CreatePropertyAssociationRequest,
         caller: &AuthenticatedUser,
     ) -> Result<PropertyAssociation, AppError> {
-        if caller.roles.contains(&RoleType::Auditor.as_str().to_string()) {
-            return Err(AppError::Forbidden("Auditor role has read-only access".to_string()));
+        if caller
+            .roles
+            .contains(&RoleType::Auditor.as_str().to_string())
+        {
+            return Err(AppError::Forbidden(
+                "Auditor role has read-only access".to_string(),
+            ));
         }
 
         if req.person_id.is_none() && req.household_id.is_none() {
-            return Err(AppError::Validation("Either person_id or household_id must be provided".to_string()));
+            return Err(AppError::Validation(
+                "Either person_id or household_id must be provided".to_string(),
+            ));
         }
 
         let vfrom = req.valid_from.unwrap_or_else(|| Utc::now().date_naive());
@@ -3226,7 +3410,10 @@ impl GraphService {
             id: center_node_id.clone(),
             node_type: "person".to_string(),
             label: format!("{} {}", center_person.first_name, center_person.last_name),
-            sublabel: Some(format!("{} • {}", center_person.public_id, center_person.status)),
+            sublabel: Some(format!(
+                "{} • {}",
+                center_person.public_id, center_person.status
+            )),
             data: serde_json::json!({
                 "person_id": center_person.id,
                 "public_id": center_person.public_id,
@@ -3236,7 +3423,9 @@ impl GraphService {
         node_set.insert(center_node_id.clone());
 
         // 2. Immediate Family Relationships (at query_date)
-        let relationships = PersonService::get_person_relationships(pool, person_id, caller, Some(query_date)).await?;
+        let relationships =
+            PersonService::get_person_relationships(pool, person_id, caller, Some(query_date))
+                .await?;
         for rel in relationships {
             let rel_node_id = format!("person-{}", rel.related_person_id);
             if !node_set.contains(&rel_node_id) {
@@ -3265,7 +3454,15 @@ impl GraphService {
         }
 
         // 3. Connected Households (at query_date)
-        let households = HouseholdService::list_households(pool, caller, Some(person_id), Some(query_date), 10, 0).await?;
+        let households = HouseholdService::list_households(
+            pool,
+            caller,
+            Some(person_id),
+            Some(query_date),
+            10,
+            0,
+        )
+        .await?;
         for hh in households {
             let hh_node_id = format!("household-{}", hh.id);
             if !node_set.contains(&hh_node_id) {
@@ -3294,7 +3491,13 @@ impl GraphService {
         }
 
         // 4. Associated Properties
-        let prop_assocs = PropertyService::get_associations_for_target(pool, Some(person_id), None, Some(query_date)).await?;
+        let prop_assocs = PropertyService::get_associations_for_target(
+            pool,
+            Some(person_id),
+            None,
+            Some(query_date),
+        )
+        .await?;
         for pa in prop_assocs {
             let p_node_id = format!("property-{}", pa.property_id);
             if !node_set.contains(&p_node_id) {
@@ -3359,7 +3562,9 @@ impl GraphService {
         node_set.insert(center_node_id.clone());
 
         // 2. Members at query_date
-        let members = HouseholdService::get_household_members(pool, household_id, caller, Some(query_date)).await?;
+        let members =
+            HouseholdService::get_household_members(pool, household_id, caller, Some(query_date))
+                .await?;
         let mut member_ids = Vec::new();
 
         for m in &members {
@@ -3425,7 +3630,13 @@ impl GraphService {
         }
 
         // 4. Properties occupied by Household
-        let prop_assocs = PropertyService::get_associations_for_target(pool, None, Some(household_id), Some(query_date)).await?;
+        let prop_assocs = PropertyService::get_associations_for_target(
+            pool,
+            None,
+            Some(household_id),
+            Some(query_date),
+        )
+        .await?;
         for pa in prop_assocs {
             let p_node_id = format!("property-{}", pa.property_id);
             if !node_set.contains(&p_node_id) {
@@ -3588,7 +3799,9 @@ impl SchemeService {
         req: CreateSchemeRequest,
         creator_id: Uuid,
     ) -> Result<Scheme, AppError> {
-        let public_id = req.public_id.unwrap_or_else(|| format!("SCH-{}", &Uuid::new_v4().to_string()[..6].to_uppercase()));
+        let public_id = req
+            .public_id
+            .unwrap_or_else(|| format!("SCH-{}", &Uuid::new_v4().to_string()[..6].to_uppercase()));
         let valid_from = req.valid_from.unwrap_or_else(|| Utc::now().date_naive());
 
         let row = sqlx::query(
@@ -3640,7 +3853,8 @@ impl SchemeService {
         req: UpdateSchemeRequest,
         updater_id: Uuid,
     ) -> Result<Scheme, AppError> {
-        let mut query_builder = sqlx::QueryBuilder::new("UPDATE schemes SET updated_at = NOW(), updated_by = ");
+        let mut query_builder =
+            sqlx::QueryBuilder::new("UPDATE schemes SET updated_at = NOW(), updated_by = ");
         query_builder.push_bind(updater_id);
 
         if let Some(n) = req.name {
@@ -3659,7 +3873,10 @@ impl SchemeService {
         query_builder.push(" WHERE id = ").push_bind(id);
         query_builder.push(" RETURNING id, public_id, code, name, description, department, status, scope, lower(effective_during) as valid_from, upper(effective_during) as valid_to, created_at, updated_at");
 
-        let row = query_builder.build().fetch_optional(pool).await?
+        let row = query_builder
+            .build()
+            .fetch_optional(pool)
+            .await?
             .ok_or_else(|| AppError::NotFound(format!("Scheme {} not found", id)))?;
 
         Ok(Scheme {
@@ -3678,7 +3895,10 @@ impl SchemeService {
         })
     }
 
-    pub async fn list_rules_for_scheme(pool: &PgPool, scheme_id: Uuid) -> Result<Vec<SchemeRule>, AppError> {
+    pub async fn list_rules_for_scheme(
+        pool: &PgPool,
+        scheme_id: Uuid,
+    ) -> Result<Vec<SchemeRule>, AppError> {
         let rows = sqlx::query(
             r#"
             SELECT id, scheme_id, rule_type, operator, value, priority, active, created_at
@@ -3747,7 +3967,8 @@ impl SchemeService {
         rule_id: Uuid,
         req: UpdateSchemeRuleRequest,
     ) -> Result<SchemeRule, AppError> {
-        let mut query_builder = sqlx::QueryBuilder::new("UPDATE scheme_rules SET updated_at = NOW()");
+        let mut query_builder =
+            sqlx::QueryBuilder::new("UPDATE scheme_rules SET updated_at = NOW()");
 
         if let Some(op) = req.operator {
             query_builder.push(", operator = ").push_bind(op);
@@ -3763,9 +3984,14 @@ impl SchemeService {
         }
 
         query_builder.push(" WHERE id = ").push_bind(rule_id);
-        query_builder.push(" RETURNING id, scheme_id, rule_type, operator, value, priority, active, created_at");
+        query_builder.push(
+            " RETURNING id, scheme_id, rule_type, operator, value, priority, active, created_at",
+        );
 
-        let row = query_builder.build().fetch_optional(pool).await?
+        let row = query_builder
+            .build()
+            .fetch_optional(pool)
+            .await?
             .ok_or_else(|| AppError::NotFound(format!("Scheme rule {} not found", rule_id)))?;
 
         Ok(SchemeRule {
@@ -3796,12 +4022,11 @@ impl EligibilityEngine {
         let rules = SchemeService::list_rules_for_scheme(pool, app.scheme_id).await?;
 
         // 1. Fetch applicant details
-        let applicant = sqlx::query(
-            "SELECT id, date_of_birth, gender, status FROM persons WHERE id = $1",
-        )
-        .bind(app.applicant_person_id)
-        .fetch_one(pool)
-        .await?;
+        let applicant =
+            sqlx::query("SELECT id, date_of_birth, gender, status FROM persons WHERE id = $1")
+                .bind(app.applicant_person_id)
+                .fetch_one(pool)
+                .await?;
 
         let dob: Option<NaiveDate> = applicant.get("date_of_birth");
         let gender: String = applicant.get("gender");
@@ -4226,7 +4451,9 @@ impl ApplicationService {
         );
 
         if is_citizen {
-            query_builder.push(" AND a.created_by = ").push_bind(caller.id);
+            query_builder
+                .push(" AND a.created_by = ")
+                .push_bind(caller.id);
         }
         if let Some(st) = status {
             query_builder.push(" AND a.status = ").push_bind(st);
@@ -4235,11 +4462,17 @@ impl ApplicationService {
             query_builder.push(" AND a.scheme_id = ").push_bind(sid);
         }
         if let Some(aid) = applicant_id {
-            query_builder.push(" AND a.applicant_person_id = ").push_bind(aid);
+            query_builder
+                .push(" AND a.applicant_person_id = ")
+                .push_bind(aid);
         }
 
         let offset = (page.max(1) - 1) * limit;
-        query_builder.push(" ORDER BY a.created_at DESC LIMIT ").push_bind(limit).push(" OFFSET ").push_bind(offset);
+        query_builder
+            .push(" ORDER BY a.created_at DESC LIMIT ")
+            .push_bind(limit)
+            .push(" OFFSET ")
+            .push_bind(offset);
 
         let rows = query_builder.build().fetch_all(pool).await?;
         let mut apps = Vec::new();
@@ -4323,7 +4556,9 @@ impl ApplicationService {
         creator_id: Uuid,
     ) -> Result<Application, AppError> {
         let scheme = SchemeService::get_scheme_by_id(pool, req.scheme_id).await?;
-        let app_date = req.application_date.unwrap_or_else(|| Utc::now().date_naive());
+        let app_date = req
+            .application_date
+            .unwrap_or_else(|| Utc::now().date_naive());
 
         // Resolve applicant person ID
         let applicant_id = if let Some(pid) = req.applicant_person_id {
@@ -4339,18 +4574,21 @@ impl ApplicationService {
             match existing_pid {
                 Some(id) => id,
                 None => {
-                    let user_row = sqlx::query(
-                        "SELECT email, display_name FROM users WHERE id = $1",
-                    )
-                    .bind(creator_id)
-                    .fetch_one(pool)
-                    .await?;
+                    let user_row =
+                        sqlx::query("SELECT email, display_name FROM users WHERE id = $1")
+                            .bind(creator_id)
+                            .fetch_one(pool)
+                            .await?;
 
                     let user_email: String = user_row.get("email");
                     let user_display: String = user_row.get("display_name");
                     let parts: Vec<&str> = user_display.split_whitespace().collect();
                     let first = parts.first().copied().unwrap_or("Citizen");
-                    let last = if parts.len() > 1 { parts.last().copied().unwrap_or("User") } else { "Citizen" };
+                    let last = if parts.len() > 1 {
+                        parts.last().copied().unwrap_or("User")
+                    } else {
+                        "Citizen"
+                    };
                     let new_pid = Uuid::new_v4();
                     let new_pub_id = format!("P-{}", &new_pid.to_string()[..8].to_uppercase());
 
@@ -4384,7 +4622,9 @@ impl ApplicationService {
                 let hh_id = if let Some(h) = req.target_household_id {
                     Some(h)
                 } else {
-                    let app_date = req.application_date.unwrap_or_else(|| chrono::Utc::now().date_naive());
+                    let app_date = req
+                        .application_date
+                        .unwrap_or_else(|| chrono::Utc::now().date_naive());
                     let member_h = sqlx::query_scalar::<_, Uuid>(
                         r#"
                         SELECT household_id 
@@ -4413,7 +4653,7 @@ impl ApplicationService {
                             WHERE person_id = $1 
                             ORDER BY valid_from DESC 
                             LIMIT 1
-                            "#
+                            "#,
                         )
                         .bind(applicant_id)
                         .fetch_optional(pool)
@@ -4441,10 +4681,18 @@ impl ApplicationService {
                 };
                 (None, req.target_household_id, p_id)
             }
-            _ => (req.target_person_id, req.target_household_id, req.target_property_id),
+            _ => (
+                req.target_person_id,
+                req.target_household_id,
+                req.target_property_id,
+            ),
         };
 
-        let pub_id = format!("MIRA-{}-{}", app_date.format("%Y"), &Uuid::new_v4().to_string()[..6].to_uppercase());
+        let pub_id = format!(
+            "MIRA-{}-{}",
+            app_date.format("%Y"),
+            &Uuid::new_v4().to_string()[..6].to_uppercase()
+        );
         let app_number = pub_id.clone();
         let meta = req.metadata.unwrap_or_else(|| serde_json::json!({}));
 
@@ -4573,7 +4821,12 @@ impl ApplicationService {
 
         // 2. Derive Benefit unit and enforce scope integrity
         let (b_unit_type, person_id, household_id, property_id) = match scheme.scope.as_str() {
-            "INDIVIDUAL" => ("PERSON", Some(app.target_person_id.unwrap_or(app.applicant_person_id)), None, None),
+            "INDIVIDUAL" => (
+                "PERSON",
+                Some(app.target_person_id.unwrap_or(app.applicant_person_id)),
+                None,
+                None,
+            ),
             "HOUSEHOLD" => {
                 let h_id = if let Some(hid) = app.target_household_id {
                     hid
@@ -4588,11 +4841,10 @@ impl ApplicationService {
                     if let Some(hid) = member_h {
                         hid
                     } else {
-                        let existing_h = sqlx::query_scalar::<_, Uuid>(
-                            "SELECT id FROM households LIMIT 1"
-                        )
-                        .fetch_optional(&mut *tx)
-                        .await?;
+                        let existing_h =
+                            sqlx::query_scalar::<_, Uuid>("SELECT id FROM households LIMIT 1")
+                                .fetch_optional(&mut *tx)
+                                .await?;
 
                         if let Some(hid) = existing_h {
                             let _ = sqlx::query(
@@ -4611,7 +4863,8 @@ impl ApplicationService {
                             hid
                         } else {
                             let new_hid = Uuid::new_v4();
-                            let new_pub = format!("HH-{}", &new_hid.to_string()[..8].to_uppercase());
+                            let new_pub =
+                                format!("HH-{}", &new_hid.to_string()[..8].to_uppercase());
                             sqlx::query(
                                 r#"
                                 INSERT INTO households (id, public_id, household_name, address_id, status, created_by)
@@ -4646,11 +4899,10 @@ impl ApplicationService {
                 let p_id = if let Some(pid) = app.target_property_id {
                     pid
                 } else {
-                    let existing_p = sqlx::query_scalar::<_, Uuid>(
-                        "SELECT id FROM properties LIMIT 1"
-                    )
-                    .fetch_optional(&mut *tx)
-                    .await?;
+                    let existing_p =
+                        sqlx::query_scalar::<_, Uuid>("SELECT id FROM properties LIMIT 1")
+                            .fetch_optional(&mut *tx)
+                            .await?;
 
                     if let Some(pid) = existing_p {
                         pid
@@ -4808,7 +5060,7 @@ impl ApplicationService {
         user_id: Uuid,
     ) -> Result<Application, AppError> {
         let app = Self::get_application_by_id(pool, id).await?;
-        
+
         let mut meta = app.metadata.clone();
         if let Some(new_meta) = req.metadata {
             if let (Some(obj), Some(new_obj)) = (meta.as_object_mut(), new_meta.as_object()) {
@@ -4863,13 +5115,12 @@ impl ApplicationService {
         let app = Self::get_application_by_id(pool, id).await?;
         let mut meta = app.metadata.clone();
 
-        let officer_name = sqlx::query_scalar::<_, String>(
-            "SELECT display_name FROM users WHERE id = $1"
-        )
-        .bind(req.assigned_to)
-        .fetch_optional(pool)
-        .await?
-        .unwrap_or_else(|| "Authorized Officer".to_string());
+        let officer_name =
+            sqlx::query_scalar::<_, String>("SELECT display_name FROM users WHERE id = $1")
+                .bind(req.assigned_to)
+                .fetch_optional(pool)
+                .await?
+                .unwrap_or_else(|| "Authorized Officer".to_string());
 
         let assignment_obj = serde_json::json!({
             "assigned_to": req.assigned_to,
@@ -4950,7 +5201,9 @@ impl ApplicationService {
         });
 
         if let Some(obj) = meta.as_object_mut() {
-            let list = obj.entry("evidence_requests".to_string()).or_insert_with(|| serde_json::json!([]));
+            let list = obj
+                .entry("evidence_requests".to_string())
+                .or_insert_with(|| serde_json::json!([]));
             if let Some(arr) = list.as_array_mut() {
                 arr.push(ev_item.clone());
             }
@@ -4988,7 +5241,7 @@ impl ApplicationService {
 
         // Notify applicant
         let creator_user_id = sqlx::query_scalar::<_, Option<Uuid>>(
-            "SELECT created_by FROM applications WHERE id = $1"
+            "SELECT created_by FROM applications WHERE id = $1",
         )
         .bind(id)
         .fetch_optional(pool)
@@ -5020,16 +5273,29 @@ impl ApplicationService {
         let mut meta = app.metadata.clone();
 
         if let Some(obj) = meta.as_object_mut() {
-            if let Some(arr) = obj.get_mut("evidence_requests").and_then(|v| v.as_array_mut()) {
+            if let Some(arr) = obj
+                .get_mut("evidence_requests")
+                .and_then(|v| v.as_array_mut())
+            {
                 let is_single = arr.len() == 1;
                 for item in arr.iter_mut() {
-                    let matches_id = item.get("id").and_then(|s| s.as_str()) == Some(&req.request_id);
+                    let matches_id =
+                        item.get("id").and_then(|s| s.as_str()) == Some(&req.request_id);
                     if matches_id || is_single {
                         if let Some(iobj) = item.as_object_mut() {
                             iobj.insert("status".to_string(), serde_json::json!("SUBMITTED"));
-                            iobj.insert("document_id".to_string(), serde_json::json!(req.document_id));
-                            iobj.insert("explanation".to_string(), serde_json::json!(req.explanation));
-                            iobj.insert("submitted_at".to_string(), serde_json::json!(chrono::Utc::now().to_rfc3339()));
+                            iobj.insert(
+                                "document_id".to_string(),
+                                serde_json::json!(req.document_id),
+                            );
+                            iobj.insert(
+                                "explanation".to_string(),
+                                serde_json::json!(req.explanation),
+                            );
+                            iobj.insert(
+                                "submitted_at".to_string(),
+                                serde_json::json!(chrono::Utc::now().to_rfc3339()),
+                            );
                         }
                     }
                 }
@@ -5132,7 +5398,9 @@ impl ApplicationService {
         user_id: Uuid,
     ) -> Result<Application, AppError> {
         if req.reason.trim().is_empty() {
-            return Err(AppError::BadRequest("A rejection reason is mandatory for welfare decisions".to_string()));
+            return Err(AppError::BadRequest(
+                "A rejection reason is mandatory for welfare decisions".to_string(),
+            ));
         }
 
         let app = Self::get_application_by_id(pool, id).await?;
@@ -5183,7 +5451,7 @@ impl ApplicationService {
 
         // Notify applicant
         let creator_user_id = sqlx::query_scalar::<_, Option<Uuid>>(
-            "SELECT created_by FROM applications WHERE id = $1"
+            "SELECT created_by FROM applications WHERE id = $1",
         )
         .bind(id)
         .fetch_optional(pool)
@@ -5253,13 +5521,11 @@ impl NotificationService {
         notification_id: Uuid,
         user_id: Uuid,
     ) -> Result<(), AppError> {
-        sqlx::query(
-            "UPDATE notifications SET read = TRUE WHERE id = $1 AND user_id = $2"
-        )
-        .bind(notification_id)
-        .bind(user_id)
-        .execute(pool)
-        .await?;
+        sqlx::query("UPDATE notifications SET read = TRUE WHERE id = $1 AND user_id = $2")
+            .bind(notification_id)
+            .bind(user_id)
+            .execute(pool)
+            .await?;
 
         Ok(())
     }
@@ -5310,7 +5576,9 @@ impl BenefitService {
         );
 
         if is_citizen {
-            query_builder.push(" AND b.created_by = ").push_bind(caller.id);
+            query_builder
+                .push(" AND b.created_by = ")
+                .push_bind(caller.id);
         }
         if let Some(sid) = scheme_id {
             query_builder.push(" AND b.scheme_id = ").push_bind(sid);
@@ -5322,13 +5590,22 @@ impl BenefitService {
             query_builder.push(" AND b.status = ").push_bind(st);
         }
         if let Some(uid) = unit_id {
-            query_builder.push(" AND (b.person_id = ").push_bind(uid)
-                .push(" OR b.household_id = ").push_bind(uid)
-                .push(" OR b.property_id = ").push_bind(uid).push(")");
+            query_builder
+                .push(" AND (b.person_id = ")
+                .push_bind(uid)
+                .push(" OR b.household_id = ")
+                .push_bind(uid)
+                .push(" OR b.property_id = ")
+                .push_bind(uid)
+                .push(")");
         }
 
         let offset = (page.max(1) - 1) * limit;
-        query_builder.push(" ORDER BY b.created_at DESC LIMIT ").push_bind(limit).push(" OFFSET ").push_bind(offset);
+        query_builder
+            .push(" ORDER BY b.created_at DESC LIMIT ")
+            .push_bind(limit)
+            .push(" OFFSET ")
+            .push_bind(offset);
 
         let rows = query_builder.build().fetch_all(pool).await?;
         let mut list = Vec::new();
@@ -5424,7 +5701,10 @@ impl BenefitService {
         })
     }
 
-    pub async fn get_person_benefits(pool: &PgPool, person_id: Uuid) -> Result<Vec<Benefit>, AppError> {
+    pub async fn get_person_benefits(
+        pool: &PgPool,
+        person_id: Uuid,
+    ) -> Result<Vec<Benefit>, AppError> {
         let rows = sqlx::query(
             r#"
             SELECT b.id, b.public_id, b.scheme_id, s.name as scheme_name, s.code as scheme_code,
@@ -5484,7 +5764,10 @@ impl BenefitService {
         Ok(list)
     }
 
-    pub async fn get_household_benefits(pool: &PgPool, household_id: Uuid) -> Result<Vec<Benefit>, AppError> {
+    pub async fn get_household_benefits(
+        pool: &PgPool,
+        household_id: Uuid,
+    ) -> Result<Vec<Benefit>, AppError> {
         let rows = sqlx::query(
             r#"
             SELECT b.id, b.public_id, b.scheme_id, s.name as scheme_name, s.code as scheme_code,
@@ -5544,7 +5827,10 @@ impl BenefitService {
         Ok(list)
     }
 
-    pub async fn get_property_benefits(pool: &PgPool, property_id: Uuid) -> Result<Vec<Benefit>, AppError> {
+    pub async fn get_property_benefits(
+        pool: &PgPool,
+        property_id: Uuid,
+    ) -> Result<Vec<Benefit>, AppError> {
         let rows = sqlx::query(
             r#"
             SELECT b.id, b.public_id, b.scheme_id, s.name as scheme_name, s.code as scheme_code,
@@ -5724,9 +6010,9 @@ impl BenefitService {
 }
 
 pub mod benefit_duplicate_service;
-pub mod entity_resolution_service;
 pub mod document_service;
+pub mod entity_resolution_service;
 
 pub use benefit_duplicate_service::*;
-pub use entity_resolution_service::*;
 pub use document_service::*;
+pub use entity_resolution_service::*;

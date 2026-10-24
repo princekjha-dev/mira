@@ -16,7 +16,13 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { SCHEMES } from "@/lib/data";
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import {
   MiraPageHeader,
@@ -33,7 +39,8 @@ export const Route = createFileRoute("/department/dashboard")({
       { title: "System & Department Administration · Mira" },
       {
         name: "description",
-        content: "Scheme administration, rule versions, department configurations, and system-wide audit telemetry.",
+        content:
+          "Scheme administration, rule versions, department configurations, and system-wide audit telemetry.",
       },
     ],
   }),
@@ -65,11 +72,14 @@ const FUTURE_CAPABILITIES = [
 
 export function DepartmentDashboardPage() {
   const { state } = useApp();
-  const [selectedSim, setSelectedSim] = useState<(typeof FUTURE_CAPABILITIES)[number] | null>(null);
+  const [selectedSim, setSelectedSim] = useState<
+    (typeof FUTURE_CAPABILITIES)[number] | null
+  >(null);
 
   const activeSchemesCount = SCHEMES.length;
   const ruleVersionsCount = state.ruleVersions?.length || 8;
-  const openAlertsCount = state.alerts?.filter((a) => a.status === "Open").length || 3;
+  const openAlertsCount =
+    state.alerts?.filter((a) => a.status === "Open").length || 3;
   const auditEventsCount = state.audit?.length || 24;
   const adminName = state.session?.name || "Arjun Mehta";
 
@@ -128,7 +138,10 @@ export function DepartmentDashboardPage() {
           value={openAlertsCount}
           subtext="Duplicate or criteria signals"
           icon={AlertTriangle}
-          trend={{ label: openAlertsCount > 0 ? "Under Review" : "Clear", tone: openAlertsCount > 0 ? "warning" : "positive" }}
+          trend={{
+            label: openAlertsCount > 0 ? "Under Review" : "Clear",
+            tone: openAlertsCount > 0 ? "warning" : "positive",
+          }}
         />
         <MiraStatCard
           title="System Audit Events"
@@ -148,40 +161,48 @@ export function DepartmentDashboardPage() {
               title="Recent Rule Engine Updates"
               description="Chronological log of versioned eligibility criteria and effective statutory dates."
               action={
-                <Button size="sm" variant="ghost" asChild className="h-7 text-xs text-muted-foreground hover:text-foreground">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  asChild
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                >
                   <Link to="/department/rules">View all versions</Link>
                 </Button>
               }
             />
 
             <div className="mt-3 divide-y divide-border/60">
-              {[...state.ruleVersions].reverse().slice(0, 5).map((rule) => {
-                const scheme = SCHEMES.find((s) => s.id === rule.schemeId);
-                return (
-                  <div
-                    key={rule.version + rule.schemeId}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 first:pt-1 last:pb-1"
-                  >
-                    <div className="space-y-0.5 min-w-0">
-                      <div className="flex items-center gap-2">
-                        <span className="font-mono text-xs font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded border border-primary/20">
-                          {rule.version}
-                        </span>
-                        <span className="text-xs font-medium text-foreground truncate">
-                          {scheme?.name || "Global Rule Group"}
-                        </span>
+              {[...state.ruleVersions]
+                .reverse()
+                .slice(0, 5)
+                .map((rule) => {
+                  const scheme = SCHEMES.find((s) => s.id === rule.schemeId);
+                  return (
+                    <div
+                      key={rule.version + rule.schemeId}
+                      className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 py-3 first:pt-1 last:pb-1"
+                    >
+                      <div className="space-y-0.5 min-w-0">
+                        <div className="flex items-center gap-2">
+                          <span className="font-mono text-xs font-semibold text-primary bg-primary/5 px-2 py-0.5 rounded border border-primary/20">
+                            {rule.version}
+                          </span>
+                          <span className="text-xs font-medium text-foreground truncate">
+                            {scheme?.name || "Global Rule Group"}
+                          </span>
+                        </div>
+                        <p className="text-[11px] text-muted-foreground">
+                          {rule.reason} · Effective from {rule.effective}
+                        </p>
                       </div>
-                      <p className="text-[11px] text-muted-foreground">
-                        {rule.reason} · Effective from {rule.effective}
-                      </p>
-                    </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
-                      <MiraStatus status="Active" />
+                      <div className="flex items-center gap-2 shrink-0">
+                        <MiraStatus status="Active" />
+                      </div>
                     </div>
-                  </div>
-                );
-              })}
+                  );
+                })}
             </div>
           </MiraCard>
 
@@ -206,7 +227,10 @@ export function DepartmentDashboardPage() {
                       <span className="text-xs font-semibold text-foreground tracking-tight">
                         {cap.name}
                       </span>
-                      <MiraBadge variant="outline" className="text-[9px] py-0 px-1 font-mono">
+                      <MiraBadge
+                        variant="outline"
+                        className="text-[9px] py-0 px-1 font-mono"
+                      >
                         Statutory Lab
                       </MiraBadge>
                     </div>
@@ -229,20 +253,36 @@ export function DepartmentDashboardPage() {
             />
             <div className="mt-2 space-y-2.5 text-xs">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">PostgreSQL 18 Engine:</span>
-                <span className="font-semibold text-teal-600 dark:text-teal-400">Online · Port 5433</span>
+                <span className="text-muted-foreground">
+                  PostgreSQL 18 Engine:
+                </span>
+                <span className="font-semibold text-teal-600 dark:text-teal-400">
+                  Online · Port 5433
+                </span>
               </div>
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">Rust Microservices (Axum):</span>
-                <span className="font-semibold text-teal-600 dark:text-teal-400">Healthy · Port 4000</span>
+                <span className="text-muted-foreground">
+                  Rust Microservices (Axum):
+                </span>
+                <span className="font-semibold text-teal-600 dark:text-teal-400">
+                  Healthy · Port 4000
+                </span>
               </div>
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">Deterministic Seeding:</span>
-                <span className="font-semibold text-teal-600 dark:text-teal-400">V4 Active</span>
+                <span className="text-muted-foreground">
+                  Deterministic Seeding:
+                </span>
+                <span className="font-semibold text-teal-600 dark:text-teal-400">
+                  V4 Active
+                </span>
               </div>
               <div className="flex items-center justify-between pb-1">
-                <span className="text-muted-foreground">Cross-Scheme Duplicate Index:</span>
-                <span className="font-semibold text-teal-600 dark:text-teal-400">Synched</span>
+                <span className="text-muted-foreground">
+                  Cross-Scheme Duplicate Index:
+                </span>
+                <span className="font-semibold text-teal-600 dark:text-teal-400">
+                  Synched
+                </span>
               </div>
             </div>
           </MiraCard>
@@ -255,7 +295,9 @@ export function DepartmentDashboardPage() {
                   Statutory Rule Governance
                 </span>
                 <p className="text-muted-foreground leading-relaxed">
-                  Modifications to active scheme thresholds require cryptographic co-signatures and automatic version increments to guarantee retrospective determinations remain auditable.
+                  Modifications to active scheme thresholds require
+                  cryptographic co-signatures and automatic version increments
+                  to guarantee retrospective determinations remain auditable.
                 </p>
               </div>
             </div>
@@ -264,10 +306,15 @@ export function DepartmentDashboardPage() {
       </div>
 
       {/* Capability Details Dialog */}
-      <Dialog open={!!selectedSim} onOpenChange={(open) => !open && setSelectedSim(null)}>
+      <Dialog
+        open={!!selectedSim}
+        onOpenChange={(open) => !open && setSelectedSim(null)}
+      >
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
-            <DialogTitle className="text-base font-semibold">{selectedSim?.name}</DialogTitle>
+            <DialogTitle className="text-base font-semibold">
+              {selectedSim?.name}
+            </DialogTitle>
             <DialogDescription className="text-xs">
               Autonomous statutory telemetry module.
             </DialogDescription>
@@ -275,7 +322,9 @@ export function DepartmentDashboardPage() {
           <div className="space-y-3 pt-2 text-xs leading-relaxed text-foreground">
             <p>{selectedSim?.text}</p>
             <p className="text-muted-foreground">
-              The platform records immutable versioned rules, household lineage graphs, and an append-only audit trail, which this capability leverages.
+              The platform records immutable versioned rules, household lineage
+              graphs, and an append-only audit trail, which this capability
+              leverages.
             </p>
           </div>
         </DialogContent>

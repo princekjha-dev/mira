@@ -14,7 +14,12 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-state";
-import { authenticateDemo, loginUser, registerUser, mapRoleToUiRole } from "@/lib/api";
+import {
+  authenticateDemo,
+  loginUser,
+  registerUser,
+  mapRoleToUiRole,
+} from "@/lib/api";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -23,12 +28,7 @@ import servicePhoto from "@/assets/login-service-photo.webp";
 import civicPhoto from "@/assets/login-civic-photo.webp";
 
 type DemoRoleKey =
-  | "citizen"
-  | "verifier"
-  | "scheme"
-  | "supervisor"
-  | "auditor"
-  | "admin";
+  "citizen" | "verifier" | "scheme" | "supervisor" | "auditor" | "admin";
 
 export const Route = createFileRoute("/login")({
   head: () => ({
@@ -165,7 +165,9 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
     } catch (cause) {
       console.error("Demo login error", cause);
       toast.error(
-        cause instanceof Error ? cause.message : "Unable to launch demo workspace.",
+        cause instanceof Error
+          ? cause.message
+          : "Unable to launch demo workspace.",
       );
     } finally {
       setLoadingRole(null);
@@ -267,7 +269,8 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                 Sign In to Mira
               </h1>
               <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-                Unified public welfare environment for citizens, verification officers, and administrators.
+                Unified public welfare environment for citizens, verification
+                officers, and administrators.
               </p>
 
               {/* Mode Switcher: Demo Access vs Use Real Account */}
@@ -362,26 +365,31 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                   <button
                     type="button"
                     onClick={() => setRealTab("login")}
-                    className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${realTab === "login"
+                    className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                      realTab === "login"
                         ? "border-gov text-navy"
                         : "border-transparent text-slate-500 hover:text-slate-800"
-                      }`}
+                    }`}
                   >
                     Sign In
                   </button>
                   <button
                     type="button"
                     onClick={() => setRealTab("register")}
-                    className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${realTab === "register"
+                    className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${
+                      realTab === "register"
                         ? "border-gov text-navy"
                         : "border-transparent text-slate-500 hover:text-slate-800"
-                      }`}
+                    }`}
                   >
                     Create Real Citizen Account
                   </button>
                 </div>
 
-                <form onSubmit={handleRealSubmit} className="space-y-4 max-w-md mx-auto">
+                <form
+                  onSubmit={handleRealSubmit}
+                  className="space-y-4 max-w-md mx-auto"
+                >
                   {realTab === "register" && (
                     <div className="space-y-1.5">
                       <Label htmlFor="real-name">Full Legal Name</Label>
@@ -414,7 +422,11 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                     <Input
                       id="real-password"
                       type="password"
-                      autoComplete={realTab === "login" ? "current-password" : "new-password"}
+                      autoComplete={
+                        realTab === "login"
+                          ? "current-password"
+                          : "new-password"
+                      }
                       required
                       placeholder="••••••••••••"
                       value={password}
@@ -422,7 +434,8 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                     />
                     {realTab === "register" && (
                       <p className="text-[11px] text-muted-foreground">
-                        Minimum 8 characters. Stored securely with Argon2id hash.
+                        Minimum 8 characters. Stored securely with Argon2id
+                        hash.
                       </p>
                     )}
                   </div>
@@ -434,14 +447,16 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                     </div>
                   )}
 
-                  <Button type="submit" className="w-full h-10 mt-2 bg-gov hover:bg-gov/90 text-white" disabled={realBusy}>
-                    {realBusy ? (
-                      "Authenticating…"
-                    ) : realTab === "register" ? (
-                      "Create Real Account & Sign In"
-                    ) : (
-                      "Sign In to Real Account"
-                    )}
+                  <Button
+                    type="submit"
+                    className="w-full h-10 mt-2 bg-gov hover:bg-gov/90 text-white"
+                    disabled={realBusy}
+                  >
+                    {realBusy
+                      ? "Authenticating…"
+                      : realTab === "register"
+                        ? "Create Real Account & Sign In"
+                        : "Sign In to Real Account"}
                     <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Button>
 

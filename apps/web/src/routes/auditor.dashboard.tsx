@@ -27,7 +27,8 @@ export const Route = createFileRoute("/auditor/dashboard")({
       { title: "Statutory Forensic Audit Station — Priya Nair · Mira" },
       {
         name: "description",
-        content: "Independent statutory audit overview, decision integrity verification, and immutable cryptographic ledger telemetry.",
+        content:
+          "Independent statutory audit overview, decision integrity verification, and immutable cryptographic ledger telemetry.",
       },
     ],
   }),
@@ -115,7 +116,12 @@ export function AuditorDashboardPage() {
               title="Immutable Ledger Stream"
               description="Real-time cryptographic trail of determinations, household splits, and cross-verifications."
               action={
-                <Button size="sm" variant="ghost" asChild className="h-7 text-xs text-muted-foreground hover:text-foreground">
+                <Button
+                  size="sm"
+                  variant="ghost"
+                  asChild
+                  className="h-7 text-xs text-muted-foreground hover:text-foreground"
+                >
                   <Link to="/auditor/audit">Inspect Full Ledger</Link>
                 </Button>
               }
@@ -142,7 +148,8 @@ export function AuditorDashboardPage() {
                       </span>
                     </div>
                     <p className="text-[11px] text-muted-foreground truncate max-w-lg">
-                      {log.reason ? `${log.reason} · ` : ""}{log.prev} → {log.next}
+                      {log.reason ? `${log.reason} · ` : ""}
+                      {log.prev} → {log.next}
                     </p>
                   </div>
 
@@ -150,7 +157,10 @@ export function AuditorDashboardPage() {
                     <span className="font-mono text-[10px] text-muted-foreground">
                       {log.ts}
                     </span>
-                    <MiraBadge variant="outline" className="text-[9px] py-0 px-1 font-mono">
+                    <MiraBadge
+                      variant="outline"
+                      className="text-[9px] py-0 px-1 font-mono"
+                    >
                       Verified
                     </MiraBadge>
                   </div>
@@ -169,8 +179,12 @@ export function AuditorDashboardPage() {
                 <FileLock2 className="h-4 w-4" />
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
               </div>
-              <h4 className="mt-2 text-xs font-semibold text-foreground">Decision Sealing</h4>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Inspect cryptographic attestations</p>
+              <h4 className="mt-2 text-xs font-semibold text-foreground">
+                Decision Sealing
+              </h4>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Inspect cryptographic attestations
+              </p>
             </Link>
 
             <Link
@@ -181,8 +195,12 @@ export function AuditorDashboardPage() {
                 <FileCheck2 className="h-4 w-4" />
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
               </div>
-              <h4 className="mt-2 text-xs font-semibold text-foreground">Evidence Records</h4>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Inspect forensic proofs</p>
+              <h4 className="mt-2 text-xs font-semibold text-foreground">
+                Evidence Records
+              </h4>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Inspect forensic proofs
+              </p>
             </Link>
 
             <Link
@@ -193,8 +211,12 @@ export function AuditorDashboardPage() {
                 <ScrollText className="h-4 w-4" />
                 <ArrowRight className="h-3 w-3 text-muted-foreground/50" />
               </div>
-              <h4 className="mt-2 text-xs font-semibold text-foreground">Rule History Trace</h4>
-              <p className="mt-0.5 text-[11px] text-muted-foreground">Statutory version telemetry</p>
+              <h4 className="mt-2 text-xs font-semibold text-foreground">
+                Rule History Trace
+              </h4>
+              <p className="mt-0.5 text-[11px] text-muted-foreground">
+                Statutory version telemetry
+              </p>
             </Link>
           </div>
         </div>
@@ -208,20 +230,34 @@ export function AuditorDashboardPage() {
             />
             <div className="mt-2 space-y-2.5 text-xs">
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">Evidence Act Section 65B:</span>
-                <span className="font-semibold text-teal-600 dark:text-teal-400">Compliant</span>
+                <span className="text-muted-foreground">
+                  Evidence Act Section 65B:
+                </span>
+                <span className="font-semibold text-teal-600 dark:text-teal-400">
+                  Compliant
+                </span>
               </div>
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
-                <span className="text-muted-foreground">Hashing Algorithm:</span>
-                <span className="font-mono font-medium text-foreground">SHA-256 Merkle</span>
+                <span className="text-muted-foreground">
+                  Hashing Algorithm:
+                </span>
+                <span className="font-mono font-medium text-foreground">
+                  SHA-256 Merkle
+                </span>
               </div>
               <div className="flex items-center justify-between border-b border-border/60 pb-2">
                 <span className="text-muted-foreground">Time Sync:</span>
-                <span className="font-medium text-foreground">NTP Stratum-1 Verified</span>
+                <span className="font-medium text-foreground">
+                  NTP Stratum-1 Verified
+                </span>
               </div>
               <div className="flex items-center justify-between pb-1">
-                <span className="text-muted-foreground">Write Restriction:</span>
-                <span className="font-semibold text-teal-600 dark:text-teal-400">Strict Read-Only</span>
+                <span className="text-muted-foreground">
+                  Write Restriction:
+                </span>
+                <span className="font-semibold text-teal-600 dark:text-teal-400">
+                  Strict Read-Only
+                </span>
               </div>
             </div>
           </MiraCard>
@@ -234,7 +270,9 @@ export function AuditorDashboardPage() {
                   Independent Oversight Notice
                 </span>
                 <p className="text-muted-foreground leading-relaxed">
-                  As an independent statutory auditor, your session is cryptographically attested. All audit queries and inspections are recorded in the secondary oversight trail.
+                  As an independent statutory auditor, your session is
+                  cryptographically attested. All audit queries and inspections
+                  are recorded in the secondary oversight trail.
                 </p>
               </div>
             </div>

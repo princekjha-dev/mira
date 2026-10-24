@@ -8,7 +8,11 @@ import {
   CheckCircle2,
   HardDrive,
 } from "lucide-react";
-import { ProfilePage, ProfileSection, ProfileRow } from "@/components/mira/profile";
+import {
+  ProfilePage,
+  ProfileSection,
+  ProfileRow,
+} from "@/components/mira/profile";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
@@ -16,7 +20,11 @@ export const Route = createFileRoute("/officer/settings")({
   head: () => ({
     meta: [
       { title: "Profile & Field Operations — Field Official" },
-      { name: "description", content: "Field verification officer identity, GPS tracking status, and offline route sync." },
+      {
+        name: "description",
+        content:
+          "Field verification officer identity, GPS tracking status, and offline route sync.",
+      },
     ],
   }),
   component: OfficerProfileRoute,
@@ -45,7 +53,7 @@ function OfficerProfileRoute() {
                   toast.success(
                     val
                       ? "Offline route sync enabled"
-                      : "Offline route sync disabled"
+                      : "Offline route sync disabled",
                   );
                 }}
               />
@@ -64,7 +72,7 @@ function OfficerProfileRoute() {
                   toast.success(
                     val
                       ? "Sub-meter GNSS enabled"
-                      : "Standard cellular GPS fallback active"
+                      : "Standard cellular GPS fallback active",
                   );
                 }}
               />
@@ -85,7 +93,9 @@ function OfficerProfileRoute() {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => toast.success("Biometric test scan successful (Demo)")}
+                onClick={() =>
+                  toast.success("Biometric test scan successful (Demo)")
+                }
                 className="h-7 text-xs ml-2"
               >
                 Test RD

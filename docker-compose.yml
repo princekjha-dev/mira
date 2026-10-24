@@ -12,7 +12,7 @@ services:
     ports:
       - "5433:5432"
     volumes:
-      - mira-pgdata:/var/lib/postgresql/data
+      - mira-pgdata:/var/lib/postgresql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 5s

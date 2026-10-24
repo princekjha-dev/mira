@@ -1,1 +1,93 @@
-import{l as e,t}from"./button-KmRTh43o.js";import{t as n}from"./link-gIn96cdo.js";import{An as r,D as i,Tt as a,k as o,w as s}from"./index-B8Y-_llO.js";import{a as c,i as l,n as u,o as d,r as f,t as p}from"./table-HtxyrupA.js";var m=e(),h=()=>(0,m.jsxs)(`div`,{children:[(0,m.jsx)(i,{title:`Manage Schemes`,actions:(0,m.jsx)(t,{onClick:()=>a.info(`New scheme drafts require approval from the Scheme Committee`,{description:`Use an existing scheme as template (demo).`}),children:`New scheme draft`})}),(0,m.jsx)(`div`,{className:`overflow-x-auto rounded-lg border bg-card`,children:(0,m.jsxs)(p,{children:[(0,m.jsx)(c,{children:(0,m.jsxs)(d,{children:[(0,m.jsx)(l,{children:`Scheme`}),(0,m.jsx)(l,{children:`Department`}),(0,m.jsx)(l,{children:`Benefit type`}),(0,m.jsx)(l,{children:`Eligibility basis`}),(0,m.jsx)(l,{children:`Status`}),(0,m.jsx)(l,{})]})}),(0,m.jsx)(u,{children:r.map(e=>(0,m.jsxs)(d,{children:[(0,m.jsx)(f,{className:`font-medium`,children:e.name}),(0,m.jsx)(f,{className:`text-sm text-muted-foreground`,children:e.department}),(0,m.jsx)(f,{children:(0,m.jsx)(s,{level:e.level})}),(0,m.jsx)(f,{className:`text-sm`,children:e.basis.join(` + `)}),(0,m.jsx)(f,{children:(0,m.jsx)(o,{t:`ok`,children:`Published`})}),(0,m.jsx)(f,{children:(0,m.jsx)(t,{size:`sm`,variant:`outline`,asChild:!0,children:(0,m.jsx)(n,{to:`/department/schemes/$id`,params:{id:e.id},children:`Configure`})})})]},e.id))})]})})]});export{h as component};
+import { l as e, t } from "./button-KmRTh43o.js";
+import { t as n } from "./link-gIn96cdo.js";
+import { An as r, D as i, Tt as a, k as o, w as s } from "./index-B8Y-_llO.js";
+import {
+  a as c,
+  i as l,
+  n as u,
+  o as d,
+  r as f,
+  t as p,
+} from "./table-HtxyrupA.js";
+var m = e(),
+  h = () =>
+    (0, m.jsxs)(`div`, {
+      children: [
+        (0, m.jsx)(i, {
+          title: `Manage Schemes`,
+          actions: (0, m.jsx)(t, {
+            onClick: () =>
+              a.info(
+                `New scheme drafts require approval from the Scheme Committee`,
+                { description: `Use an existing scheme as template (demo).` },
+              ),
+            children: `New scheme draft`,
+          }),
+        }),
+        (0, m.jsx)(`div`, {
+          className: `overflow-x-auto rounded-lg border bg-card`,
+          children: (0, m.jsxs)(p, {
+            children: [
+              (0, m.jsx)(c, {
+                children: (0, m.jsxs)(d, {
+                  children: [
+                    (0, m.jsx)(l, { children: `Scheme` }),
+                    (0, m.jsx)(l, { children: `Department` }),
+                    (0, m.jsx)(l, { children: `Benefit type` }),
+                    (0, m.jsx)(l, { children: `Eligibility basis` }),
+                    (0, m.jsx)(l, { children: `Status` }),
+                    (0, m.jsx)(l, {}),
+                  ],
+                }),
+              }),
+              (0, m.jsx)(u, {
+                children: r.map((e) =>
+                  (0, m.jsxs)(
+                    d,
+                    {
+                      children: [
+                        (0, m.jsx)(f, {
+                          className: `font-medium`,
+                          children: e.name,
+                        }),
+                        (0, m.jsx)(f, {
+                          className: `text-sm text-muted-foreground`,
+                          children: e.department,
+                        }),
+                        (0, m.jsx)(f, {
+                          children: (0, m.jsx)(s, { level: e.level }),
+                        }),
+                        (0, m.jsx)(f, {
+                          className: `text-sm`,
+                          children: e.basis.join(` + `),
+                        }),
+                        (0, m.jsx)(f, {
+                          children: (0, m.jsx)(o, {
+                            t: `ok`,
+                            children: `Published`,
+                          }),
+                        }),
+                        (0, m.jsx)(f, {
+                          children: (0, m.jsx)(t, {
+                            size: `sm`,
+                            variant: `outline`,
+                            asChild: !0,
+                            children: (0, m.jsx)(n, {
+                              to: `/department/schemes/$id`,
+                              params: { id: e.id },
+                              children: `Configure`,
+                            }),
+                          }),
+                        }),
+                      ],
+                    },
+                    e.id,
+                  ),
+                ),
+              }),
+            ],
+          }),
+        }),
+      ],
+    });
+export { h as component };

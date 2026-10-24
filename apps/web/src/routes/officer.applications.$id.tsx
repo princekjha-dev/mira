@@ -1,6 +1,13 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect } from "react";
-import { AlertOctagon, AlertTriangle, CheckCircle2, Eye, FileText, Users } from "lucide-react";
+import {
+  AlertOctagon,
+  AlertTriangle,
+  CheckCircle2,
+  Eye,
+  FileText,
+  Users,
+} from "lucide-react";
 import { toast } from "sonner";
 import { nowStamp, useApp } from "@/lib/app-state";
 import { DocumentViewer } from "@/components/gov/DocumentViewer";
@@ -111,16 +118,22 @@ function Review() {
   const [submittedDocs, setSubmittedDocs] = useState<ApiDocument[]>([]);
   const [activeDoc, setActiveDoc] = useState<ApiDocument | null>(null);
 
-  const loadDocuments = () => {
-    if (!state.session?.apiToken) return;
-    const targetId = (a as any)?.rawId || a?.id;
-    if (!targetId) return;
-    apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/applications/${targetId}/documents`)
+  const targetAppId = (a as { rawId?: string } | undefined)?.rawId || a?.id;
+
+  const loadDocuments = useCallback(() => {
+    if (!state.session?.apiToken || !targetAppId) return;
+    apiRequest<{ data: ApiDocument[] }>(
+      state.session,
+      `/api/v1/applications/${targetAppId}/documents`,
+    )
       .then((res) => {
         if (res.data && res.data.length > 0) {
           setSubmittedDocs(res.data);
         } else {
-          apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/documents`)
+          apiRequest<{ data: ApiDocument[] }>(
+            state.session,
+            `/api/v1/documents`,
+          )
             .then((all) => setSubmittedDocs(all.data || []))
             .catch(() => setSubmittedDocs([]));
         }
@@ -130,13 +143,13 @@ function Review() {
           .then((all) => setSubmittedDocs(all.data || []))
           .catch(() => setSubmittedDocs([]));
       });
-  };
+  }, [state.session, targetAppId]);
 
   useEffect(() => {
     if (a) {
       loadDocuments();
     }
-  }, [a?.id, (a as any)?.rawId, state.session?.apiToken]);
+  }, [a, loadDocuments]);
   if (!a)
     return (
       <Empty
@@ -405,8 +418,8 @@ function Review() {
                             isConflict
                               ? "text-amber-600"
                               : doc.verification_status === "VERIFIED"
-                              ? "text-emerald-600"
-                              : "text-slate-500"
+                                ? "text-emerald-600"
+                                : "text-slate-500"
                           }`}
                         />
                         <div className="min-w-0">
@@ -424,8 +437,8 @@ function Review() {
                             doc.verification_status === "VERIFIED"
                               ? "ok"
                               : isConflict
-                              ? "warn"
-                              : "default"
+                                ? "warn"
+                                : "default"
                           }
                         >
                           {doc.verification_status}

@@ -153,7 +153,10 @@ function Eligibility() {
       </ol>
 
       {step < 3 ? (
-        <MiraCard variant="elevated" className="overflow-hidden p-0 rounded-2xl">
+        <MiraCard
+          variant="elevated"
+          className="overflow-hidden p-0 rounded-2xl"
+        >
           <div className="border-b border-border/60 px-5 py-4 sm:px-7 bg-muted/20">
             <p className="text-xs font-medium text-muted-foreground">
               Step 0{step + 1} of 04
@@ -427,7 +430,11 @@ function Eligibility() {
               <span />
             )}
             {step === 2 ? (
-              <Button onClick={next} disabled={!selected} className="tactile-btn">
+              <Button
+                onClick={next}
+                disabled={!selected}
+                className="tactile-btn"
+              >
                 Check Eligibility
                 <ArrowRight className="h-4 w-4 ml-1.5" />
               </Button>
@@ -454,7 +461,9 @@ function Eligibility() {
                       ? "More information is needed"
                       : "Not currently eligible"}
                 </h2>
-                <p className="mt-1 text-xs text-muted-foreground">{selected.name}</p>
+                <p className="mt-1 text-xs text-muted-foreground">
+                  {selected.name}
+                </p>
               </div>
               <Button
                 variant="outline"

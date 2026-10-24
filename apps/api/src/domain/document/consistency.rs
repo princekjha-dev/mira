@@ -1,7 +1,9 @@
-use serde::{Deserialize, Serialize};
-use crate::domain::document::models::{ConsistencyCheckType, ConsistencyResult, DocumentConsistencyCheck};
+use crate::domain::document::models::{
+    ConsistencyCheckType, ConsistencyResult, DocumentConsistencyCheck,
+};
 use crate::domain::entity_resolution::normalization::normalize_name;
 use crate::domain::entity_resolution::similarity::compare_names;
+use serde::{Deserialize, Serialize};
 use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -72,7 +74,8 @@ impl ConsistencyEngine {
                     source_b_label: comparison_doc_label.to_string(),
                     source_b_value: Some(clean_rec_dob.to_string()),
                     action_recommended: "AUTO_PASS".to_string(),
-                    explanation: "Date of birth matches authoritative record identically.".to_string(),
+                    explanation: "Date of birth matches authoritative record identically."
+                        .to_string(),
                 });
             } else {
                 checks.push(ConsistencyCheckItem {
@@ -92,7 +95,12 @@ impl ConsistencyEngine {
             }
 
             // Timeline addition
-            if let Ok(year) = clean_doc_dob.split('-').next().unwrap_or("1998").parse::<i32>() {
+            if let Ok(year) = clean_doc_dob
+                .split('-')
+                .next()
+                .unwrap_or("1998")
+                .parse::<i32>()
+            {
                 timeline.push(CrossDocumentTimelineEntry {
                     date_str: clean_doc_dob.to_string(),
                     year,
@@ -116,7 +124,9 @@ impl ConsistencyEngine {
                 source_b_label: comparison_doc_label.to_string(),
                 source_b_value: record_dob.map(|s| s.to_string()),
                 action_recommended: "INSUFFICIENT_DATA_REVIEW".to_string(),
-                explanation: "One of the source records does not provide a validated date of birth.".to_string(),
+                explanation:
+                    "One of the source records does not provide a validated date of birth."
+                        .to_string(),
             });
         }
 
@@ -138,7 +148,11 @@ impl ConsistencyEngine {
                     source_b_label: comparison_doc_label.to_string(),
                     source_b_value: Some(rec_n.to_string()),
                     action_recommended: "AUTO_PASS".to_string(),
-                    explanation: format!("Name variation consistent (similarity: {:.0}%, {})", sim * 100.0, details),
+                    explanation: format!(
+                        "Name variation consistent (similarity: {:.0}%, {})",
+                        sim * 100.0,
+                        details
+                    ),
                 });
             } else if sim >= 0.50 {
                 checks.push(ConsistencyCheckItem {
@@ -150,7 +164,10 @@ impl ConsistencyEngine {
                     source_b_label: comparison_doc_label.to_string(),
                     source_b_value: Some(rec_n.to_string()),
                     action_recommended: "MANUAL_VERIFICATION_REQUIRED".to_string(),
-                    explanation: format!("Moderate name phonetic/spelling variation detected: '{}' vs '{}'", doc_n, rec_n),
+                    explanation: format!(
+                        "Moderate name phonetic/spelling variation detected: '{}' vs '{}'",
+                        doc_n, rec_n
+                    ),
                 });
             } else {
                 checks.push(ConsistencyCheckItem {
@@ -162,7 +179,10 @@ impl ConsistencyEngine {
                     source_b_label: comparison_doc_label.to_string(),
                     source_b_value: Some(rec_n.to_string()),
                     action_recommended: "MANUAL_VERIFICATION_REQUIRED".to_string(),
-                    explanation: format!("Significant name mismatch detected: '{}' vs '{}'", doc_n, rec_n),
+                    explanation: format!(
+                        "Significant name mismatch detected: '{}' vs '{}'",
+                        doc_n, rec_n
+                    ),
                 });
             }
         }
@@ -182,7 +202,8 @@ impl ConsistencyEngine {
                     source_b_label: comparison_doc_label.to_string(),
                     source_b_value: Some(rec_addr.to_string()),
                     action_recommended: "AUTO_PASS".to_string(),
-                    explanation: "Address components correlate with existing residential address.".to_string(),
+                    explanation: "Address components correlate with existing residential address."
+                        .to_string(),
                 });
             } else {
                 checks.push(ConsistencyCheckItem {

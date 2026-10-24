@@ -32,14 +32,18 @@ export function MessageList({
 
       if (e.key === "ArrowDown") {
         e.preventDefault();
-        const currentIndex = threads.findIndex((t) => t.id === selectedThreadId);
+        const currentIndex = threads.findIndex(
+          (t) => t.id === selectedThreadId,
+        );
         const nextIndex = Math.min(threads.length - 1, currentIndex + 1);
         if (threads[nextIndex]) {
           onSelectThread(threads[nextIndex]);
         }
       } else if (e.key === "ArrowUp") {
         e.preventDefault();
-        const currentIndex = threads.findIndex((t) => t.id === selectedThreadId);
+        const currentIndex = threads.findIndex(
+          (t) => t.id === selectedThreadId,
+        );
         const prevIndex = Math.max(0, currentIndex - 1);
         if (threads[prevIndex]) {
           onSelectThread(threads[prevIndex]);

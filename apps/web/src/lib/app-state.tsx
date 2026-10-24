@@ -286,7 +286,10 @@ interface Ctx {
     replyToId?: string;
   }) => void;
   updateFieldVisit: (visitId: string, patch: Partial<FieldVisit>) => void;
-  addFileVersion: (fileId: string, newVersion: { filename: string; sizeBytes: number; reason: string }) => void;
+  addFileVersion: (
+    fileId: string,
+    newVersion: { filename: string; sizeBytes: number; reason: string },
+  ) => void;
 }
 
 const AppCtx = createContext<Ctx | null>(null);
@@ -842,7 +845,9 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       archiveMessage: (threadId) =>
         set((s) => ({
           messages: s.messages.map((m) =>
-            m.id === threadId ? { ...m, folder: "archived" as const, isArchived: true } : m,
+            m.id === threadId
+              ? { ...m, folder: "archived" as const, isArchived: true }
+              : m,
           ),
         })),
       addComment: (comment) =>

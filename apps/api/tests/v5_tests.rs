@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use axum::{
     body::Body,
     http::{header, Method, Request, StatusCode},
@@ -10,11 +9,14 @@ use mira_api::{
     database::{create_pool, run_migrations, seed_database, DEMO_PASSWORD},
 };
 use serde_json::Value;
+use std::sync::Arc;
 use tower::ServiceExt;
 
 async fn setup_test_app() -> (axum::Router, sqlx::PgPool, AppConfig) {
     let mut config = AppConfig::from_env();
-    config.database_url = "postgres://postgres@127.0.0.1:5433/mira_test".to_string();
+    config.database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| {
+        "postgres://postgres:postgrespassword@127.0.0.1:5433/mira_test".to_string()
+    });
 
     let pool = create_pool(&config.database_url)
         .await
@@ -38,7 +40,8 @@ async fn get_auth_token(app: &axum::Router, email: &str, password: &str) -> Stri
         "password": password
     });
 
-    let res = app.clone()
+    let res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/auth/login")
@@ -80,7 +83,8 @@ async fn test_v5_security_and_file_upload_attacks() {
         "access_purpose": "CITIZEN_SELF_SERVICE"
     });
 
-    let res = app.clone()
+    let res = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/documents")
@@ -104,7 +108,8 @@ async fn test_v5_security_and_file_upload_attacks() {
         "access_purpose": "CITIZEN_SELF_SERVICE"
     });
 
-    let res_script = app.clone()
+    let res_script = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/documents")
@@ -128,7 +133,8 @@ async fn test_v5_security_and_file_upload_attacks() {
         "access_purpose": "CITIZEN_SELF_SERVICE"
     });
 
-    let res_traversal = app.clone()
+    let res_traversal = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/documents")
@@ -142,9 +148,20 @@ async fn test_v5_security_and_file_upload_attacks() {
         .unwrap();
 
     assert_eq!(res_traversal.status(), StatusCode::CREATED);
-    let body: Value = serde_json::from_slice(&res_traversal.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let body: Value = serde_json::from_slice(
+        &res_traversal
+            .into_body()
+            .collect()
+            .await
+            .unwrap()
+            .to_bytes(),
+    )
+    .unwrap();
     let original_filename = body["data"]["original_filename"].as_str().unwrap();
-    assert!(!original_filename.contains("../"), "Path traversal sequences must be stripped");
+    assert!(
+        !original_filename.contains("../"),
+        "Path traversal sequences must be stripped"
+    );
 }
 
 // ============================================================================
@@ -171,7 +188,8 @@ async fn test_v5_privacy_and_idor_protection() {
         "access_purpose": "CITIZEN_SELF_SERVICE"
     });
 
-    let res_upload = app.clone()
+    let res_upload = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/documents")
@@ -185,7 +203,9 @@ async fn test_v5_privacy_and_idor_protection() {
         .unwrap();
 
     assert_eq!(res_upload.status(), StatusCode::CREATED);
-    let upload_body: Value = serde_json::from_slice(&res_upload.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let upload_body: Value =
+        serde_json::from_slice(&res_upload.into_body().collect().await.unwrap().to_bytes())
+            .unwrap();
     let doc_id = upload_body["data"]["id"].as_str().unwrap();
 
     // 2. IDOR Attack: Citizen attempts to upload document claiming another user's owner_id
@@ -198,14 +218,17 @@ async fn test_v5_privacy_and_idor_protection() {
         "access_purpose": "CITIZEN_SELF_SERVICE"
     });
 
-    let res_idor = app.clone()
+    let res_idor = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/documents")
                 .method(Method::POST)
                 .header(header::AUTHORIZATION, format!("Bearer {}", citizen_token))
                 .header(header::CONTENT_TYPE, "application/json")
-                .body(Body::from(serde_json::to_vec(&idor_upload_payload).unwrap()))
+                .body(Body::from(
+                    serde_json::to_vec(&idor_upload_payload).unwrap(),
+                ))
                 .unwrap(),
         )
         .await
@@ -213,11 +236,52 @@ async fn test_v5_privacy_and_idor_protection() {
 
     assert_eq!(res_idor.status(), StatusCode::FORBIDDEN);
 
-    // 3. Authorized verification download by officer with purpose
-    let res_download = app.clone()
+    // 2b. IDOR Protection: Officer cannot access an unlinked private citizen document
+    let res_unlinked = app
+        .clone()
         .oneshot(
             Request::builder()
-                .uri(format!("/api/v1/documents/{}/download?purpose=APPLICATION_VERIFICATION", doc_id))
+                .uri(format!(
+                    "/api/v1/documents/{}/download?purpose=APPLICATION_VERIFICATION",
+                    doc_id
+                ))
+                .method(Method::GET)
+                .header(header::AUTHORIZATION, format!("Bearer {}", officer_token))
+                .body(Body::empty())
+                .unwrap(),
+        )
+        .await
+        .unwrap();
+    assert_eq!(res_unlinked.status(), StatusCode::FORBIDDEN);
+
+    // Link document to an application for verification
+    let app_row = sqlx::query!("SELECT id FROM applications WHERE status != 'REJECTED' LIMIT 1")
+        .fetch_one(&pool)
+        .await
+        .unwrap();
+    let doc_uuid = uuid::Uuid::parse_str(doc_id).unwrap();
+    sqlx::query!(
+        r#"
+        INSERT INTO application_documents (application_id, document_id, document_version_id, required_type, linked_by)
+        VALUES ($1, $2, $2, 'INCOME_CERTIFICATE', $3)
+        "#,
+        app_row.id,
+        doc_uuid,
+        citizen_user.id
+    )
+    .execute(&pool)
+    .await
+    .unwrap();
+
+    // 3. Authorized verification download by officer with purpose once document is linked
+    let res_download = app
+        .clone()
+        .oneshot(
+            Request::builder()
+                .uri(format!(
+                    "/api/v1/documents/{}/download?purpose=APPLICATION_VERIFICATION",
+                    doc_id
+                ))
                 .method(Method::GET)
                 .header(header::AUTHORIZATION, format!("Bearer {}", officer_token))
                 .body(Body::empty())
@@ -237,7 +301,9 @@ async fn test_v5_privacy_and_idor_protection() {
     .await
     .unwrap();
 
-    assert!(access_logs.iter().any(|l| l.action == "DOWNLOAD" && l.purpose == "APPLICATION_VERIFICATION"));
+    assert!(access_logs
+        .iter()
+        .any(|l| l.action == "DOWNLOAD" && l.purpose == "APPLICATION_VERIFICATION"));
 }
 
 // ============================================================================
@@ -250,10 +316,12 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
     let officer_token = get_auth_token(&app, "officer@mira.local", DEMO_PASSWORD).await;
 
     // Get seeded case application
-    let app_row = sqlx::query!("SELECT id, applicant_person_id FROM applications WHERE public_id = 'APP-2025-001'")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let app_row = sqlx::query!(
+        "SELECT id, applicant_person_id FROM applications WHERE public_id = 'APP-2025-001'"
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
 
     // -------------------------------------------------------------------------
     // Scenario 1: Clean Birth Certificate
@@ -267,7 +335,8 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
         "access_purpose": "APPLICATION_VERIFICATION"
     });
 
-    let res_s1 = app.clone()
+    let res_s1 = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/documents")
@@ -281,11 +350,13 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
         .unwrap();
 
     assert_eq!(res_s1.status(), StatusCode::CREATED);
-    let s1_body: Value = serde_json::from_slice(&res_s1.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let s1_body: Value =
+        serde_json::from_slice(&res_s1.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let s1_doc_id = s1_body["data"]["id"].as_str().unwrap();
 
     // Check extractions for Scenario 1
-    let res_ext = app.clone()
+    let res_ext = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri(format!("/api/v1/documents/{}/extractions", s1_doc_id))
@@ -298,11 +369,16 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
         .unwrap();
 
     assert_eq!(res_ext.status(), StatusCode::OK);
-    let ext_body: Value = serde_json::from_slice(&res_ext.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let ext_body: Value =
+        serde_json::from_slice(&res_ext.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let fields = ext_body["data"].as_array().unwrap();
 
-    assert!(fields.iter().any(|f| f["field"] == "NAME" && f["value"].as_str().unwrap().contains("Rahul Kumar")));
-    assert!(fields.iter().any(|f| f["field"] == "DATE_OF_BIRTH" && f["normalized_value"] == "1998-04-12"));
+    assert!(fields
+        .iter()
+        .any(|f| f["field"] == "NAME" && f["value"].as_str().unwrap().contains("Rahul Kumar")));
+    assert!(fields
+        .iter()
+        .any(|f| f["field"] == "DATE_OF_BIRTH" && f["normalized_value"] == "1998-04-12"));
 
     // -------------------------------------------------------------------------
     // Scenario 4: Cross-Document Conflict (DOB 12/04/1988 vs 12/04/1998)
@@ -316,7 +392,8 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
         "access_purpose": "APPLICATION_VERIFICATION"
     });
 
-    let res_s4 = app.clone()
+    let res_s4 = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri("/api/v1/documents")
@@ -330,12 +407,14 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
         .unwrap();
 
     assert_eq!(res_s4.status(), StatusCode::CREATED);
-    let s4_body: Value = serde_json::from_slice(&res_s4.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let s4_body: Value =
+        serde_json::from_slice(&res_s4.into_body().collect().await.unwrap().to_bytes()).unwrap();
     let _s4_doc_id = s4_body["data"]["id"].as_str().unwrap();
 
     // Check Case Evidence Pack for conflict
 
-    let res_pack = app.clone()
+    let res_pack = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri(format!("/api/v1/cases/{}/evidence-pack", app_row.id))
@@ -348,16 +427,26 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
         .unwrap();
 
     assert_eq!(res_pack.status(), StatusCode::OK);
-    let pack_body: Value = serde_json::from_slice(&res_pack.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let pack_body: Value =
+        serde_json::from_slice(&res_pack.into_body().collect().await.unwrap().to_bytes()).unwrap();
 
-    assert_eq!(pack_body["data"]["recommended_action"], "MANUAL_OFFICER_REVIEW_REQUIRED");
-    assert!(pack_body["data"]["why_flagged"].as_str().unwrap().contains("DOB_CONFLICT"));
+    assert_eq!(
+        pack_body["data"]["recommended_action"],
+        "MANUAL_OFFICER_REVIEW_REQUIRED"
+    );
+    assert!(pack_body["data"]["why_flagged"]
+        .as_str()
+        .unwrap()
+        .contains("DOB_CONFLICT"));
 
     // -------------------------------------------------------------------------
     // Scenario 6: Human Officer Correction & Immutable Provenance Trail
     // -------------------------------------------------------------------------
     // Get extraction ID for NAME from doc 1
-    let name_ext = fields.iter().find(|f| f["field"] == "NAME").expect("Name field must exist");
+    let name_ext = fields
+        .iter()
+        .find(|f| f["field"] == "NAME")
+        .expect("Name field must exist");
     let name_ext_id = name_ext["id"].as_str().unwrap();
 
     let correction_payload = serde_json::json!({
@@ -368,7 +457,8 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
         "reason": "Corrected minor spelling variant from OCR extraction"
     });
 
-    let res_correct = app.clone()
+    let res_correct = app
+        .clone()
         .oneshot(
             Request::builder()
                 .uri(format!("/api/v1/documents/{}/verify-extraction", s1_doc_id))
@@ -382,14 +472,22 @@ async fn test_v5_demo_scenarios_clean_conflict_property_and_correction() {
         .unwrap();
 
     assert_eq!(res_correct.status(), StatusCode::OK);
-    let correct_body: Value = serde_json::from_slice(&res_correct.into_body().collect().await.unwrap().to_bytes()).unwrap();
+    let correct_body: Value =
+        serde_json::from_slice(&res_correct.into_body().collect().await.unwrap().to_bytes())
+            .unwrap();
     assert_eq!(correct_body["data"]["decision"], "EDITED");
     assert_eq!(correct_body["data"]["corrected_value"], "Rahul Kumar");
 
     // Check that original raw OCR text is still intact in ocr_results
-    let raw_ocr = sqlx::query!("SELECT text FROM ocr_results WHERE document_id = $1", uuid::Uuid::parse_str(s1_doc_id).unwrap())
-        .fetch_one(&pool)
-        .await
-        .unwrap();
-    assert!(!raw_ocr.text.is_empty(), "Original OCR text must be preserved");
+    let raw_ocr = sqlx::query!(
+        "SELECT text FROM ocr_results WHERE document_id = $1",
+        uuid::Uuid::parse_str(s1_doc_id).unwrap()
+    )
+    .fetch_one(&pool)
+    .await
+    .unwrap();
+    assert!(
+        !raw_ocr.text.is_empty(),
+        "Original OCR text must be preserved"
+    );
 }

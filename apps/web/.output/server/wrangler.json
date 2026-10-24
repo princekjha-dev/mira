@@ -3,20 +3,15 @@
   "main": "index.mjs",
   "assets": {
     "binding": "ASSETS",
-    "directory": "../public"
+    "directory": "..\\public"
   },
-  "name": "princekjha-dev-mira-apps-web",
-  "compatibility_flags": [
-    "nodejs_compat"
-  ],
+  "name": "tanstack-start-ts-apps-web",
+  "compatibility_flags": ["nodejs_compat"],
   "no_bundle": true,
   "rules": [
     {
       "type": "ESModule",
-      "globs": [
-        "**/*.mjs",
-        "**/*.js"
-      ]
+      "globs": ["**/*.mjs", "**/*.js"]
     }
   ]
 }

@@ -152,7 +152,14 @@ export async function getMe(token: string): Promise<ApiAuthResponse["user"]> {
 }
 
 export async function authenticateDemo(
-  role: "citizen" | "officer" | "verifier" | "scheme" | "supervisor" | "admin" | "auditor",
+  role:
+    | "citizen"
+    | "officer"
+    | "verifier"
+    | "scheme"
+    | "supervisor"
+    | "admin"
+    | "auditor",
 ): Promise<ApiAuthResponse> {
   let response: Response;
   try {
@@ -927,14 +934,10 @@ export async function sendMiraAiChat(
   sessionOrToken: Session | string | null,
   payload: ApiAiChatRequest,
 ): Promise<ApiAiChatResponse> {
-  return apiRequest<ApiAiChatResponse>(
-    sessionOrToken,
-    "/api/v1/ai/chat",
-    {
-      method: "POST",
-      body: JSON.stringify(payload),
-    },
-  );
+  return apiRequest<ApiAiChatResponse>(sessionOrToken, "/api/v1/ai/chat", {
+    method: "POST",
+    body: JSON.stringify(payload),
+  });
 }
 
 // ============================================================================
@@ -1102,4 +1105,3 @@ export async function fetchMyAuditActivity(
   );
   return res.data;
 }
-

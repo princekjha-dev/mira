@@ -1,1 +1,78 @@
-import{c as e,l as t}from"./button-KmRTh43o.js";import{t as n}from"./activity-rZvbijey.js";import{a as r,i,n as a,r as o}from"./role-config-SRjM_HxE.js";import{n as s,t as c}from"./WorkspaceShell-CSEbCXFL.js";import{t as l}from"./mail-BPXI5_FF.js";import{$t as u,A as d,Ft as f,Ln as p,ln as m}from"./index-B8Y-_llO.js";var h=e(`file-stack`,[[`path`,{d:`M11 21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1`,key:`likhh7`}],[`path`,{d:`M16 16a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1`,key:`17ky3x`}],[`path`,{d:`M21 6a2 2 0 0 0-.586-1.414l-2-2A2 2 0 0 0 17 2h-3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1z`,key:`1hyeo0`}]]),g=e(`workflow`,[[`rect`,{width:`8`,height:`8`,x:`3`,y:`3`,rx:`2`,key:`by2w9f`}],[`path`,{d:`M7 11v4a2 2 0 0 0 2 2h4`,key:`xkn7yn`}],[`rect`,{width:`8`,height:`8`,x:`13`,y:`13`,rx:`2`,key:`1cgmvn`}]]),_=t(),v=[{to:`/department/dashboard`,label:`Dashboard`,icon:s},{to:`/department/workflow`,label:`Workflow Configurator`,icon:g},{to:`/department/schemes`,label:`Manage Schemes`,icon:h,exact:!0},{to:`/department/rules`,label:`Eligibility Rules`,icon:o},{to:`/department/applications`,label:`Department Applications`,icon:u},{to:`/department/operations`,label:`Operations & SLA Health`,icon:n},{to:`/department/departments`,label:`Directorate Directory`,icon:m},{to:`/department/integrations`,label:`Integrations & APIs`,icon:i},{to:`/department/inbox`,label:`Communications`,icon:l},{to:`/department/reports`,label:`Reports & Analytics`,icon:r},{to:`/department/audit`,label:`Audit Ledger`,icon:f},{to:`/department/settings`,label:`Policy Settings`,icon:a}];function y(){return(0,_.jsx)(d,{role:[`admin`,`supervisor`],children:(0,_.jsx)(c,{title:`Department Administration`,items:v,notifTo:`/department/notifications`,inboxTo:`/department/inbox`,children:(0,_.jsx)(p,{})})})}export{y as component};
+import { c as e, l as t } from "./button-KmRTh43o.js";
+import { t as n } from "./activity-rZvbijey.js";
+import { a as r, i, n as a, r as o } from "./role-config-SRjM_HxE.js";
+import { n as s, t as c } from "./WorkspaceShell-CSEbCXFL.js";
+import { t as l } from "./mail-BPXI5_FF.js";
+import {
+  $t as u,
+  A as d,
+  Ft as f,
+  Ln as p,
+  ln as m,
+} from "./index-B8Y-_llO.js";
+var h = e(`file-stack`, [
+    [
+      `path`,
+      {
+        d: `M11 21a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1v-8a1 1 0 0 1 1-1`,
+        key: `likhh7`,
+      },
+    ],
+    [
+      `path`,
+      {
+        d: `M16 16a1 1 0 0 1-1 1H9a1 1 0 0 1-1-1V8a1 1 0 0 1 1-1`,
+        key: `17ky3x`,
+      },
+    ],
+    [
+      `path`,
+      {
+        d: `M21 6a2 2 0 0 0-.586-1.414l-2-2A2 2 0 0 0 17 2h-3a1 1 0 0 0-1 1v8a1 1 0 0 0 1 1h6a1 1 0 0 0 1-1z`,
+        key: `1hyeo0`,
+      },
+    ],
+  ]),
+  g = e(`workflow`, [
+    [
+      `rect`,
+      { width: `8`, height: `8`, x: `3`, y: `3`, rx: `2`, key: `by2w9f` },
+    ],
+    [`path`, { d: `M7 11v4a2 2 0 0 0 2 2h4`, key: `xkn7yn` }],
+    [
+      `rect`,
+      { width: `8`, height: `8`, x: `13`, y: `13`, rx: `2`, key: `1cgmvn` },
+    ],
+  ]),
+  _ = t(),
+  v = [
+    { to: `/department/dashboard`, label: `Dashboard`, icon: s },
+    { to: `/department/workflow`, label: `Workflow Configurator`, icon: g },
+    { to: `/department/schemes`, label: `Manage Schemes`, icon: h, exact: !0 },
+    { to: `/department/rules`, label: `Eligibility Rules`, icon: o },
+    {
+      to: `/department/applications`,
+      label: `Department Applications`,
+      icon: u,
+    },
+    { to: `/department/operations`, label: `Operations & SLA Health`, icon: n },
+    { to: `/department/departments`, label: `Directorate Directory`, icon: m },
+    { to: `/department/integrations`, label: `Integrations & APIs`, icon: i },
+    { to: `/department/inbox`, label: `Communications`, icon: l },
+    { to: `/department/reports`, label: `Reports & Analytics`, icon: r },
+    { to: `/department/audit`, label: `Audit Ledger`, icon: f },
+    { to: `/department/settings`, label: `Policy Settings`, icon: a },
+  ];
+function y() {
+  return (0, _.jsx)(d, {
+    role: [`admin`, `supervisor`],
+    children: (0, _.jsx)(c, {
+      title: `Department Administration`,
+      items: v,
+      notifTo: `/department/notifications`,
+      inboxTo: `/department/inbox`,
+      children: (0, _.jsx)(p, {}),
+    }),
+  });
+}
+export { y as component };

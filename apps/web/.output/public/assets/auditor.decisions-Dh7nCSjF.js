@@ -1,1 +1,168 @@
-import{f as e,l as t,t as n,u as r}from"./button-KmRTh43o.js";import{t as i}from"./copy-BJlw9oKN.js";import{D as a,It as o,Mt as s,Tt as c,mn as l,sn as u,x as d}from"./index-B8Y-_llO.js";import{i as f,n as p,t as m}from"./card-DNkZ-jvk.js";var h=e(r()),g=t();function _(){let{state:e}=l(),[t,r]=(0,h.useState)(null),_=e.decisions||[],v=(e,t)=>{navigator.clipboard.writeText(e),r(t),c.success(`Cryptographic SHA-256 hash copied to clipboard.`),setTimeout(()=>r(null),2e3)};return(0,g.jsxs)(`div`,{className:`space-y-6`,children:[(0,g.jsx)(a,{title:`Cryptographic Decision Registry`,desc:`Permanent audit ledger of approved and rejected public benefit determinations with immutable SHA-256 state hashes.`,crumbs:[{label:`Auditor`,to:`/auditor/dashboard`},{label:`Decisions`}]}),(0,g.jsx)(`div`,{className:`space-y-4`,children:_.map(e=>(0,g.jsxs)(m,{className:`border-border/80 shadow-xs`,children:[(0,g.jsx)(f,{className:`p-5 pb-3`,children:(0,g.jsxs)(`div`,{className:`flex flex-wrap items-center justify-between gap-2`,children:[(0,g.jsxs)(`div`,{className:`flex items-center gap-2`,children:[(0,g.jsx)(o,{className:`h-4 w-4 text-primary`}),(0,g.jsx)(`span`,{className:`font-mono text-xs font-bold text-foreground`,children:e.id}),(0,g.jsx)(d,{variant:`outline`,className:`text-[10px] ${e.decision===`APPROVED`?`border-teal-400 bg-teal-500/10 text-teal-700 dark:text-teal-300`:`border-red-400 bg-red-500/10 text-red-700 dark:text-red-300`}`,children:e.decision})]}),(0,g.jsxs)(`div`,{className:`text-xs text-muted-foreground font-mono`,children:[`Date: `,e.decidedAt]})]})}),(0,g.jsxs)(p,{className:`p-5 pt-1 space-y-3 text-xs`,children:[(0,g.jsxs)(`div`,{className:`grid gap-3 sm:grid-cols-2 rounded-lg bg-muted/30 p-3`,children:[(0,g.jsxs)(`div`,{children:[(0,g.jsx)(`span`,{className:`text-muted-foreground text-[11px]`,children:`Application:`}),(0,g.jsxs)(`div`,{className:`font-semibold text-foreground`,children:[e.applicationId,` · `,e.schemeName]})]}),(0,g.jsxs)(`div`,{children:[(0,g.jsx)(`span`,{className:`text-muted-foreground text-[11px]`,children:`Beneficiary / Applicant:`}),(0,g.jsx)(`div`,{className:`font-semibold text-foreground`,children:e.applicantName})]})]}),(0,g.jsxs)(`div`,{children:[(0,g.jsx)(`span`,{className:`font-medium text-foreground`,children:`Statutory Determination Rationale:`}),(0,g.jsxs)(`p`,{className:`mt-1 text-muted-foreground leading-relaxed italic bg-background p-2.5 rounded border border-border/60`,children:[`"`,e.justification,`"`]})]}),(0,g.jsxs)(`div`,{className:`flex flex-wrap items-center justify-between gap-3 border-t pt-3`,children:[(0,g.jsxs)(`div`,{className:`flex items-center gap-2 font-mono text-[11px] text-muted-foreground`,children:[(0,g.jsx)(s,{className:`h-4 w-4 text-teal-600 shrink-0`}),(0,g.jsxs)(`span`,{className:`truncate max-w-xs sm:max-w-md`,children:[`SHA256: `,e.auditHash]}),(0,g.jsx)(n,{size:`icon`,variant:`ghost`,className:`h-6 w-6`,onClick:()=>v(e.auditHash,e.id),children:t===e.id?(0,g.jsx)(u,{className:`h-3 w-3 text-teal-600`}):(0,g.jsx)(i,{className:`h-3 w-3`})})]}),(0,g.jsxs)(`div`,{className:`text-right text-[11px] text-muted-foreground`,children:[`Affixed by: `,(0,g.jsx)(`strong`,{className:`text-foreground`,children:e.decidedBy}),` (`,e.statutoryRuleRef,`)`]})]})]})]},e.id))})]})}export{_ as component};
+import { f as e, l as t, t as n, u as r } from "./button-KmRTh43o.js";
+import { t as i } from "./copy-BJlw9oKN.js";
+import {
+  D as a,
+  It as o,
+  Mt as s,
+  Tt as c,
+  mn as l,
+  sn as u,
+  x as d,
+} from "./index-B8Y-_llO.js";
+import { i as f, n as p, t as m } from "./card-DNkZ-jvk.js";
+var h = e(r()),
+  g = t();
+function _() {
+  let { state: e } = l(),
+    [t, r] = (0, h.useState)(null),
+    _ = e.decisions || [],
+    v = (e, t) => {
+      (navigator.clipboard.writeText(e),
+        r(t),
+        c.success(`Cryptographic SHA-256 hash copied to clipboard.`),
+        setTimeout(() => r(null), 2e3));
+    };
+  return (0, g.jsxs)(`div`, {
+    className: `space-y-6`,
+    children: [
+      (0, g.jsx)(a, {
+        title: `Cryptographic Decision Registry`,
+        desc: `Permanent audit ledger of approved and rejected public benefit determinations with immutable SHA-256 state hashes.`,
+        crumbs: [
+          { label: `Auditor`, to: `/auditor/dashboard` },
+          { label: `Decisions` },
+        ],
+      }),
+      (0, g.jsx)(`div`, {
+        className: `space-y-4`,
+        children: _.map((e) =>
+          (0, g.jsxs)(
+            m,
+            {
+              className: `border-border/80 shadow-xs`,
+              children: [
+                (0, g.jsx)(f, {
+                  className: `p-5 pb-3`,
+                  children: (0, g.jsxs)(`div`, {
+                    className: `flex flex-wrap items-center justify-between gap-2`,
+                    children: [
+                      (0, g.jsxs)(`div`, {
+                        className: `flex items-center gap-2`,
+                        children: [
+                          (0, g.jsx)(o, { className: `h-4 w-4 text-primary` }),
+                          (0, g.jsx)(`span`, {
+                            className: `font-mono text-xs font-bold text-foreground`,
+                            children: e.id,
+                          }),
+                          (0, g.jsx)(d, {
+                            variant: `outline`,
+                            className: `text-[10px] ${e.decision === `APPROVED` ? `border-teal-400 bg-teal-500/10 text-teal-700 dark:text-teal-300` : `border-red-400 bg-red-500/10 text-red-700 dark:text-red-300`}`,
+                            children: e.decision,
+                          }),
+                        ],
+                      }),
+                      (0, g.jsxs)(`div`, {
+                        className: `text-xs text-muted-foreground font-mono`,
+                        children: [`Date: `, e.decidedAt],
+                      }),
+                    ],
+                  }),
+                }),
+                (0, g.jsxs)(p, {
+                  className: `p-5 pt-1 space-y-3 text-xs`,
+                  children: [
+                    (0, g.jsxs)(`div`, {
+                      className: `grid gap-3 sm:grid-cols-2 rounded-lg bg-muted/30 p-3`,
+                      children: [
+                        (0, g.jsxs)(`div`, {
+                          children: [
+                            (0, g.jsx)(`span`, {
+                              className: `text-muted-foreground text-[11px]`,
+                              children: `Application:`,
+                            }),
+                            (0, g.jsxs)(`div`, {
+                              className: `font-semibold text-foreground`,
+                              children: [e.applicationId, ` · `, e.schemeName],
+                            }),
+                          ],
+                        }),
+                        (0, g.jsxs)(`div`, {
+                          children: [
+                            (0, g.jsx)(`span`, {
+                              className: `text-muted-foreground text-[11px]`,
+                              children: `Beneficiary / Applicant:`,
+                            }),
+                            (0, g.jsx)(`div`, {
+                              className: `font-semibold text-foreground`,
+                              children: e.applicantName,
+                            }),
+                          ],
+                        }),
+                      ],
+                    }),
+                    (0, g.jsxs)(`div`, {
+                      children: [
+                        (0, g.jsx)(`span`, {
+                          className: `font-medium text-foreground`,
+                          children: `Statutory Determination Rationale:`,
+                        }),
+                        (0, g.jsxs)(`p`, {
+                          className: `mt-1 text-muted-foreground leading-relaxed italic bg-background p-2.5 rounded border border-border/60`,
+                          children: [`"`, e.justification, `"`],
+                        }),
+                      ],
+                    }),
+                    (0, g.jsxs)(`div`, {
+                      className: `flex flex-wrap items-center justify-between gap-3 border-t pt-3`,
+                      children: [
+                        (0, g.jsxs)(`div`, {
+                          className: `flex items-center gap-2 font-mono text-[11px] text-muted-foreground`,
+                          children: [
+                            (0, g.jsx)(s, {
+                              className: `h-4 w-4 text-teal-600 shrink-0`,
+                            }),
+                            (0, g.jsxs)(`span`, {
+                              className: `truncate max-w-xs sm:max-w-md`,
+                              children: [`SHA256: `, e.auditHash],
+                            }),
+                            (0, g.jsx)(n, {
+                              size: `icon`,
+                              variant: `ghost`,
+                              className: `h-6 w-6`,
+                              onClick: () => v(e.auditHash, e.id),
+                              children:
+                                t === e.id
+                                  ? (0, g.jsx)(u, {
+                                      className: `h-3 w-3 text-teal-600`,
+                                    })
+                                  : (0, g.jsx)(i, { className: `h-3 w-3` }),
+                            }),
+                          ],
+                        }),
+                        (0, g.jsxs)(`div`, {
+                          className: `text-right text-[11px] text-muted-foreground`,
+                          children: [
+                            `Affixed by: `,
+                            (0, g.jsx)(`strong`, {
+                              className: `text-foreground`,
+                              children: e.decidedBy,
+                            }),
+                            ` (`,
+                            e.statutoryRuleRef,
+                            `)`,
+                          ],
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            },
+            e.id,
+          ),
+        ),
+      }),
+    ],
+  });
+}
+export { _ as component };

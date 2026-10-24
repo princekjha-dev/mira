@@ -34,7 +34,10 @@ export function AttachmentRow({ attachment, onPreview }: AttachmentRowProps) {
     if (ext === "pdf" || type?.includes("pdf")) {
       return <FileText className="h-4 w-4 text-rose-500 shrink-0" />;
     }
-    if (["png", "jpg", "jpeg", "webp"].includes(ext || "") || type?.includes("image")) {
+    if (
+      ["png", "jpg", "jpeg", "webp"].includes(ext || "") ||
+      type?.includes("image")
+    ) {
       return <FileImage className="h-4 w-4 text-emerald-500 shrink-0" />;
     }
     if (["xlsx", "csv", "xls"].includes(ext || "") || type?.includes("sheet")) {
@@ -108,7 +111,8 @@ export function AttachmentRow({ attachment, onPreview }: AttachmentRowProps) {
                 <span>{attachment.name}</span>
               </DialogTitle>
               <DialogDescription className="text-xs text-muted-foreground mt-0.5">
-                {Math.round(attachment.size / 1024)} KB · Recorded in verification audit trail
+                {Math.round(attachment.size / 1024)} KB · Recorded in
+                verification audit trail
               </DialogDescription>
             </div>
             <div className="flex items-center gap-2 pr-6">

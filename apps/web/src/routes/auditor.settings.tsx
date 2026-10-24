@@ -8,7 +8,11 @@ import {
   FileCode,
   DownloadCloud,
 } from "lucide-react";
-import { ProfilePage, ProfileSection, ProfileRow } from "@/components/mira/profile";
+import {
+  ProfilePage,
+  ProfileSection,
+  ProfileRow,
+} from "@/components/mira/profile";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
@@ -16,7 +20,11 @@ export const Route = createFileRoute("/auditor/settings")({
   head: () => ({
     meta: [
       { title: "Profile & Standards — Forensic Auditor" },
-      { name: "description", content: "Senior forensic auditor profile, CAG compliance benchmarks, and cryptographic verification parameters." },
+      {
+        name: "description",
+        content:
+          "Senior forensic auditor profile, CAG compliance benchmarks, and cryptographic verification parameters.",
+      },
     ],
   }),
   component: AuditorProfileRoute,
@@ -45,7 +53,7 @@ function AuditorProfileRoute() {
                   toast.success(
                     val
                       ? "Strict Merkle verification enabled"
-                      : "Standard batch verification mode"
+                      : "Standard batch verification mode",
                   );
                 }}
               />
@@ -64,7 +72,7 @@ function AuditorProfileRoute() {
                   toast.success(
                     val
                       ? "Anomaly sentinel active"
-                      : "Anomaly sentinel disabled"
+                      : "Anomaly sentinel disabled",
                   );
                 }}
               />

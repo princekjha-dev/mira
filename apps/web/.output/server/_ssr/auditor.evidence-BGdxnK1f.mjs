@@ -4,17 +4,23 @@ import { t as FilesExplorer } from "./FilesExplorer-CjttA4u9.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/auditor.evidence-BGdxnK1f.js
 var import_jsx_runtime = require_jsx_runtime();
 function AuditorEvidencePage() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
-		className: "space-y-6",
-		children: [/* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageHeader, {
-			title: "Forensic Evidence & Document Vault",
-			desc: "Read-only forensic inspection of uploaded affidavits, land deeds, income certificates, and version trees.",
-			crumbs: [{
-				label: "Auditor",
-				to: "/auditor/dashboard"
-			}, { label: "Evidence Vault" }]
-		}), /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FilesExplorer, {})]
-	});
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsxs)("div", {
+    className: "space-y-6",
+    children: [
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(PageHeader, {
+        title: "Forensic Evidence & Document Vault",
+        desc: "Read-only forensic inspection of uploaded affidavits, land deeds, income certificates, and version trees.",
+        crumbs: [
+          {
+            label: "Auditor",
+            to: "/auditor/dashboard",
+          },
+          { label: "Evidence Vault" },
+        ],
+      }),
+      /* @__PURE__ */ (0, import_jsx_runtime.jsx)(FilesExplorer, {}),
+    ],
+  });
 }
 //#endregion
 export { AuditorEvidencePage as component };

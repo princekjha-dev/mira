@@ -1,1 +1,183 @@
-import{l as e,t}from"./button-KmRTh43o.js";import{t as n}from"./link-gIn96cdo.js";import{D as r,Dn as i,Nn as a,O as o,Pn as s,S as c,j as l,k as u,kn as d,mn as f,r as p}from"./index-B8Y-_llO.js";var m=e();function h(){let{id:e}=p.useParams(),{state:h}=f(),g=d.find(t=>t.id===e);if(!g)return(0,m.jsx)(c,{title:`No citizen record for ${e}`,body:`Demo records: C-1001 to C-1005.`,action:(0,m.jsx)(t,{asChild:!0,children:(0,m.jsx)(n,{to:`/officer/citizens/$id`,params:{id:`C-1001`},children:`Open C-1001`})})});let _=h.applications.filter(t=>t.citizenId===e);return(0,m.jsxs)(`div`,{className:`space-y-4`,children:[(0,m.jsx)(r,{title:g.name,desc:`Citizen ID ${g.id} · Access logged for audit`,crumbs:[{label:`Citizen Records`},{label:g.id}]}),(0,m.jsx)(o,{title:`Identity and registration`,children:(0,m.jsxs)(`dl`,{className:`grid gap-3 text-sm sm:grid-cols-3`,children:[(0,m.jsxs)(`div`,{children:[(0,m.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Date of birth`}),(0,m.jsx)(`dd`,{children:a(g.dob)})]}),(0,m.jsxs)(`div`,{children:[(0,m.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Gender`}),(0,m.jsx)(`dd`,{children:g.gender})]}),(0,m.jsxs)(`div`,{children:[(0,m.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Identity`}),(0,m.jsx)(`dd`,{children:(0,m.jsx)(u,{t:g.identity===`Verified`?`ok`:`warn`,children:g.identity})})]}),(0,m.jsxs)(`div`,{children:[(0,m.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Household`}),(0,m.jsx)(`dd`,{children:(0,m.jsx)(n,{to:`/officer/families/$id`,params:{id:i.householdId},className:`font-mono text-gov hover:underline`,children:i.householdId})})]}),(0,m.jsxs)(`div`,{children:[(0,m.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Relationship`}),(0,m.jsx)(`dd`,{children:g.relationship})]}),(0,m.jsxs)(`div`,{children:[(0,m.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Membership`}),(0,m.jsx)(`dd`,{children:g.membership})]})]})}),(0,m.jsx)(o,{title:`Record history`,children:(0,m.jsx)(`ul`,{className:`space-y-2`,children:g.history.map((e,t)=>(0,m.jsxs)(`li`,{className:`border-l-2 pl-3 text-sm`,children:[e.event,(0,m.jsx)(`span`,{className:`block text-xs text-muted-foreground`,children:a(e.date)})]},t))})}),(0,m.jsx)(o,{title:`Applications`,children:_.length?(0,m.jsx)(`ul`,{className:`divide-y`,children:_.map(e=>(0,m.jsxs)(`li`,{className:`flex items-center justify-between py-2 text-sm`,children:[(0,m.jsxs)(`span`,{children:[e.id,` · `,s(e.schemeId)?.name]}),(0,m.jsxs)(`span`,{className:`flex items-center gap-2`,children:[(0,m.jsx)(l,{s:e.status}),(0,m.jsx)(t,{size:`sm`,variant:`outline`,asChild:!0,children:(0,m.jsx)(n,{to:`/officer/applications/$id`,params:{id:e.id},children:`Open`})})]})]},e.id))}):(0,m.jsx)(`p`,{className:`text-sm text-muted-foreground`,children:`No applications.`})})]})}export{h as component};
+import { l as e, t } from "./button-KmRTh43o.js";
+import { t as n } from "./link-gIn96cdo.js";
+import {
+  D as r,
+  Dn as i,
+  Nn as a,
+  O as o,
+  Pn as s,
+  S as c,
+  j as l,
+  k as u,
+  kn as d,
+  mn as f,
+  r as p,
+} from "./index-B8Y-_llO.js";
+var m = e();
+function h() {
+  let { id: e } = p.useParams(),
+    { state: h } = f(),
+    g = d.find((t) => t.id === e);
+  if (!g)
+    return (0, m.jsx)(c, {
+      title: `No citizen record for ${e}`,
+      body: `Demo records: C-1001 to C-1005.`,
+      action: (0, m.jsx)(t, {
+        asChild: !0,
+        children: (0, m.jsx)(n, {
+          to: `/officer/citizens/$id`,
+          params: { id: `C-1001` },
+          children: `Open C-1001`,
+        }),
+      }),
+    });
+  let _ = h.applications.filter((t) => t.citizenId === e);
+  return (0, m.jsxs)(`div`, {
+    className: `space-y-4`,
+    children: [
+      (0, m.jsx)(r, {
+        title: g.name,
+        desc: `Citizen ID ${g.id} · Access logged for audit`,
+        crumbs: [{ label: `Citizen Records` }, { label: g.id }],
+      }),
+      (0, m.jsx)(o, {
+        title: `Identity and registration`,
+        children: (0, m.jsxs)(`dl`, {
+          className: `grid gap-3 text-sm sm:grid-cols-3`,
+          children: [
+            (0, m.jsxs)(`div`, {
+              children: [
+                (0, m.jsx)(`dt`, {
+                  className: `text-xs text-muted-foreground`,
+                  children: `Date of birth`,
+                }),
+                (0, m.jsx)(`dd`, { children: a(g.dob) }),
+              ],
+            }),
+            (0, m.jsxs)(`div`, {
+              children: [
+                (0, m.jsx)(`dt`, {
+                  className: `text-xs text-muted-foreground`,
+                  children: `Gender`,
+                }),
+                (0, m.jsx)(`dd`, { children: g.gender }),
+              ],
+            }),
+            (0, m.jsxs)(`div`, {
+              children: [
+                (0, m.jsx)(`dt`, {
+                  className: `text-xs text-muted-foreground`,
+                  children: `Identity`,
+                }),
+                (0, m.jsx)(`dd`, {
+                  children: (0, m.jsx)(u, {
+                    t: g.identity === `Verified` ? `ok` : `warn`,
+                    children: g.identity,
+                  }),
+                }),
+              ],
+            }),
+            (0, m.jsxs)(`div`, {
+              children: [
+                (0, m.jsx)(`dt`, {
+                  className: `text-xs text-muted-foreground`,
+                  children: `Household`,
+                }),
+                (0, m.jsx)(`dd`, {
+                  children: (0, m.jsx)(n, {
+                    to: `/officer/families/$id`,
+                    params: { id: i.householdId },
+                    className: `font-mono text-gov hover:underline`,
+                    children: i.householdId,
+                  }),
+                }),
+              ],
+            }),
+            (0, m.jsxs)(`div`, {
+              children: [
+                (0, m.jsx)(`dt`, {
+                  className: `text-xs text-muted-foreground`,
+                  children: `Relationship`,
+                }),
+                (0, m.jsx)(`dd`, { children: g.relationship }),
+              ],
+            }),
+            (0, m.jsxs)(`div`, {
+              children: [
+                (0, m.jsx)(`dt`, {
+                  className: `text-xs text-muted-foreground`,
+                  children: `Membership`,
+                }),
+                (0, m.jsx)(`dd`, { children: g.membership }),
+              ],
+            }),
+          ],
+        }),
+      }),
+      (0, m.jsx)(o, {
+        title: `Record history`,
+        children: (0, m.jsx)(`ul`, {
+          className: `space-y-2`,
+          children: g.history.map((e, t) =>
+            (0, m.jsxs)(
+              `li`,
+              {
+                className: `border-l-2 pl-3 text-sm`,
+                children: [
+                  e.event,
+                  (0, m.jsx)(`span`, {
+                    className: `block text-xs text-muted-foreground`,
+                    children: a(e.date),
+                  }),
+                ],
+              },
+              t,
+            ),
+          ),
+        }),
+      }),
+      (0, m.jsx)(o, {
+        title: `Applications`,
+        children: _.length
+          ? (0, m.jsx)(`ul`, {
+              className: `divide-y`,
+              children: _.map((e) =>
+                (0, m.jsxs)(
+                  `li`,
+                  {
+                    className: `flex items-center justify-between py-2 text-sm`,
+                    children: [
+                      (0, m.jsxs)(`span`, {
+                        children: [e.id, ` · `, s(e.schemeId)?.name],
+                      }),
+                      (0, m.jsxs)(`span`, {
+                        className: `flex items-center gap-2`,
+                        children: [
+                          (0, m.jsx)(l, { s: e.status }),
+                          (0, m.jsx)(t, {
+                            size: `sm`,
+                            variant: `outline`,
+                            asChild: !0,
+                            children: (0, m.jsx)(n, {
+                              to: `/officer/applications/$id`,
+                              params: { id: e.id },
+                              children: `Open`,
+                            }),
+                          }),
+                        ],
+                      }),
+                    ],
+                  },
+                  e.id,
+                ),
+              ),
+            })
+          : (0, m.jsx)(`p`, {
+              className: `text-sm text-muted-foreground`,
+              children: `No applications.`,
+            }),
+      }),
+    ],
+  });
+}
+export { h as component };

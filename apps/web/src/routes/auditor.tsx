@@ -18,9 +18,17 @@ import { WorkspaceShell, type NavItem } from "@/components/gov/WorkspaceShell";
 export const Route = createFileRoute("/auditor")({ component: AuditorLayout });
 
 const ITEMS: NavItem[] = [
-  { to: "/auditor/dashboard", label: "Forensic Overview", icon: LayoutDashboard },
+  {
+    to: "/auditor/dashboard",
+    label: "Forensic Overview",
+    icon: LayoutDashboard,
+  },
   { to: "/auditor/audit", label: "Audit Ledger", icon: ScrollText },
-  { to: "/auditor/applications", label: "Applications Audit", icon: FileSearch },
+  {
+    to: "/auditor/applications",
+    label: "Applications Audit",
+    icon: FileSearch,
+  },
   { to: "/auditor/decisions", label: "Hashed Decisions", icon: Scale },
   { to: "/auditor/evidence", label: "Evidence Vault", icon: FileCheck2 },
   { to: "/auditor/rules", label: "Eligibility Rule Audit", icon: Scale },

@@ -1,7 +1,7 @@
-use serde::{Deserialize, Serialize};
-use std::process::Command;
 use crate::domain::document::models::BoundingBox;
 use crate::errors::AppError;
+use serde::{Deserialize, Serialize};
+use std::process::Command;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct OcrExtractedPage {
@@ -46,7 +46,10 @@ impl BilingualOcrProvider {
     /// Pre-OCR document quality analysis
     pub fn check_quality(filename: &str, data: &[u8]) -> Option<String> {
         // Deliberate test scenario marker for low-quality demo
-        if filename.to_lowercase().contains("messy") || filename.to_lowercase().contains("blurry") || filename.to_lowercase().contains("low_quality") {
+        if filename.to_lowercase().contains("messy")
+            || filename.to_lowercase().contains("blurry")
+            || filename.to_lowercase().contains("low_quality")
+        {
             return Some("DOCUMENT_QUALITY_WARNING: Document image appears degraded or blurred. Extraction confidence reduced; manual verification recommended.".to_string());
         }
 
@@ -132,7 +135,9 @@ impl OCRProvider for BilingualOcrProvider {
         if mime_type == "application/pdf" {
             if let Some(native_text) = Self::try_native_pdf_text(data) {
                 let regions = generate_bounding_boxes_for_text(&native_text, 1);
-                let is_hindi = native_text.chars().any(|c| ('\u{0900}'..='\u{097F}').contains(&c));
+                let is_hindi = native_text
+                    .chars()
+                    .any(|c| ('\u{0900}'..='\u{097F}').contains(&c));
                 let lang = if is_hindi { "hi-en" } else { "en" };
 
                 return Ok(OcrDocumentOutput {
@@ -162,9 +167,15 @@ impl OCRProvider for BilingualOcrProvider {
             generate_fallback_ocr_text_from_filename(filename)
         };
 
-        let is_hindi = extracted_text.chars().any(|c| ('\u{0900}'..='\u{097F}').contains(&c));
+        let is_hindi = extracted_text
+            .chars()
+            .any(|c| ('\u{0900}'..='\u{097F}').contains(&c));
         let lang = if is_hindi { "hi-en" } else { "en" };
-        let confidence = if quality_warning.is_some() { 0.68 } else { 0.94 };
+        let confidence = if quality_warning.is_some() {
+            0.68
+        } else {
+            0.94
+        };
 
         let regions = generate_bounding_boxes_for_text(&extracted_text, 1);
 
@@ -227,7 +238,8 @@ pub fn generate_fallback_ocr_text_from_filename(filename: &str) -> String {
         } else {
             "GOVERNMENT OF UTTAR PRADESH\nREVENUE DEPARTMENT\nINCOME CERTIFICATE / आय प्रमाण पत्र\nCertificate No: INC-UP-2025-1029\nIssue Date: 10/01/2025\nApplicant Name / प्रार्थी का नाम: Rahul Kumar (राहुल कुमार)\nDate of Birth: 12/04/1998\nFather's Name: Ramesh Kumar\nAnnual Income / वार्षिक आय: ₹ 95,000 (Ninety Five Thousand Rupees Only)\nFinancial Year: 2024-2025\nAddress: House No 42, Ward 7, Nadesar, Varanasi, UP - 221002\nIssuing Authority: Tehsildar Varanasi Sadar".to_string()
         }
-    } else if lower.contains("property") || lower.contains("sanitation") || lower.contains("toilet") {
+    } else if lower.contains("property") || lower.contains("sanitation") || lower.contains("toilet")
+    {
         "URBAN DEVELOPMENT DEPARTMENT\nPROPERTY & HOUSING INFRASTRUCTURE CERTIFICATE\nCertificate Reference: CERT-PROP-2025-410\nProperty Identifier: P001\nOwner / Occupant: Kumar Family Household\nBeneficiary: Rahul Kumar\nAddress: House No 42, Ward 7, Nadesar, Varanasi, UP - 221002\nApproved Facility: Individual Household Latrine (IHHL)\nVerification Date: 10/02/2025\nIssuing Officer: Municipal Executive Officer".to_string()
     } else if lower.contains("messy") || lower.contains("blurry") {
         "GOVT OF UP\nCERTIFICATE (LOW QUALITY SCAN)\nName: Sunita Devi / सुनीता देवी\nDOB: 12/05/1995 (Unclear OCR: 12/O5/199S)\nParent: Ram Lal\nAddress: Plot 9, Dashashwamedh, Varanasi\nStatus: Unverified blur detected".to_string()

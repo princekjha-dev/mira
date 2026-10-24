@@ -5,7 +5,11 @@ export const Route = createFileRoute("/officer/inbox")({
   head: () => ({
     meta: [
       { title: "Communications — Field Operational Workspace" },
-      { name: "description", content: "Official messages, citizen clarifications, assignments and departmental correspondence." },
+      {
+        name: "description",
+        content:
+          "Official messages, citizen clarifications, assignments and departmental correspondence.",
+      },
     ],
   }),
   component: OfficerInboxPage,

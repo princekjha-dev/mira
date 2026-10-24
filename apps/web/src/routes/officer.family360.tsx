@@ -68,17 +68,19 @@ export function OfficerFamily360Page() {
               className="h-8 pl-8 text-xs font-mono bg-white dark:bg-slate-900"
             />
           </div>
-          <Button type="submit" size="sm" variant="outline" className="h-8 text-xs">
+          <Button
+            type="submit"
+            size="sm"
+            variant="outline"
+            className="h-8 text-xs"
+          >
             Inspect
           </Button>
         </form>
       </div>
 
       {/* Family360 Component */}
-      <Family360
-        householdId={activeHouseholdId}
-        role="officer"
-      />
+      <Family360 householdId={activeHouseholdId} role="officer" />
 
       {/* Operational Shortcuts */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">

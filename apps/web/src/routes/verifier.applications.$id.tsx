@@ -19,11 +19,30 @@ import {
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-state";
 import { getScheme, fmtDate } from "@/lib/data";
-import { PageHeader, StatusBadge, Timeline, Empty, Pill } from "@/components/gov/ui";
+import {
+  PageHeader,
+  StatusBadge,
+  Timeline,
+  Empty,
+  Pill,
+} from "@/components/gov/ui";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@/components/ui/dialog";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { CommentsThread } from "@/components/gov/CommentsThread";
 import { DocumentViewer } from "@/components/gov/DocumentViewer";
@@ -33,7 +52,11 @@ export const Route = createFileRoute("/verifier/applications/$id")({
   head: ({ params }) => ({
     meta: [
       { title: `Verify Application ${params.id} — Verifier Workstation` },
-      { name: "description", content: "Comprehensive determination workbench and document cross-verification." },
+      {
+        name: "description",
+        content:
+          "Comprehensive determination workbench and document cross-verification.",
+      },
     ],
   }),
   component: VerifierAppDetailWorkbench,
@@ -42,23 +65,33 @@ export const Route = createFileRoute("/verifier/applications/$id")({
 function VerifierAppDetailWorkbench() {
   const { id } = Route.useParams();
   const { state, updateApp, addAudit } = useApp();
-  const a = state.applications.find((x) => x.id === id || (x as any).rawId === id);
+  const a = state.applications.find(
+    (x) => x.id === id || (x as any).rawId === id,
+  );
 
-  const [decisionDlg, setDecisionDlg] = useState<null | "approve" | "reject" | "evidence" | "escalate">(null);
+  const [decisionDlg, setDecisionDlg] = useState<
+    null | "approve" | "reject" | "evidence" | "escalate"
+  >(null);
   const [reason, setReason] = useState("");
   const [submittedDocs, setSubmittedDocs] = useState<ApiDocument[]>([]);
   const [activeDoc, setActiveDoc] = useState<ApiDocument | null>(null);
 
-  const loadDocuments = () => {
-    if (!state.session?.apiToken) return;
-    const targetId = (a as any)?.rawId || a?.id;
-    if (!targetId) return;
-    apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/applications/${targetId}/documents`)
+  const targetAppId = (a as { rawId?: string } | undefined)?.rawId || a?.id;
+
+  const loadDocuments = useCallback(() => {
+    if (!state.session?.apiToken || !targetAppId) return;
+    apiRequest<{ data: ApiDocument[] }>(
+      state.session,
+      `/api/v1/applications/${targetAppId}/documents`,
+    )
       .then((res) => {
         if (res.data && res.data.length > 0) {
           setSubmittedDocs(res.data);
         } else {
-          apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/documents`)
+          apiRequest<{ data: ApiDocument[] }>(
+            state.session,
+            `/api/v1/documents`,
+          )
             .then((all) => setSubmittedDocs(all.data || []))
             .catch(() => setSubmittedDocs([]));
         }
@@ -68,13 +101,13 @@ function VerifierAppDetailWorkbench() {
           .then((all) => setSubmittedDocs(all.data || []))
           .catch(() => setSubmittedDocs([]));
       });
-  };
+  }, [state.session, targetAppId]);
 
   useEffect(() => {
     if (a) {
       loadDocuments();
     }
-  }, [a?.id, (a as any)?.rawId, state.session?.apiToken]);
+  }, [a, loadDocuments]);
 
   if (!a) {
     return (
@@ -97,13 +130,17 @@ function VerifierAppDetailWorkbench() {
     documents: ["Income Certificate", "Residence Certificate"],
   };
 
-  const handleDecision = (outcome: "Approved" | "Rejected" | "Additional Evidence Required" | "Escalated") => {
+  const handleDecision = (
+    outcome:
+      "Approved" | "Rejected" | "Additional Evidence Required" | "Escalated",
+  ) => {
     if (!reason.trim()) {
       toast.error("Please enter a determination note or legal finding.");
       return;
     }
 
-    const officerName = state.session?.name || "Neha Verma (Verification Officer)";
+    const officerName =
+      state.session?.name || "Neha Verma (Verification Officer)";
 
     if (outcome === "Approved") {
       updateApp(
@@ -120,7 +157,7 @@ function VerifierAppDetailWorkbench() {
           },
         },
         `Statutory approval granted: ${reason.trim()}`,
-        officerName
+        officerName,
       );
       addAudit({
         actor: officerName,
@@ -130,7 +167,9 @@ function VerifierAppDetailWorkbench() {
         next: "Approved",
         reason: reason.trim(),
       });
-      toast.success(`Application ${a.id} approved. Benefit entitlement generated.`);
+      toast.success(
+        `Application ${a.id} approved. Benefit entitlement generated.`,
+      );
     } else if (outcome === "Rejected") {
       updateApp(
         a.id,
@@ -146,7 +185,7 @@ function VerifierAppDetailWorkbench() {
           },
         },
         `Application rejected with cause: ${reason.trim()}`,
-        officerName
+        officerName,
       );
       addAudit({
         actor: officerName,
@@ -164,7 +203,7 @@ function VerifierAppDetailWorkbench() {
           status: "Additional Evidence Required",
         },
         `Clarification required from citizen: ${reason.trim()}`,
-        officerName
+        officerName,
       );
       addAudit({
         actor: officerName,
@@ -182,7 +221,7 @@ function VerifierAppDetailWorkbench() {
           status: "Verification Required",
         },
         `Escalated to Supervisor: ${reason.trim()}`,
-        officerName
+        officerName,
       );
       addAudit({
         actor: officerName,
@@ -204,7 +243,10 @@ function VerifierAppDetailWorkbench() {
       <PageHeader
         title={`Determination: ${s.name}`}
         desc={`${a.id} · Applicant: ${a.applicant} · Household: ${a.householdId}`}
-        crumbs={[{ label: "Verifier Queue", to: "/verifier/queue" }, { label: a.id }]}
+        crumbs={[
+          { label: "Verifier Queue", to: "/verifier/queue" },
+          { label: a.id },
+        ]}
         actions={
           <div className="flex flex-wrap items-center gap-2">
             <Button
@@ -256,7 +298,9 @@ function VerifierAppDetailWorkbench() {
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
                   <StatusBadge s={a.status} />
-                  <span className="text-xs text-muted-foreground">Updated {fmtDate(a.updatedOn)}</span>
+                  <span className="text-xs text-muted-foreground">
+                    Updated {fmtDate(a.updatedOn)}
+                  </span>
                 </div>
                 <Badge variant="outline" className="text-[10px]">
                   Stage {a.stage} / 6
@@ -268,10 +312,15 @@ function VerifierAppDetailWorkbench() {
                 <div className="rounded-lg border border-blue-300/40 bg-blue-500/10 p-3 text-blue-900 dark:text-blue-200">
                   <div className="flex items-center gap-2 font-semibold">
                     <ShieldCheck className="h-4 w-4 text-blue-600" />
-                    <span>Household Lineage Cross-Match (Duplicate Signal)</span>
+                    <span>
+                      Household Lineage Cross-Match (Duplicate Signal)
+                    </span>
                   </div>
                   <p className="mt-1 text-[11px] opacity-90">
-                    Earlier benefit sanctioned in 2019 for pre-split household lineage. March 2021 formal bifurcation registered in family register. Determination must verify distinct independent dwelling status.
+                    Earlier benefit sanctioned in 2019 for pre-split household
+                    lineage. March 2021 formal bifurcation registered in family
+                    register. Determination must verify distinct independent
+                    dwelling status.
                   </p>
                 </div>
               )}
@@ -284,12 +333,20 @@ function VerifierAppDetailWorkbench() {
                   </div>
                   <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
                     <div>
-                      <span className="text-muted-foreground">Citizen Declared:</span>
-                      <p className="font-semibold text-foreground">{a.mismatch.declared}</p>
+                      <span className="text-muted-foreground">
+                        Citizen Declared:
+                      </span>
+                      <p className="font-semibold text-foreground">
+                        {a.mismatch.declared}
+                      </p>
                     </div>
                     <div>
-                      <span className="text-muted-foreground">{a.mismatch.source}:</span>
-                      <p className="font-semibold text-foreground">{a.mismatch.document}</p>
+                      <span className="text-muted-foreground">
+                        {a.mismatch.source}:
+                      </span>
+                      <p className="font-semibold text-foreground">
+                        {a.mismatch.document}
+                      </p>
                     </div>
                   </div>
                 </div>
@@ -297,9 +354,15 @@ function VerifierAppDetailWorkbench() {
 
               {a.decision && (
                 <div className="rounded-lg border border-teal-300/40 bg-teal-500/10 p-3 text-teal-900 dark:text-teal-200">
-                  <div className="font-semibold">Official Determination: {a.decision.outcome}</div>
-                  <p className="mt-1 text-[11px]">Reason: {a.decision.reason}</p>
-                  <p className="mt-1 text-[10px] text-muted-foreground">By {a.decision.by} on {fmtDate(a.decision.date)}</p>
+                  <div className="font-semibold">
+                    Official Determination: {a.decision.outcome}
+                  </div>
+                  <p className="mt-1 text-[11px]">
+                    Reason: {a.decision.reason}
+                  </p>
+                  <p className="mt-1 text-[10px] text-muted-foreground">
+                    By {a.decision.by} on {fmtDate(a.decision.date)}
+                  </p>
                 </div>
               )}
             </CardContent>
@@ -315,7 +378,8 @@ function VerifierAppDetailWorkbench() {
                     Submitted Documents & Evidence
                   </CardTitle>
                   <CardDescription className="text-xs">
-                    Certificates attached to this application with OCR extracted intelligence
+                    Certificates attached to this application with OCR extracted
+                    intelligence
                   </CardDescription>
                 </div>
                 <Badge variant="outline" className="text-[10px]">
@@ -341,8 +405,8 @@ function VerifierAppDetailWorkbench() {
                               isConflicting
                                 ? "text-amber-600"
                                 : doc.verification_status === "VERIFIED"
-                                ? "text-emerald-600"
-                                : "text-slate-500"
+                                  ? "text-emerald-600"
+                                  : "text-slate-500"
                             }`}
                           />
                           <div className="min-w-0">
@@ -361,10 +425,10 @@ function VerifierAppDetailWorkbench() {
                               doc.verification_status === "VERIFIED"
                                 ? "border-emerald-300 bg-emerald-50 text-emerald-800"
                                 : isConflicting
-                                ? "border-amber-300 bg-amber-50 text-amber-900"
-                                : doc.verification_status === "REJECTED"
-                                ? "border-red-300 bg-red-50 text-red-800"
-                                : "border-slate-300 bg-slate-100 text-slate-700"
+                                  ? "border-amber-300 bg-amber-50 text-amber-900"
+                                  : doc.verification_status === "REJECTED"
+                                    ? "border-red-300 bg-red-50 text-red-800"
+                                    : "border-slate-300 bg-slate-100 text-slate-700"
                             }`}
                           >
                             {doc.verification_status}
@@ -394,36 +458,61 @@ function VerifierAppDetailWorkbench() {
           {/* Scheme Criteria Checklist */}
           <Card className="border-border/80 shadow-xs">
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-semibold">Statutory Eligibility Verification</CardTitle>
-              <CardDescription className="text-xs">Criteria prescribed under {s.name}</CardDescription>
+              <CardTitle className="text-sm font-semibold">
+                Statutory Eligibility Verification
+              </CardTitle>
+              <CardDescription className="text-xs">
+                Criteria prescribed under {s.name}
+              </CardDescription>
             </CardHeader>
             <CardContent className="p-4 pt-1 space-y-2 text-xs">
               <div className="flex items-center justify-between border-b pb-2">
                 <div>
-                  <span className="font-medium text-foreground">Annual Household Income &lt; ₹ 2,00,000</span>
-                  <p className="text-[11px] text-muted-foreground">Verified against Tehsildar & State Revenue Registry</p>
+                  <span className="font-medium text-foreground">
+                    Annual Household Income &lt; ₹ 2,00,000
+                  </span>
+                  <p className="text-[11px] text-muted-foreground">
+                    Verified against Tehsildar & State Revenue Registry
+                  </p>
                 </div>
-                <Badge variant="outline" className="border-teal-400 bg-teal-500/10 text-teal-700 text-[10px]">
+                <Badge
+                  variant="outline"
+                  className="border-teal-400 bg-teal-500/10 text-teal-700 text-[10px]"
+                >
                   Pass (₹ 1,72,000)
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between border-b pb-2">
                 <div>
-                  <span className="font-medium text-foreground">Rural Residence & Land Holding</span>
-                  <p className="text-[11px] text-muted-foreground">Plot 42/Ward 7 recorded in UP Bhulekh Khatauni</p>
+                  <span className="font-medium text-foreground">
+                    Rural Residence & Land Holding
+                  </span>
+                  <p className="text-[11px] text-muted-foreground">
+                    Plot 42/Ward 7 recorded in UP Bhulekh Khatauni
+                  </p>
                 </div>
-                <Badge variant="outline" className="border-teal-400 bg-teal-500/10 text-teal-700 text-[10px]">
+                <Badge
+                  variant="outline"
+                  className="border-teal-400 bg-teal-500/10 text-teal-700 text-[10px]"
+                >
                   Pass (0.18 Ha)
                 </Badge>
               </div>
 
               <div className="flex items-center justify-between pb-1">
                 <div>
-                  <span className="font-medium text-foreground">No Prior Disqualifying Benefit in 5 Years</span>
-                  <p className="text-[11px] text-muted-foreground">Household split authenticated by Gram Panchayat</p>
+                  <span className="font-medium text-foreground">
+                    No Prior Disqualifying Benefit in 5 Years
+                  </span>
+                  <p className="text-[11px] text-muted-foreground">
+                    Household split authenticated by Gram Panchayat
+                  </p>
                 </div>
-                <Badge variant="outline" className="border-blue-400 bg-blue-500/10 text-blue-700 text-[10px]">
+                <Badge
+                  variant="outline"
+                  className="border-blue-400 bg-blue-500/10 text-blue-700 text-[10px]"
+                >
                   Requires Sign-off
                 </Badge>
               </div>
@@ -438,7 +527,9 @@ function VerifierAppDetailWorkbench() {
         <div className="space-y-6">
           <Card className="border-border/80 shadow-xs">
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-semibold">Application Lifecycle</CardTitle>
+              <CardTitle className="text-sm font-semibold">
+                Application Lifecycle
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-1">
               <Timeline app={a} />
@@ -447,7 +538,9 @@ function VerifierAppDetailWorkbench() {
 
           <Card className="border-border/80 shadow-xs">
             <CardHeader className="p-4 pb-2">
-              <CardTitle className="text-sm font-semibold">Household Summary</CardTitle>
+              <CardTitle className="text-sm font-semibold">
+                Household Summary
+              </CardTitle>
             </CardHeader>
             <CardContent className="p-4 pt-1 space-y-2 text-xs">
               <div className="flex justify-between border-b pb-1.5">
@@ -455,13 +548,19 @@ function VerifierAppDetailWorkbench() {
                 <span className="font-mono font-medium">{a.householdId}</span>
               </div>
               <div className="flex justify-between border-b pb-1.5">
-                <span className="text-muted-foreground">Members Registered:</span>
+                <span className="text-muted-foreground">
+                  Members Registered:
+                </span>
                 <span className="font-medium font-semibold text-blue-900 dark:text-blue-200">
-                  {a.householdId?.includes("10482") ? "35 Members (Multi-Gen)" : "5 Members"}
+                  {a.householdId?.includes("10482")
+                    ? "35 Members (Multi-Gen)"
+                    : "5 Members"}
                 </span>
               </div>
               <div className="flex justify-between border-b pb-1.5">
-                <span className="text-muted-foreground">Registration Date:</span>
+                <span className="text-muted-foreground">
+                  Registration Date:
+                </span>
                 <span className="font-medium">February 2010</span>
               </div>
               <div className="flex justify-between pb-1">
@@ -489,17 +588,20 @@ function VerifierAppDetailWorkbench() {
 
       {/* Decision Dialogs */}
       {decisionDlg && (
-        <Dialog open={!!decisionDlg} onOpenChange={(open) => !open && setDecisionDlg(null)}>
+        <Dialog
+          open={!!decisionDlg}
+          onOpenChange={(open) => !open && setDecisionDlg(null)}
+        >
           <DialogContent className="max-w-md">
             <DialogHeader>
               <DialogTitle className="capitalize">
                 {decisionDlg === "approve"
                   ? "Approve Application & Entitlement"
                   : decisionDlg === "reject"
-                  ? "Issue Rejection Order"
-                  : decisionDlg === "evidence"
-                  ? "Request Additional Evidence"
-                  : "Escalate to Supervisor"}
+                    ? "Issue Rejection Order"
+                    : decisionDlg === "evidence"
+                      ? "Request Additional Evidence"
+                      : "Escalate to Supervisor"}
               </DialogTitle>
               <DialogDescription className="text-xs">
                 {decisionDlg === "approve"
@@ -510,7 +612,9 @@ function VerifierAppDetailWorkbench() {
 
             <div className="space-y-3 py-2 text-xs">
               <div>
-                <label className="font-medium text-foreground">Determination Finding / Directive Note</label>
+                <label className="font-medium text-foreground">
+                  Determination Finding / Directive Note
+                </label>
                 <Textarea
                   value={reason}
                   onChange={(e) => setReason(e.target.value)}
@@ -518,8 +622,8 @@ function VerifierAppDetailWorkbench() {
                     decisionDlg === "approve"
                       ? "e.g. All statutory criteria met. Household split confirmed independent. Prior 2019 benefit pertained to separate brother-in-law dwelling."
                       : decisionDlg === "reject"
-                      ? "e.g. Ineligible under Rule 8(b): Income ceiling exceeded based on revenue records."
-                      : "e.g. Please furnish registered partition deed or Gram Panchayat resolution."
+                        ? "e.g. Ineligible under Rule 8(b): Income ceiling exceeded based on revenue records."
+                        : "e.g. Please furnish registered partition deed or Gram Panchayat resolution."
                   }
                   rows={4}
                   className="mt-1 text-xs"
@@ -528,7 +632,11 @@ function VerifierAppDetailWorkbench() {
             </div>
 
             <DialogFooter>
-              <Button variant="outline" size="sm" onClick={() => setDecisionDlg(null)}>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setDecisionDlg(null)}
+              >
                 Cancel
               </Button>
               <Button
@@ -539,10 +647,10 @@ function VerifierAppDetailWorkbench() {
                     decisionDlg === "approve"
                       ? "Approved"
                       : decisionDlg === "reject"
-                      ? "Rejected"
-                      : decisionDlg === "evidence"
-                      ? "Additional Evidence Required"
-                      : "Escalated"
+                        ? "Rejected"
+                        : decisionDlg === "evidence"
+                          ? "Additional Evidence Required"
+                          : "Escalated",
                   )
                 }
               >

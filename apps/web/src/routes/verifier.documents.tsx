@@ -11,7 +11,13 @@ import {
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { PageHeader } from "@/components/gov/ui";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 
@@ -19,7 +25,10 @@ export const Route = createFileRoute("/verifier/documents")({
   head: () => ({
     meta: [
       { title: "Document Comparison Tool — Verifier Workstation" },
-      { name: "description", content: "Side-by-side OCR and registry comparison workstation." },
+      {
+        name: "description",
+        content: "Side-by-side OCR and registry comparison workstation.",
+      },
     ],
   }),
   component: VerifierDocumentsPage,
@@ -27,7 +36,9 @@ export const Route = createFileRoute("/verifier/documents")({
 
 function VerifierDocumentsPage() {
   const { state } = useApp();
-  const [selectedDoc, setSelectedDoc] = useState("Aadhaar Card — Rajesh Sharma");
+  const [selectedDoc, setSelectedDoc] = useState(
+    "Aadhaar Card — Rajesh Sharma",
+  );
 
   const records = [
     {
@@ -92,15 +103,22 @@ function VerifierDocumentsPage() {
       <PageHeader
         title="Side-by-Side Document Comparison"
         desc="Cross-reference citizen document uploads against authoritative state registries and digital repositories."
-        crumbs={[{ label: "Verifier", to: "/verifier/dashboard" }, { label: "Documents" }]}
+        crumbs={[
+          { label: "Verifier", to: "/verifier/dashboard" },
+          { label: "Documents" },
+        ]}
       />
 
       <div className="grid gap-6 lg:grid-cols-4">
         {/* Document Selector Column */}
         <Card className="border-border/80 shadow-xs lg:col-span-1">
           <CardHeader className="p-4 pb-2">
-            <CardTitle className="text-sm font-semibold">Available Documents</CardTitle>
-            <CardDescription className="text-xs">Sharma Household (HH-UP-0417-2291)</CardDescription>
+            <CardTitle className="text-sm font-semibold">
+              Available Documents
+            </CardTitle>
+            <CardDescription className="text-xs">
+              Sharma Household (HH-UP-0417-2291)
+            </CardDescription>
           </CardHeader>
           <CardContent className="p-2 space-y-1">
             {records.map((r) => (
@@ -130,7 +148,9 @@ function VerifierDocumentsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <FileText className="h-4 w-4 text-primary" />
-                    <CardTitle className="text-sm font-semibold">Citizen Declared Record</CardTitle>
+                    <CardTitle className="text-sm font-semibold">
+                      Citizen Declared Record
+                    </CardTitle>
                   </div>
                   <Badge variant="outline" className="text-[10px]">
                     {current.docId}
@@ -140,8 +160,12 @@ function VerifierDocumentsPage() {
               <CardContent className="p-4 space-y-3 text-xs">
                 {Object.entries(current.declared).map(([k, v]) => (
                   <div key={k} className="border-b pb-2 last:border-0">
-                    <div className="text-muted-foreground capitalize text-[11px]">{k.replace(/([A-Z])/g, " $1")}</div>
-                    <div className="font-medium text-foreground mt-0.5">{String(v)}</div>
+                    <div className="text-muted-foreground capitalize text-[11px]">
+                      {k.replace(/([A-Z])/g, " $1")}
+                    </div>
+                    <div className="font-medium text-foreground mt-0.5">
+                      {String(v)}
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -153,7 +177,9 @@ function VerifierDocumentsPage() {
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-2">
                     <ShieldCheck className="h-4 w-4 text-emerald-600" />
-                    <CardTitle className="text-sm font-semibold">Authoritative Registry Source</CardTitle>
+                    <CardTitle className="text-sm font-semibold">
+                      Authoritative Registry Source
+                    </CardTitle>
                   </div>
                   <Badge
                     variant="outline"
@@ -170,8 +196,12 @@ function VerifierDocumentsPage() {
               <CardContent className="p-4 space-y-3 text-xs">
                 {Object.entries(current.registry).map(([k, v]) => (
                   <div key={k} className="border-b pb-2 last:border-0">
-                    <div className="text-muted-foreground capitalize text-[11px]">{k.replace(/([A-Z])/g, " $1")}</div>
-                    <div className="font-medium text-foreground mt-0.5">{String(v)}</div>
+                    <div className="text-muted-foreground capitalize text-[11px]">
+                      {k.replace(/([A-Z])/g, " $1")}
+                    </div>
+                    <div className="font-medium text-foreground mt-0.5">
+                      {String(v)}
+                    </div>
                   </div>
                 ))}
               </CardContent>
@@ -182,7 +212,10 @@ function VerifierDocumentsPage() {
           <Card className="border-border/80 shadow-xs">
             <CardContent className="p-4 flex flex-wrap items-center justify-between gap-3 text-xs">
               <div className="text-muted-foreground">
-                Document checksum: <span className="font-mono text-foreground font-semibold">SHA-256: 7d4a…81b3</span>
+                Document checksum:{" "}
+                <span className="font-mono text-foreground font-semibold">
+                  SHA-256: 7d4a…81b3
+                </span>
               </div>
               <div className="flex items-center gap-2">
                 <Button size="sm" variant="outline" className="h-8 text-xs">

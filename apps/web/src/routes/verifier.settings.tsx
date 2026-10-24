@@ -9,7 +9,11 @@ import {
   CheckCircle2,
   FileCheck2,
 } from "lucide-react";
-import { ProfilePage, ProfileSection, ProfileRow } from "@/components/mira/profile";
+import {
+  ProfilePage,
+  ProfileSection,
+  ProfileRow,
+} from "@/components/mira/profile";
 import { Switch } from "@/components/ui/switch";
 import { Button } from "@/components/ui/button";
 
@@ -17,7 +21,11 @@ export const Route = createFileRoute("/verifier/settings")({
   head: () => ({
     meta: [
       { title: "Profile & Workstation — Verification Officer" },
-      { name: "description", content: "Verification officer identity, workstation parameters, and cryptographic token status." },
+      {
+        name: "description",
+        content:
+          "Verification officer identity, workstation parameters, and cryptographic token status.",
+      },
     ],
   }),
   component: VerifierProfileRoute,
@@ -46,7 +54,7 @@ function VerifierProfileRoute() {
                   toast.success(
                     val
                       ? "Auto-triage enabled: next case will auto-lock"
-                      : "Auto-triage disabled: manual queue selection active"
+                      : "Auto-triage disabled: manual queue selection active",
                   );
                 }}
               />
@@ -65,7 +73,7 @@ function VerifierProfileRoute() {
                   toast.success(
                     val
                       ? "Workstation local cache enabled"
-                      : "Workstation cache purged"
+                      : "Workstation cache purged",
                   );
                 }}
               />

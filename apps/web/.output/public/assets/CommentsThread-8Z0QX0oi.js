@@ -1,1 +1,309 @@
-import{c as e,f as t,l as n,r,t as i,u as a}from"./button-KmRTh43o.js";import{t as o}from"./corner-down-right-DLOWz3yr.js";import{t as s}from"./send-DIfBWT5Y.js";import{N as c,Tt as l,mn as u}from"./index-B8Y-_llO.js";var d=e(`at-sign`,[[`circle`,{cx:`12`,cy:`12`,r:`4`,key:`4exip2`}],[`path`,{d:`M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8`,key:`7n84p3`}]]),f=e(`message-square`,[[`path`,{d:`M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z`,key:`18887p`}]]),p=t(a(),1),m=n();function h({recordType:e,recordId:t,title:n=`Collaboration & Official Notes`}){let{state:a,addComment:h}=u(),[g,_]=(0,p.useState)(``),[v,y]=(0,p.useState)({}),[b,x]=(0,p.useState)(null),S=a.comments.filter(n=>n.recordType===e&&n.recordId===t),C=n=>{if(n.preventDefault(),!g.trim())return;let r=Array.from(g.matchAll(/@(\w+)/g)).map(e=>e[1]);h({recordType:e,recordId:t,text:g.trim(),mentions:r}),l.success(`Note added to official thread`),_(``)},w=n=>{let r=v[n]?.trim();if(!r)return;let i=Array.from(r.matchAll(/@(\w+)/g)).map(e=>e[1]);h({recordType:e,recordId:t,text:r,mentions:i,replyToId:n}),l.success(`Reply recorded`),y({...v,[n]:``}),x(null)},T=e=>{switch(e){case`verifier`:return`bg-teal/15 text-teal border-teal/20`;case`officer`:return`bg-gov/15 text-gov border-gov/20`;case`admin`:return`bg-purple-100 text-purple-800 border-purple-200`;case`auditor`:return`bg-slate-200 text-slate-800 border-slate-300`;default:return`bg-blue-50 text-blue-800 border-blue-200`}};return(0,m.jsxs)(`div`,{className:`rounded-xl border bg-white p-5 shadow-xs space-y-4`,children:[(0,m.jsxs)(`div`,{className:`flex items-center justify-between border-b pb-3`,children:[(0,m.jsxs)(`div`,{className:`flex items-center gap-2`,children:[(0,m.jsx)(f,{className:`h-4 w-4 text-gov`}),(0,m.jsx)(`h3`,{className:`text-sm font-bold text-navy`,children:n}),(0,m.jsx)(`span`,{className:`rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700`,children:S.length})]}),(0,m.jsxs)(`span`,{className:`text-[11px] text-muted-foreground`,children:[`Use `,(0,m.jsx)(`code`,{className:`text-gov font-mono`,children:`@name`}),` to mention officers`]})]}),(0,m.jsx)(`div`,{className:`space-y-4`,children:S.length===0?(0,m.jsx)(`p`,{className:`text-xs text-muted-foreground text-center py-4`,children:`No notes logged yet. Use this section for team collaboration, verification queries, or field clarifications.`}):S.map(e=>(0,m.jsxs)(`div`,{className:`rounded-lg border border-slate-100 bg-slate-50/50 p-3.5 space-y-2.5 text-xs`,children:[(0,m.jsxs)(`div`,{className:`flex items-center justify-between`,children:[(0,m.jsxs)(`div`,{className:`flex items-center gap-2`,children:[(0,m.jsx)(`span`,{className:`font-bold text-navy`,children:e.author.name}),(0,m.jsx)(`span`,{className:r(`rounded text-[9px] px-1.5 py-0.2 border uppercase font-mono font-medium`,T(e.author.role)),children:e.author.role}),e.author.department&&(0,m.jsxs)(`span`,{className:`text-[10px] text-slate-400`,children:[`· `,e.author.department]})]}),(0,m.jsx)(`span`,{className:`text-[10px] text-muted-foreground font-mono`,children:e.timestamp})]}),(0,m.jsx)(`p`,{className:`text-slate-800 leading-relaxed whitespace-pre-wrap`,children:e.text}),e.mentions&&e.mentions.length>0&&(0,m.jsxs)(`div`,{className:`flex items-center gap-1`,children:[(0,m.jsx)(`span`,{className:`text-[10px] text-slate-400`,children:`Mentioned:`}),e.mentions.map(e=>(0,m.jsxs)(`span`,{className:`rounded bg-blue-50 text-blue-700 font-mono text-[10px] px-1.5 py-0.2`,children:[`@`,e]},e))]}),e.replies&&e.replies.length>0&&(0,m.jsx)(`div`,{className:`mt-3 pl-4 border-l-2 border-slate-200 space-y-2.5 pt-1`,children:e.replies.map(e=>(0,m.jsxs)(`div`,{className:`rounded bg-white border border-slate-100 p-2.5 space-y-1`,children:[(0,m.jsxs)(`div`,{className:`flex items-center justify-between text-[11px]`,children:[(0,m.jsxs)(`div`,{className:`flex items-center gap-1.5`,children:[(0,m.jsx)(`span`,{className:`font-semibold text-navy`,children:e.author.name}),(0,m.jsx)(`span`,{className:r(`rounded text-[8px] px-1 py-0.1 border uppercase font-mono`,T(e.author.role)),children:e.author.role})]}),(0,m.jsx)(`span`,{className:`text-[9px] text-muted-foreground font-mono`,children:e.timestamp})]}),(0,m.jsx)(`p`,{className:`text-slate-700 text-xs`,children:e.text})]},e.id))}),(0,m.jsx)(`div`,{className:`pt-1 flex items-center justify-between`,children:b===e.id?(0,m.jsxs)(`div`,{className:`w-full mt-2 space-y-2`,children:[(0,m.jsx)(c,{placeholder:`Type reply or field update…`,value:v[e.id]||``,onChange:t=>y({...v,[e.id]:t.target.value}),rows:2,className:`text-xs bg-white`}),(0,m.jsxs)(`div`,{className:`flex justify-end gap-2`,children:[(0,m.jsx)(i,{type:`button`,variant:`ghost`,size:`sm`,className:`h-6 text-xs`,onClick:()=>x(null),children:`Cancel`}),(0,m.jsx)(i,{type:`button`,size:`sm`,className:`h-6 text-xs bg-gov hover:bg-gov/90 text-white`,onClick:()=>w(e.id),children:`Send Reply`})]})]}):(0,m.jsxs)(i,{type:`button`,variant:`ghost`,size:`sm`,className:`h-6 text-[10px] gap-1 text-gov px-2`,onClick:()=>x(e.id),children:[(0,m.jsx)(o,{className:`h-3 w-3`}),`Reply`]})})]},e.id))}),(0,m.jsxs)(`form`,{onSubmit:C,className:`pt-2 border-t space-y-2`,children:[(0,m.jsx)(c,{placeholder:`Add an official note, document query or instruction (e.g. '@Ravi please verify address on-site')…`,value:g,onChange:e=>_(e.target.value),rows:3,className:`text-xs`}),(0,m.jsxs)(`div`,{className:`flex justify-between items-center`,children:[(0,m.jsxs)(`div`,{className:`flex items-center gap-1.5 text-[11px] text-slate-500`,children:[(0,m.jsx)(d,{className:`h-3.5 w-3.5 text-slate-400`}),(0,m.jsx)(`span`,{children:`Tag: @Ananya, @Ravi, @Neha, @Department`})]}),(0,m.jsxs)(i,{type:`submit`,size:`sm`,className:`bg-gov hover:bg-gov/90 text-white text-xs h-8 gap-1.5`,disabled:!g.trim(),children:[(0,m.jsx)(s,{className:`h-3.5 w-3.5`}),`Post Note`]})]})]})]})}export{h as t};
+import {
+  c as e,
+  f as t,
+  l as n,
+  r,
+  t as i,
+  u as a,
+} from "./button-KmRTh43o.js";
+import { t as o } from "./corner-down-right-DLOWz3yr.js";
+import { t as s } from "./send-DIfBWT5Y.js";
+import { N as c, Tt as l, mn as u } from "./index-B8Y-_llO.js";
+var d = e(`at-sign`, [
+    [`circle`, { cx: `12`, cy: `12`, r: `4`, key: `4exip2` }],
+    [`path`, { d: `M16 8v5a3 3 0 0 0 6 0v-1a10 10 0 1 0-4 8`, key: `7n84p3` }],
+  ]),
+  f = e(`message-square`, [
+    [
+      `path`,
+      {
+        d: `M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z`,
+        key: `18887p`,
+      },
+    ],
+  ]),
+  p = t(a(), 1),
+  m = n();
+function h({
+  recordType: e,
+  recordId: t,
+  title: n = `Collaboration & Official Notes`,
+}) {
+  let { state: a, addComment: h } = u(),
+    [g, _] = (0, p.useState)(``),
+    [v, y] = (0, p.useState)({}),
+    [b, x] = (0, p.useState)(null),
+    S = a.comments.filter((n) => n.recordType === e && n.recordId === t),
+    C = (n) => {
+      if ((n.preventDefault(), !g.trim())) return;
+      let r = Array.from(g.matchAll(/@(\w+)/g)).map((e) => e[1]);
+      (h({ recordType: e, recordId: t, text: g.trim(), mentions: r }),
+        l.success(`Note added to official thread`),
+        _(``));
+    },
+    w = (n) => {
+      let r = v[n]?.trim();
+      if (!r) return;
+      let i = Array.from(r.matchAll(/@(\w+)/g)).map((e) => e[1]);
+      (h({ recordType: e, recordId: t, text: r, mentions: i, replyToId: n }),
+        l.success(`Reply recorded`),
+        y({ ...v, [n]: `` }),
+        x(null));
+    },
+    T = (e) => {
+      switch (e) {
+        case `verifier`:
+          return `bg-teal/15 text-teal border-teal/20`;
+        case `officer`:
+          return `bg-gov/15 text-gov border-gov/20`;
+        case `admin`:
+          return `bg-purple-100 text-purple-800 border-purple-200`;
+        case `auditor`:
+          return `bg-slate-200 text-slate-800 border-slate-300`;
+        default:
+          return `bg-blue-50 text-blue-800 border-blue-200`;
+      }
+    };
+  return (0, m.jsxs)(`div`, {
+    className: `rounded-xl border bg-white p-5 shadow-xs space-y-4`,
+    children: [
+      (0, m.jsxs)(`div`, {
+        className: `flex items-center justify-between border-b pb-3`,
+        children: [
+          (0, m.jsxs)(`div`, {
+            className: `flex items-center gap-2`,
+            children: [
+              (0, m.jsx)(f, { className: `h-4 w-4 text-gov` }),
+              (0, m.jsx)(`h3`, {
+                className: `text-sm font-bold text-navy`,
+                children: n,
+              }),
+              (0, m.jsx)(`span`, {
+                className: `rounded-full bg-slate-100 px-2 py-0.5 text-[10px] font-semibold text-slate-700`,
+                children: S.length,
+              }),
+            ],
+          }),
+          (0, m.jsxs)(`span`, {
+            className: `text-[11px] text-muted-foreground`,
+            children: [
+              `Use `,
+              (0, m.jsx)(`code`, {
+                className: `text-gov font-mono`,
+                children: `@name`,
+              }),
+              ` to mention officers`,
+            ],
+          }),
+        ],
+      }),
+      (0, m.jsx)(`div`, {
+        className: `space-y-4`,
+        children:
+          S.length === 0
+            ? (0, m.jsx)(`p`, {
+                className: `text-xs text-muted-foreground text-center py-4`,
+                children: `No notes logged yet. Use this section for team collaboration, verification queries, or field clarifications.`,
+              })
+            : S.map((e) =>
+                (0, m.jsxs)(
+                  `div`,
+                  {
+                    className: `rounded-lg border border-slate-100 bg-slate-50/50 p-3.5 space-y-2.5 text-xs`,
+                    children: [
+                      (0, m.jsxs)(`div`, {
+                        className: `flex items-center justify-between`,
+                        children: [
+                          (0, m.jsxs)(`div`, {
+                            className: `flex items-center gap-2`,
+                            children: [
+                              (0, m.jsx)(`span`, {
+                                className: `font-bold text-navy`,
+                                children: e.author.name,
+                              }),
+                              (0, m.jsx)(`span`, {
+                                className: r(
+                                  `rounded text-[9px] px-1.5 py-0.2 border uppercase font-mono font-medium`,
+                                  T(e.author.role),
+                                ),
+                                children: e.author.role,
+                              }),
+                              e.author.department &&
+                                (0, m.jsxs)(`span`, {
+                                  className: `text-[10px] text-slate-400`,
+                                  children: [`· `, e.author.department],
+                                }),
+                            ],
+                          }),
+                          (0, m.jsx)(`span`, {
+                            className: `text-[10px] text-muted-foreground font-mono`,
+                            children: e.timestamp,
+                          }),
+                        ],
+                      }),
+                      (0, m.jsx)(`p`, {
+                        className: `text-slate-800 leading-relaxed whitespace-pre-wrap`,
+                        children: e.text,
+                      }),
+                      e.mentions &&
+                        e.mentions.length > 0 &&
+                        (0, m.jsxs)(`div`, {
+                          className: `flex items-center gap-1`,
+                          children: [
+                            (0, m.jsx)(`span`, {
+                              className: `text-[10px] text-slate-400`,
+                              children: `Mentioned:`,
+                            }),
+                            e.mentions.map((e) =>
+                              (0, m.jsxs)(
+                                `span`,
+                                {
+                                  className: `rounded bg-blue-50 text-blue-700 font-mono text-[10px] px-1.5 py-0.2`,
+                                  children: [`@`, e],
+                                },
+                                e,
+                              ),
+                            ),
+                          ],
+                        }),
+                      e.replies &&
+                        e.replies.length > 0 &&
+                        (0, m.jsx)(`div`, {
+                          className: `mt-3 pl-4 border-l-2 border-slate-200 space-y-2.5 pt-1`,
+                          children: e.replies.map((e) =>
+                            (0, m.jsxs)(
+                              `div`,
+                              {
+                                className: `rounded bg-white border border-slate-100 p-2.5 space-y-1`,
+                                children: [
+                                  (0, m.jsxs)(`div`, {
+                                    className: `flex items-center justify-between text-[11px]`,
+                                    children: [
+                                      (0, m.jsxs)(`div`, {
+                                        className: `flex items-center gap-1.5`,
+                                        children: [
+                                          (0, m.jsx)(`span`, {
+                                            className: `font-semibold text-navy`,
+                                            children: e.author.name,
+                                          }),
+                                          (0, m.jsx)(`span`, {
+                                            className: r(
+                                              `rounded text-[8px] px-1 py-0.1 border uppercase font-mono`,
+                                              T(e.author.role),
+                                            ),
+                                            children: e.author.role,
+                                          }),
+                                        ],
+                                      }),
+                                      (0, m.jsx)(`span`, {
+                                        className: `text-[9px] text-muted-foreground font-mono`,
+                                        children: e.timestamp,
+                                      }),
+                                    ],
+                                  }),
+                                  (0, m.jsx)(`p`, {
+                                    className: `text-slate-700 text-xs`,
+                                    children: e.text,
+                                  }),
+                                ],
+                              },
+                              e.id,
+                            ),
+                          ),
+                        }),
+                      (0, m.jsx)(`div`, {
+                        className: `pt-1 flex items-center justify-between`,
+                        children:
+                          b === e.id
+                            ? (0, m.jsxs)(`div`, {
+                                className: `w-full mt-2 space-y-2`,
+                                children: [
+                                  (0, m.jsx)(c, {
+                                    placeholder: `Type reply or field update…`,
+                                    value: v[e.id] || ``,
+                                    onChange: (t) =>
+                                      y({ ...v, [e.id]: t.target.value }),
+                                    rows: 2,
+                                    className: `text-xs bg-white`,
+                                  }),
+                                  (0, m.jsxs)(`div`, {
+                                    className: `flex justify-end gap-2`,
+                                    children: [
+                                      (0, m.jsx)(i, {
+                                        type: `button`,
+                                        variant: `ghost`,
+                                        size: `sm`,
+                                        className: `h-6 text-xs`,
+                                        onClick: () => x(null),
+                                        children: `Cancel`,
+                                      }),
+                                      (0, m.jsx)(i, {
+                                        type: `button`,
+                                        size: `sm`,
+                                        className: `h-6 text-xs bg-gov hover:bg-gov/90 text-white`,
+                                        onClick: () => w(e.id),
+                                        children: `Send Reply`,
+                                      }),
+                                    ],
+                                  }),
+                                ],
+                              })
+                            : (0, m.jsxs)(i, {
+                                type: `button`,
+                                variant: `ghost`,
+                                size: `sm`,
+                                className: `h-6 text-[10px] gap-1 text-gov px-2`,
+                                onClick: () => x(e.id),
+                                children: [
+                                  (0, m.jsx)(o, { className: `h-3 w-3` }),
+                                  `Reply`,
+                                ],
+                              }),
+                      }),
+                    ],
+                  },
+                  e.id,
+                ),
+              ),
+      }),
+      (0, m.jsxs)(`form`, {
+        onSubmit: C,
+        className: `pt-2 border-t space-y-2`,
+        children: [
+          (0, m.jsx)(c, {
+            placeholder: `Add an official note, document query or instruction (e.g. '@Ravi please verify address on-site')…`,
+            value: g,
+            onChange: (e) => _(e.target.value),
+            rows: 3,
+            className: `text-xs`,
+          }),
+          (0, m.jsxs)(`div`, {
+            className: `flex justify-between items-center`,
+            children: [
+              (0, m.jsxs)(`div`, {
+                className: `flex items-center gap-1.5 text-[11px] text-slate-500`,
+                children: [
+                  (0, m.jsx)(d, { className: `h-3.5 w-3.5 text-slate-400` }),
+                  (0, m.jsx)(`span`, {
+                    children: `Tag: @Ananya, @Ravi, @Neha, @Department`,
+                  }),
+                ],
+              }),
+              (0, m.jsxs)(i, {
+                type: `submit`,
+                size: `sm`,
+                className: `bg-gov hover:bg-gov/90 text-white text-xs h-8 gap-1.5`,
+                disabled: !g.trim(),
+                children: [
+                  (0, m.jsx)(s, { className: `h-3.5 w-3.5` }),
+                  `Post Note`,
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+    ],
+  });
+}
+export { h as t };

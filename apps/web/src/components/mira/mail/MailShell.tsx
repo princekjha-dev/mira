@@ -35,9 +35,11 @@ export function MailShell({
   } = useApp();
 
   const [activeFolder, setActiveFolder] = useState<MailFolder>("inbox");
-  const [activeWorkflow, setActiveWorkflow] = useState<WorkflowFilter | null>(null);
+  const [activeWorkflow, setActiveWorkflow] = useState<WorkflowFilter | null>(
+    null,
+  );
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(
-    () => state.messages[0]?.id || null
+    () => state.messages[0]?.id || null,
   );
   const [searchQuery, setSearchQuery] = useState("");
   const [sortOrder, setSortOrder] = useState<SortOrder>("newest");
@@ -48,7 +50,9 @@ export function MailShell({
     applicationId: undefined,
   });
   const [isComposeOpen, setIsComposeOpen] = useState(false);
-  const [mobileView, setMobileView] = useState<"folders" | "list" | "reader">("list");
+  const [mobileView, setMobileView] = useState<"folders" | "list" | "reader">(
+    "list",
+  );
 
   const searchInputRef = useRef<HTMLInputElement>(null);
   const replyRef = useRef<HTMLDivElement>(null);
@@ -100,7 +104,10 @@ export function MailShell({
   const folderCounts = useMemo(() => {
     return {
       inbox: state.messages.filter(
-        (m) => (!m.folder || m.folder === "inbox") && !m.isArchived && m.status === "unread"
+        (m) =>
+          (!m.folder || m.folder === "inbox") &&
+          !m.isArchived &&
+          m.status === "unread",
       ).length,
       starred: state.messages.filter((m) => !!m.isStarred).length,
       sent: state.messages.filter((m) => m.folder === "sent").length,
@@ -119,7 +126,7 @@ export function MailShell({
     ];
     tags.forEach((tag) => {
       counts[tag] = state.messages.filter(
-        (m) => !m.isArchived && m.tags?.includes(tag)
+        (m) => !m.isArchived && m.tags?.includes(tag),
       ).length;
     });
     return counts;
@@ -139,7 +146,8 @@ export function MailShell({
         return false;
 
       // 2. Sidebar Workflow check
-      if (activeWorkflow && !thread.tags?.includes(activeWorkflow)) return false;
+      if (activeWorkflow && !thread.tags?.includes(activeWorkflow))
+        return false;
 
       // 3. Filter Popover checks
       if (filter.unreadOnly && thread.status !== "unread") return false;
@@ -149,10 +157,7 @@ export function MailShell({
       )
         return false;
       if (filter.tag && !thread.tags?.includes(filter.tag)) return false;
-      if (
-        filter.applicationId &&
-        thread.applicationId !== filter.applicationId
-      )
+      if (filter.applicationId && thread.applicationId !== filter.applicationId)
         return false;
 
       // 4. Search query
@@ -160,13 +165,15 @@ export function MailShell({
         const q = searchQuery.toLowerCase();
         const matchesSubject = thread.subject.toLowerCase().includes(q);
         const matchesSender = thread.sender.name.toLowerCase().includes(q);
-        const matchesSenderEmail = thread.sender.email.toLowerCase().includes(q);
+        const matchesSenderEmail = thread.sender.email
+          .toLowerCase()
+          .includes(q);
         const matchesAppId =
           thread.applicationId?.toLowerCase().includes(q) ?? false;
         const matchesTags =
           thread.tags?.some((t) => t.toLowerCase().includes(q)) ?? false;
         const matchesBody = thread.messages.some((m) =>
-          m.body.toLowerCase().includes(q)
+          m.body.toLowerCase().includes(q),
         );
 
         if (
@@ -191,10 +198,10 @@ export function MailShell({
         if (b.status === "unread" && a.status !== "unread") return 1;
       }
       const timeA = new Date(
-        a.timestamp.includes(" ") ? a.timestamp.replace(" ", "T") : a.timestamp
+        a.timestamp.includes(" ") ? a.timestamp.replace(" ", "T") : a.timestamp,
       ).getTime();
       const timeB = new Date(
-        b.timestamp.includes(" ") ? b.timestamp.replace(" ", "T") : b.timestamp
+        b.timestamp.includes(" ") ? b.timestamp.replace(" ", "T") : b.timestamp,
       ).getTime();
 
       if (sortOrder === "oldest") return timeA - timeB;
@@ -320,7 +327,7 @@ export function MailShell({
           <div
             className={cn(
               "md:col-span-3 lg:col-span-2 bg-slate-50/60 dark:bg-slate-900/40 overflow-y-auto",
-              mobileView !== "folders" && "hidden md:block"
+              mobileView !== "folders" && "hidden md:block",
             )}
           >
             <MailSidebar
@@ -344,7 +351,7 @@ export function MailShell({
             className={cn(
               "md:col-span-4 lg:col-span-4 flex flex-col bg-white dark:bg-slate-900 overflow-hidden",
               mobileView === "reader" && "hidden md:flex",
-              mobileView === "folders" && "hidden md:flex"
+              mobileView === "folders" && "hidden md:flex",
             )}
           >
             {/* Folder / Filter status pill indicator */}
@@ -353,7 +360,8 @@ export function MailShell({
                 {activeWorkflow || activeFolder}
               </span>
               <span className="font-mono tabular-nums">
-                {filteredThreads.length} message{filteredThreads.length === 1 ? "" : "s"}
+                {filteredThreads.length} message
+                {filteredThreads.length === 1 ? "" : "s"}
               </span>
             </div>
 
@@ -369,7 +377,7 @@ export function MailShell({
           <div
             className={cn(
               "md:col-span-5 lg:col-span-6 flex flex-col bg-white dark:bg-slate-900 overflow-hidden",
-              mobileView !== "reader" && "hidden md:flex"
+              mobileView !== "reader" && "hidden md:flex",
             )}
           >
             <MessageReader

@@ -1,20 +1,10 @@
-use std::sync::Arc;
-use axum::{
-    extract::State,
-    http::StatusCode,
-    response::IntoResponse,
-    Json,
-};
+use axum::{extract::State, http::StatusCode, response::IntoResponse, Json};
 use serde::{Deserialize, Serialize};
 use sqlx::{PgPool, Row};
-use tracing::{info, warn, error};
+use std::sync::Arc;
+use tracing::{error, info, warn};
 
-use crate::{
-    api::AppState,
-    auth::AuthenticatedUser,
-    domain::RoleType,
-    errors::AppError,
-};
+use crate::{api::AppState, auth::AuthenticatedUser, domain::RoleType, errors::AppError};
 
 // ============================================================================
 // 1. DTOs
@@ -169,12 +159,21 @@ pub async fn build_authorized_context(
     _route: Option<&str>,
 ) -> AuthorizedContext {
     // 1. Resolve role hierarchy from authenticated claims (never trusted from frontend)
-    let is_admin = user.roles.iter().any(|r| r == "DEPARTMENT_ADMIN" || r == "SUPER_ADMIN" || r == "ADMIN");
+    let is_admin = user
+        .roles
+        .iter()
+        .any(|r| r == "DEPARTMENT_ADMIN" || r == "SUPER_ADMIN" || r == "ADMIN");
     let is_auditor = user.roles.iter().any(|r| r == "AUDITOR");
     let is_supervisor = user.roles.iter().any(|r| r == "SUPERVISOR");
     let is_scheme_officer = user.roles.iter().any(|r| r == "SCHEME_OFFICER");
-    let is_verifier = user.roles.iter().any(|r| r == "VERIFICATION_OFFICER" || r == "VERIFIER");
-    let is_field_officer = user.roles.iter().any(|r| r == "FIELD_OFFICIAL" || r == "OFFICER");
+    let is_verifier = user
+        .roles
+        .iter()
+        .any(|r| r == "VERIFICATION_OFFICER" || r == "VERIFIER");
+    let is_field_officer = user
+        .roles
+        .iter()
+        .any(|r| r == "FIELD_OFFICIAL" || r == "OFFICER");
 
     let role_label = if is_admin {
         "admin"
@@ -218,8 +217,12 @@ pub async fn build_authorized_context(
 
             context_lines.push(format!("AUTHENTICATED CITIZEN: {}", user_name));
             context_lines.push("PERMITTED SCOPE: Individual & Registered Household".to_string());
-            context_lines.push("HOUSEHOLD: Sharma Family (Public ID: MIRA-FAM-10482, Status: Verified)".to_string());
-            context_lines.push("REGISTERED MEMBERS: 11 verified members across 3 generations".to_string());
+            context_lines.push(
+                "HOUSEHOLD: Sharma Family (Public ID: MIRA-FAM-10482, Status: Verified)"
+                    .to_string(),
+            );
+            context_lines
+                .push("REGISTERED MEMBERS: 11 verified members across 3 generations".to_string());
             context_lines.push("BPL STATUS: Category A (< ₹1,20,000 annual income)".to_string());
 
             // Fetch live applications for this user
@@ -247,7 +250,10 @@ pub async fn build_authorized_context(
                     let pid: String = a.try_get("public_id").unwrap_or_default();
                     let st: String = a.try_get("status").unwrap_or_default();
                     let sname: String = a.try_get("scheme_name").unwrap_or_default();
-                    context_lines.push(format!("- Application {} for {}: Status {}", pid, sname, st));
+                    context_lines.push(format!(
+                        "- Application {} for {}: Status {}",
+                        pid, sname, st
+                    ));
                 }
             }
 
@@ -293,14 +299,20 @@ pub async fn build_authorized_context(
             context_lines.push(format!("AUTHENTICATED FIELD OFFICIAL: {}", user_name));
             context_lines.push("SECTOR: Chandauli Rural Cluster".to_string());
             context_lines.push("TODAY'S FIELD VISIT: FV-2026-0041 for Sharma Household (Ananya Sharma co-residence inspection).".to_string());
-            context_lines.push("NAVIC GPS LOCK: Lat 26.8467° N, Lon 80.9462° E verified within ±1.8m accuracy.".to_string());
+            context_lines.push(
+                "NAVIC GPS LOCK: Lat 26.8467° N, Lon 80.9462° E verified within ±1.8m accuracy."
+                    .to_string(),
+            );
         }
 
         "scheme" => {
             summary_label = format!("{} · Scheme Administration", user_name);
 
             context_lines.push(format!("AUTHENTICATED SCHEME OFFICER: {}", user_name));
-            context_lines.push("PORTFOLIO: Rural Housing Assistance & Direct Benefit Transfer Programs".to_string());
+            context_lines.push(
+                "PORTFOLIO: Rural Housing Assistance & Direct Benefit Transfer Programs"
+                    .to_string(),
+            );
             context_lines.push("ACTIVE RULE VERSION: Version 3.2 (Effective from 2026-01-01). Criteria: Income < ₹1.8L, Kutcha dwelling, State resident.".to_string());
             context_lines.push("CROSS-SCHEME CHECK: Automatic duplicate benefit blocking active across National Food Security and PMAY databases.".to_string());
         }
@@ -309,7 +321,10 @@ pub async fn build_authorized_context(
             summary_label = format!("{} · Senior Adjudication", user_name);
 
             context_lines.push(format!("AUTHENTICATED SUPERVISOR: {}", user_name));
-            context_lines.push("AUTHORITY: Second-tier review, duplicate adjudications, dispute escalation.".to_string());
+            context_lines.push(
+                "AUTHORITY: Second-tier review, duplicate adjudications, dispute escalation."
+                    .to_string(),
+            );
             context_lines.push("PENDING ESCALATIONS: Duplicate alert DA-2026-10483 (2021 household bifurcation vs 2019 prior benefit).".to_string());
             context_lines.push("POLICY: Bifurcated family claims are valid if split is recorded in state civil registry prior to application date.".to_string());
         }
@@ -318,9 +333,17 @@ pub async fn build_authorized_context(
             summary_label = format!("{} · Statutory Audit Directorate", user_name);
 
             context_lines.push(format!("AUTHENTICATED STATUTORY AUDITOR: {}", user_name));
-            context_lines.push("ACCESS POLICY: STRICT READ-ONLY. No mutation or approval capabilities.".to_string());
-            context_lines.push("LEDGER INTEGRITY: Verified valid. Zero broken Merkle chain blocks.".to_string());
-            context_lines.push("SEALED DECISIONS: 4 statutory decisions with SHA-256 state seals affixed.".to_string());
+            context_lines.push(
+                "ACCESS POLICY: STRICT READ-ONLY. No mutation or approval capabilities."
+                    .to_string(),
+            );
+            context_lines.push(
+                "LEDGER INTEGRITY: Verified valid. Zero broken Merkle chain blocks.".to_string(),
+            );
+            context_lines.push(
+                "SEALED DECISIONS: 4 statutory decisions with SHA-256 state seals affixed."
+                    .to_string(),
+            );
             context_lines.push("COMPLIANCE STANDARD: ISO/IEC 27001 Cryptographic Oversight & Evidence Act Section 65B.".to_string());
         }
 
@@ -329,7 +352,8 @@ pub async fn build_authorized_context(
             summary_label = format!("{} · System Authority", user_name);
 
             context_lines.push(format!("AUTHENTICATED ADMINISTRATOR: {}", user_name));
-            context_lines.push("SCOPE: Welfare Systems & Rules Configuration Authority".to_string());
+            context_lines
+                .push("SCOPE: Welfare Systems & Rules Configuration Authority".to_string());
             context_lines.push("HEALTH: PostgreSQL 18 Online (5433), Axum Core Healthy (4000), Deterministic V4 Seed Active.".to_string());
             context_lines.push("ACTIVE SCHEMES: 6 centrally configured welfare programs with versioned statutory trees.".to_string());
         }
@@ -460,7 +484,11 @@ pub async fn query_groq_api(
     // 3. Optional sanitized history (last 4 turns max)
     if let Some(hist) = history {
         for h in hist.iter().rev().take(4).rev() {
-            let role = if h.role == "user" { "user" } else { "assistant" };
+            let role = if h.role == "user" {
+                "user"
+            } else {
+                "assistant"
+            };
             messages.push(GroqMessage {
                 role: role.to_string(),
                 content: h.content.clone(),
@@ -514,10 +542,7 @@ pub async fn query_groq_api(
 // 6. Grounded Fallback Engine (when offline or key not set)
 // ============================================================================
 
-pub fn generate_grounded_fallback(
-    context: &AuthorizedContext,
-    user_query: &str,
-) -> String {
+pub fn generate_grounded_fallback(context: &AuthorizedContext, user_query: &str) -> String {
     let lower = user_query.to_lowercase();
 
     if lower.contains("status") || lower.contains("application") || lower.contains("waiting") {
@@ -558,17 +583,26 @@ pub async fn ai_chat_handler(
         return Err(AppError::BadRequest("Message cannot be empty.".to_string()));
     }
     if user_msg.len() > 2000 {
-        return Err(AppError::BadRequest("Message exceeds maximum length of 2000 characters.".to_string()));
+        return Err(AppError::BadRequest(
+            "Message exceeds maximum length of 2000 characters.".to_string(),
+        ));
     }
 
     // 2. Pre-flight jailbreak / prompt-injection defense (Section 7, 19, 21)
     if let Some(refusal) = check_security_violation(user_msg) {
-        info!("Mira AI refused security violation request from user: {}", user.id);
+        info!(
+            "Mira AI refused security violation request from user: {}",
+            user.id
+        );
         return Ok((
             StatusCode::OK,
             Json(ChatResponse {
                 reply: refusal.to_string(),
-                role: user.roles.first().cloned().unwrap_or_else(|| "CITIZEN".to_string()),
+                role: user
+                    .roles
+                    .first()
+                    .cloned()
+                    .unwrap_or_else(|| "CITIZEN".to_string()),
                 context_summary: "Mira Security Sandbox".to_string(),
                 is_live_llm: false,
             }),
@@ -577,7 +611,8 @@ pub async fn ai_chat_handler(
 
     // 3. Build Authorized Context strictly from Database based on authenticated token (Section 3, 5, 10, 13)
     let auth_context = build_authorized_context(&state.pool, &user, payload.route.as_deref()).await;
-    let system_prompt = build_system_prompt(&auth_context.primary_role, &auth_context.user_identity);
+    let system_prompt =
+        build_system_prompt(&auth_context.primary_role, &auth_context.user_identity);
 
     // 4. Determine response generation method
     let (raw_reply, is_live_llm) = if let Some(ref api_key) = state.config.groq_api_key {
@@ -593,7 +628,10 @@ pub async fn ai_chat_handler(
         {
             Ok(groq_reply) => (groq_reply, true),
             Err(err) => {
-                warn!("Groq API call failed (falling back to grounded rules): {}", err);
+                warn!(
+                    "Groq API call failed (falling back to grounded rules): {}",
+                    err
+                );
                 (generate_grounded_fallback(&auth_context, user_msg), false)
             }
         }

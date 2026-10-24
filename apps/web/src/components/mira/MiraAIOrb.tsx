@@ -51,8 +51,15 @@ export function MiraAIOrb() {
       timestamp: "Just now",
     };
     setMessages([defaultGreeting]);
-    setContextSummary(`${state.session?.name || roleConfig.defaultIdentity.name} · Authorized Records`);
-  }, [role, state.session?.name, roleConfig.workspaceTitle, roleConfig.defaultIdentity.name]);
+    setContextSummary(
+      `${state.session?.name || roleConfig.defaultIdentity.name} · Authorized Records`,
+    );
+  }, [
+    role,
+    state.session?.name,
+    roleConfig.workspaceTitle,
+    roleConfig.defaultIdentity.name,
+  ]);
 
   useEffect(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -140,7 +147,10 @@ export function MiraAIOrb() {
       id: Date.now().toString(),
       sender: "user",
       text,
-      timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+      timestamp: new Date().toLocaleTimeString([], {
+        hour: "2-digit",
+        minute: "2-digit",
+      }),
     };
 
     setMessages((prev) => [...prev, userMsg]);
@@ -153,7 +163,8 @@ export function MiraAIOrb() {
         .filter((m) => m.id !== "init")
         .slice(-4)
         .map((m) => ({
-          role: (m.sender === "user" ? "user" : "assistant") as "user" | "assistant",
+          role: (m.sender === "user" ? "user" : "assistant") as
+            "user" | "assistant",
           content: m.text,
         }));
 
@@ -171,7 +182,10 @@ export function MiraAIOrb() {
         id: (Date.now() + 1).toString(),
         sender: "mira",
         text: response.reply,
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
         isLiveLLM: response.is_live_llm,
       };
 
@@ -183,7 +197,10 @@ export function MiraAIOrb() {
         id: (Date.now() + 1).toString(),
         sender: "mira",
         text: "Mira AI is temporarily unavailable. Please try again.",
-        timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        timestamp: new Date().toLocaleTimeString([], {
+          hour: "2-digit",
+          minute: "2-digit",
+        }),
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -206,12 +223,16 @@ export function MiraAIOrb() {
               </div>
               <div>
                 <div className="flex items-center gap-1.5">
-                  <h3 className="text-xs font-bold tracking-tight text-slate-900 dark:text-slate-100">Mira Intelligence</h3>
+                  <h3 className="text-xs font-bold tracking-tight text-slate-900 dark:text-slate-100">
+                    Mira Intelligence
+                  </h3>
                   <span className="rounded-full bg-gov/10 px-1.5 py-0.2 text-[9px] font-semibold text-gov">
                     {role.toUpperCase()}
                   </span>
                 </div>
-                <p className="text-[10px] text-muted-foreground">{roleConfig.workspaceTitle}</p>
+                <p className="text-[10px] text-muted-foreground">
+                  {roleConfig.workspaceTitle}
+                </p>
               </div>
             </div>
 
@@ -228,7 +249,11 @@ export function MiraAIOrb() {
           {/* Section 28: AI Context Indicator */}
           <div className="flex items-center gap-1.5 px-4 py-1.5 bg-slate-50/40 border-b border-slate-100 dark:bg-slate-900/40 dark:border-slate-800 text-[10px] text-muted-foreground select-text">
             <ShieldCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400 shrink-0" />
-            <span className="truncate font-medium">Using: {contextSummary || `${state.session?.name || roleConfig.defaultIdentity.name} · Authorized Records`}</span>
+            <span className="truncate font-medium">
+              Using:{" "}
+              {contextSummary ||
+                `${state.session?.name || roleConfig.defaultIdentity.name} · Authorized Records`}
+            </span>
           </div>
 
           {/* Conversation Stream */}
@@ -238,7 +263,9 @@ export function MiraAIOrb() {
                 key={m.id}
                 className={cn(
                   "flex flex-col max-w-[85%]",
-                  m.sender === "user" ? "ml-auto items-end" : "mr-auto items-start"
+                  m.sender === "user"
+                    ? "ml-auto items-end"
+                    : "mr-auto items-start",
                 )}
               >
                 <div
@@ -246,12 +273,14 @@ export function MiraAIOrb() {
                     "rounded-2xl px-3.5 py-2.5 shadow-2xs whitespace-pre-wrap leading-relaxed",
                     m.sender === "user"
                       ? "bg-slate-900 text-white font-medium rounded-br-xs dark:bg-slate-100 dark:text-slate-900"
-                      : "bg-slate-50 text-slate-900 border border-slate-200/80 rounded-bl-xs dark:bg-slate-800/80 dark:border-slate-700/60 dark:text-slate-100"
+                      : "bg-slate-50 text-slate-900 border border-slate-200/80 rounded-bl-xs dark:bg-slate-800/80 dark:border-slate-700/60 dark:text-slate-100",
                   )}
                 >
                   {m.text}
                 </div>
-                <span className="text-[10px] text-muted-foreground/75 px-1 mt-0.5 tabular-nums font-mono">{m.timestamp}</span>
+                <span className="text-[10px] text-muted-foreground/75 px-1 mt-0.5 tabular-nums font-mono">
+                  {m.timestamp}
+                </span>
               </div>
             ))}
 
@@ -266,7 +295,9 @@ export function MiraAIOrb() {
 
           {/* Role-Specific Prompt Suggestions */}
           <div className="border-t border-slate-100 dark:border-slate-800 bg-slate-50/40 dark:bg-slate-900/40 px-3 py-2">
-            <p className="text-[10px] font-medium text-muted-foreground mb-1.5 font-mono uppercase tracking-wider">Contextual Queries:</p>
+            <p className="text-[10px] font-medium text-muted-foreground mb-1.5 font-mono uppercase tracking-wider">
+              Contextual Queries:
+            </p>
             <div className="flex flex-wrap gap-1">
               {suggestedPrompts.slice(0, 2).map((p, idx) => (
                 <button
@@ -295,7 +326,12 @@ export function MiraAIOrb() {
               placeholder={`Ask Mira about ${roleConfig.workspaceTitle}…`}
               className="h-9 flex-1 text-xs bg-slate-50/80 border-slate-200/80 dark:bg-slate-800 dark:border-slate-700 rounded-xl"
             />
-            <Button size="icon" type="submit" disabled={!query.trim() || isProcessing} className="h-9 w-9 shrink-0 rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900">
+            <Button
+              size="icon"
+              type="submit"
+              disabled={!query.trim() || isProcessing}
+              className="h-9 w-9 shrink-0 rounded-xl bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-900"
+            >
               <Send className="h-3.5 w-3.5" />
             </Button>
           </form>
@@ -312,7 +348,7 @@ export function MiraAIOrb() {
           "group relative flex h-12 w-12 items-center justify-center rounded-2xl transition-all duration-200 select-none shadow-lg outline-none",
           "bg-slate-900 text-white border border-slate-700/60 dark:bg-slate-100 dark:text-slate-950 dark:border-slate-300/40",
           "hover:scale-[1.04] active:scale-[0.96]",
-          isOpen ? "ring-2 ring-gov ring-offset-2 ring-offset-background" : ""
+          isOpen ? "ring-2 ring-gov ring-offset-2 ring-offset-background" : "",
         )}
         aria-label="Open Mira AI Assistant"
       >
@@ -321,13 +357,22 @@ export function MiraAIOrb() {
           className={cn(
             "absolute -inset-1 rounded-2xl opacity-20 blur-sm transition-opacity duration-300 pointer-events-none",
             "bg-gradient-to-tr from-sky-400 via-teal-400 to-indigo-400",
-            isProcessing ? "opacity-60 animate-pulse" : "group-hover:opacity-40"
+            isProcessing
+              ? "opacity-60 animate-pulse"
+              : "group-hover:opacity-40",
           )}
         />
 
         {/* Center Orb Icon */}
         <div className="relative z-10 flex items-center justify-center">
-          <Sparkles className={cn("h-4.5 w-4.5 transition-transform duration-200", isProcessing ? "animate-spin text-teal-400" : "group-hover:rotate-6 text-teal-300 dark:text-teal-600")} />
+          <Sparkles
+            className={cn(
+              "h-4.5 w-4.5 transition-transform duration-200",
+              isProcessing
+                ? "animate-spin text-teal-400"
+                : "group-hover:rotate-6 text-teal-300 dark:text-teal-600",
+            )}
+          />
         </div>
 
         {/* Floating Tooltip Label when Idle */}

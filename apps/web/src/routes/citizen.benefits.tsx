@@ -185,7 +185,11 @@ function Benefits() {
                 className="mb-8 grid gap-3 sm:grid-cols-2 xl:grid-cols-4"
               >
                 {summary.map(({ label, value, icon: Icon }) => (
-                  <MiraCard key={label} variant="elevated" className="p-4 rounded-xl">
+                  <MiraCard
+                    key={label}
+                    variant="elevated"
+                    className="p-4 rounded-xl"
+                  >
                     <div className="flex items-center gap-3">
                       <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/60 text-foreground border border-border/50">
                         <Icon className="h-4.5 w-4.5" />
@@ -194,7 +198,9 @@ function Benefits() {
                         <p className="text-2xl font-bold tracking-tight text-foreground">
                           {value}
                         </p>
-                        <p className="text-xs text-muted-foreground truncate">{label}</p>
+                        <p className="text-xs text-muted-foreground truncate">
+                          {label}
+                        </p>
                       </div>
                     </div>
                   </MiraCard>
@@ -336,7 +342,9 @@ function Benefits() {
                             </dd>
                           </div>
                           <div>
-                            <dt className="text-xs text-muted-foreground">Approved</dt>
+                            <dt className="text-xs text-muted-foreground">
+                              Approved
+                            </dt>
                             <dd className="mt-1 font-medium text-foreground">
                               {asDate(benefit.approvedOn)}
                             </dd>

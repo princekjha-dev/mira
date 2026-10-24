@@ -1,1 +1,611 @@
-import{c as e,f as t,l as n,t as r,u as i}from"./button-KmRTh43o.js";import{t as a}from"./link-gIn96cdo.js";import{i as o,t as s}from"./DocumentViewer-Dry7D_TW.js";import{t as c}from"./folder-open-CYgp4wCu.js";import{t as l}from"./house-C7oibhrH.js";import{t as u}from"./user-pen-CfbXr0wp.js";import{$t as d,B as f,F as p,I as m,In as h,Kt as g,L as _,Nn as v,Ot as y,Pn as b,R as x,Rn as S,Wt as C,Xt as w,bn as T,dn as E,hn as D,jt as O,mn as k,nn as A,z as j}from"./index-B8Y-_llO.js";var M=e(`credit-card`,[[`rect`,{width:`20`,height:`14`,x:`2`,y:`5`,rx:`2`,key:`ynyp8z`}],[`line`,{x1:`2`,x2:`22`,y1:`10`,y2:`10`,key:`1b3vmo`}]]),N=e(`message-square-warning`,[[`path`,{d:`M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z`,key:`18887p`}],[`path`,{d:`M12 15h.01`,key:`q59x07`}],[`path`,{d:`M12 7v4`,key:`xawao1`}]]),P=t(i()),F=n(),I=[{to:`/schemes`,icon:d,label:`Apply for Scheme`,desc:`Discover active welfare programs`},{to:`/eligibility`,icon:C,label:`Check Eligibility`,desc:`Instant automated criteria test`},{to:`/citizen/applications`,icon:w,label:`Track Application`,desc:`Real-time verification telemetry`},{to:`/citizen/family`,icon:y,label:`My Family Tree`,desc:`Verified household roster`},{to:`/citizen/documents`,icon:c,label:`Civil Documents`,desc:`Attested digital certificates`},{to:`/citizen/benefits`,icon:g,label:`Benefit Disbursements`,desc:`Direct benefit transfer logs`},{to:`/citizen/family`,icon:u,label:`Report Life Event`,desc:`Birth, marriage & address changes`},{to:`/citizen/grievances`,icon:N,label:`Lodge Grievance`,desc:`Direct supervisory escalation`}];function L(){let{state:e}=k(),t=S(),[n,i]=(0,P.useState)([]),[u,g]=(0,P.useState)(null),[C,N]=(0,P.useState)(`Good day`),{data:L}=h({queryKey:[`my-family`,e.session?.apiUserId],queryFn:()=>T(e.session),enabled:!!e.session});(0,P.useEffect)(()=>{let e=new Date().getHours();N(e<12?`Good morning`:e<17?`Good afternoon`:`Good evening`)},[]),(0,P.useEffect)(()=>{if(!e.session?.apiToken)return;let t=!0;return D(e.session,`/api/v1/documents?owner_type=CITIZEN`).then(e=>{t&&i(e.data.filter(e=>e.status!==`REVOKED`).slice(0,5))}).catch(()=>{t&&i([])}),()=>{t=!1}},[e.session?.apiToken,e.session?.apiUserId]);let R=e.applications,z=R.filter(e=>e.status===`Verification Required`||e.status===`Additional Evidence Required`||e.status===`Draft`),B=R.filter(e=>![`Draft`,`Approved`,`Rejected`].includes(e.status)).length,V=e.benefits.filter(e=>[`Disbursed`,`Completed`].includes(e.status)).length,H=n.filter(e=>e.verification_status===`VERIFIED`).length,U=e.session?.name||`Rajesh Sharma`,W=L?.household_name||`Sharma Family`,G=L?.household_public_id||`MIRA-FAM-10482`,K=L?.members?.length||11;return(0,F.jsxs)(`div`,{className:`space-y-7 pb-12 animate-in fade-in duration-200`,children:[(0,F.jsx)(_,{context:`Citizen account`,title:`${C}, ${U}`,description:`Unified welfare eligibility, household civil registry, and verified direct entitlement services.`,actions:(0,F.jsxs)(`div`,{className:`flex items-center gap-2`,children:[(0,F.jsx)(r,{size:`sm`,variant:`outline`,asChild:!0,className:`h-8.5 rounded-lg border-border/80 bg-background/80 px-3.5 text-xs font-medium shadow-2xs hover:bg-muted`,children:(0,F.jsxs)(a,{to:`/citizen/family`,children:[(0,F.jsx)(y,{className:`mr-1.5 h-3.5 w-3.5 text-muted-foreground`}),`View Family Tree`]})}),(0,F.jsx)(r,{size:`sm`,asChild:!0,className:`h-8.5 rounded-lg bg-primary px-3.5 text-xs font-medium text-primary-foreground shadow-2xs hover:bg-primary/95`,children:(0,F.jsxs)(a,{to:`/schemes`,children:[(0,F.jsx)(d,{className:`mr-1.5 h-3.5 w-3.5`}),`Explore Schemes`]})})]})}),(0,F.jsx)(`div`,{className:`rounded-xl border border-border/80 bg-gradient-to-b from-card via-card to-muted/20 p-5 shadow-xs`,children:(0,F.jsxs)(`div`,{className:`flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`,children:[(0,F.jsxs)(`div`,{className:`flex items-start gap-4`,children:[(0,F.jsx)(`div`,{className:`flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary`,children:(0,F.jsx)(l,{className:`h-5 w-5`})}),(0,F.jsxs)(`div`,{children:[(0,F.jsxs)(`div`,{className:`flex flex-wrap items-center gap-2.5`,children:[(0,F.jsx)(`h2`,{className:`text-base font-semibold tracking-tight text-foreground`,children:W}),(0,F.jsx)(`span`,{className:`font-mono text-xs font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/60`,children:G}),(0,F.jsx)(f,{status:L?.verification_status||`Verified`})]}),(0,F.jsxs)(`p`,{className:`mt-1 text-xs text-muted-foreground leading-normal`,children:[(0,F.jsxs)(`span`,{className:`font-medium text-foreground`,children:[K,` registered members`]}),` ·`,` `,L?.bpl_status||`BPL Category A`,` · `,L?.income_category||`Annual Income < ₹1.2L`,` · Verified via Civil Registration`]})]})]}),(0,F.jsx)(`div`,{className:`flex items-center gap-2 sm:self-center`,children:(0,F.jsx)(r,{size:`sm`,variant:`outline`,asChild:!0,className:`h-8 rounded-lg text-xs font-medium`,children:(0,F.jsxs)(a,{to:`/citizen/family`,children:[`Manage Household`,(0,F.jsx)(E,{className:`ml-1.5 h-3.5 w-3.5 text-muted-foreground`})]})})})]})}),z.some(e=>e.status===`Additional Evidence Required`||e.status===`Verification Required`)&&(0,F.jsx)(`div`,{className:`rounded-xl border border-amber-500/30 bg-amber-500/10 p-4.5 text-amber-950 dark:text-amber-200`,children:(0,F.jsxs)(`div`,{className:`flex flex-col sm:flex-row sm:items-center justify-between gap-3`,children:[(0,F.jsxs)(`div`,{className:`flex items-start gap-3`,children:[(0,F.jsx)(O,{className:`h-4.5 w-4.5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5`}),(0,F.jsxs)(`div`,{children:[(0,F.jsx)(`h3`,{className:`text-xs font-semibold tracking-tight`,children:`Officer Clarification Requested`}),(0,F.jsx)(`p`,{className:`mt-0.5 text-xs text-amber-900/90 dark:text-amber-300/90 leading-relaxed`,children:`The verification officer has requested supporting documentation for your pending application. Review details and upload attested documents to prevent SLA delays.`})]})]}),(0,F.jsx)(r,{size:`sm`,asChild:!0,className:`h-8 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-medium shrink-0 shadow-2xs`,children:(0,F.jsxs)(a,{to:`/citizen/applications`,children:[`Respond to Request`,(0,F.jsx)(E,{className:`ml-1.5 h-3.5 w-3.5`})]})})]})}),(0,F.jsxs)(`div`,{className:`grid grid-cols-2 gap-4 lg:grid-cols-4`,children:[(0,F.jsx)(j,{title:`Applications in Progress`,value:B,subtext:`Under statutory review`,icon:w}),(0,F.jsx)(j,{title:`Disbursed Benefits`,value:V,subtext:`Direct bank transfers`,icon:M,trend:{label:`Active`,tone:`positive`}}),(0,F.jsx)(j,{title:`Verified Documents`,value:H,subtext:`of ${n.length||5} civil proofs`,icon:c,trend:{label:`Attested`,tone:`positive`}}),(0,F.jsx)(j,{title:`Household Members`,value:K,subtext:`Verified kinship registry`,icon:y})]}),(0,F.jsxs)(`div`,{className:`grid gap-6 lg:grid-cols-3`,children:[(0,F.jsxs)(`div`,{className:`space-y-4 lg:col-span-2`,children:[(0,F.jsxs)(p,{className:`p-5`,children:[(0,F.jsx)(x,{title:`Active Applications`,description:`Real-time statutory status and verification progression.`,action:(0,F.jsx)(r,{size:`sm`,variant:`ghost`,asChild:!0,className:`h-7 text-xs text-muted-foreground hover:text-foreground`,children:(0,F.jsxs)(a,{to:`/citizen/applications`,children:[`View all (`,R.length,`)`]})})}),R.length===0?(0,F.jsx)(m,{icon:w,title:`No active applications`,description:`Explore schemes and check eligibility to apply for welfare support.`,action:(0,F.jsx)(r,{size:`sm`,asChild:!0,className:`mt-2 text-xs`,children:(0,F.jsx)(a,{to:`/schemes`,children:`Apply for Scheme`})})}):(0,F.jsx)(`div`,{className:`mt-3 divide-y divide-border/60`,children:R.slice(0,4).map(e=>(0,F.jsxs)(`div`,{className:`flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3.5 first:pt-1 last:pb-1`,children:[(0,F.jsxs)(`div`,{className:`space-y-1 min-w-0`,children:[(0,F.jsxs)(`div`,{className:`flex items-center gap-2 flex-wrap`,children:[(0,F.jsx)(`span`,{className:`text-xs font-medium font-mono text-muted-foreground`,children:e.id}),(0,F.jsx)(f,{status:e.status}),e.duplicate&&(0,F.jsx)(`span`,{className:`rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400 border border-amber-500/20`,children:`Duplicate Alert`})]}),(0,F.jsx)(`h4`,{className:`text-sm font-semibold text-foreground truncate`,children:b(e.schemeId)?.name||`Welfare Assistance Scheme`}),(0,F.jsxs)(`p`,{className:`text-[11px] text-muted-foreground`,children:[`Updated `,v(e.updatedOn),` · Assigned to district verification queue`]})]}),(0,F.jsx)(`div`,{className:`flex items-center gap-2 shrink-0`,children:(0,F.jsx)(r,{size:`sm`,variant:`outline`,asChild:!0,className:`h-7.5 text-xs font-medium rounded-lg`,children:(0,F.jsx)(a,{to:`/citizen/applications/$id`,params:{id:e.id},children:`View Details`})})})]},e.id))})]}),(0,F.jsxs)(p,{className:`p-5`,children:[(0,F.jsx)(x,{title:`Citizen Services`,description:`Direct access to lifecycle claims, family registry updates, and scheme discovery.`}),(0,F.jsx)(`div`,{className:`mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4`,children:I.map(e=>(0,F.jsxs)(a,{to:e.to,className:`group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-3.5 transition-all duration-150 hover:border-primary/40 hover:bg-muted/30`,children:[(0,F.jsxs)(`div`,{className:`flex items-center justify-between`,children:[(0,F.jsx)(`div`,{className:`flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-muted/40 text-foreground group-hover:text-primary transition-colors`,children:(0,F.jsx)(e.icon,{className:`h-4 w-4`})}),(0,F.jsx)(E,{className:`h-3 w-3 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100`})]}),(0,F.jsxs)(`div`,{className:`mt-3`,children:[(0,F.jsx)(`span`,{className:`text-xs font-semibold text-foreground tracking-tight block`,children:e.label}),(0,F.jsx)(`span`,{className:`mt-0.5 text-[10px] text-muted-foreground line-clamp-1 block`,children:e.desc})]})]},e.label))})]})]}),(0,F.jsxs)(`div`,{className:`space-y-4`,children:[(0,F.jsxs)(p,{className:`p-5`,children:[(0,F.jsx)(x,{title:`Verified Documents`,description:`Official proofs linked to your household.`,action:(0,F.jsx)(r,{size:`sm`,variant:`ghost`,onClick:()=>void t({to:`/citizen/documents`,search:{upload:!0}}),className:`h-7 text-xs text-primary hover:text-primary/90`,children:`Upload New`})}),n.length===0?(0,F.jsx)(`p`,{className:`mt-2 text-xs text-muted-foreground`,children:`No documents uploaded yet. Attested proofs will appear here.`}):(0,F.jsx)(`div`,{className:`mt-2 divide-y divide-border/60`,children:n.slice(0,4).map(e=>(0,F.jsxs)(`button`,{onClick:()=>g(e),className:`w-full text-left py-3 first:pt-1 last:pb-1 flex items-center justify-between gap-3 group hover:bg-muted/20 -mx-1 px-1 rounded transition-colors`,children:[(0,F.jsxs)(`div`,{className:`min-w-0`,children:[(0,F.jsx)(`span`,{className:`block truncate text-xs font-medium text-foreground group-hover:text-primary transition-colors`,children:e.original_filename}),(0,F.jsxs)(`span`,{className:`text-[11px] text-muted-foreground`,children:[o(e.size_bytes),` · `,new Date(e.created_at).toLocaleDateString(`en-IN`)]})]}),(0,F.jsx)(f,{status:e.verification_status===`VERIFIED`?`Verified`:`Pending`})]},e.id))}),(0,F.jsxs)(`div`,{className:`mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs`,children:[(0,F.jsx)(`span`,{className:`text-muted-foreground`,children:`Verification Rate`}),(0,F.jsxs)(`span`,{className:`font-semibold text-teal-600 dark:text-teal-400`,children:[n.length?Math.round(H/n.length*100):100,`%`]})]})]}),(0,F.jsx)(p,{className:`p-4.5 bg-muted/30`,children:(0,F.jsxs)(`div`,{className:`flex items-start gap-2.5 text-xs text-muted-foreground leading-relaxed`,children:[(0,F.jsx)(A,{className:`h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5`}),(0,F.jsx)(`span`,{children:`Your household record is protected by statutory end-to-end audit seals. All eligibility determinations are reproducible on the public ledger.`})]})})]})]}),e.session&&(0,F.jsx)(s,{document:u,session:e.session,onClose:()=>g(null),onChanged:()=>{e.session?.apiToken&&D(e.session,`/api/v1/documents?owner_type=CITIZEN`).then(e=>i(e.data.filter(e=>e.status!==`REVOKED`).slice(0,5))).catch(()=>void 0)}})]})}export{L as component};
+import { c as e, f as t, l as n, t as r, u as i } from "./button-KmRTh43o.js";
+import { t as a } from "./link-gIn96cdo.js";
+import { i as o, t as s } from "./DocumentViewer-Dry7D_TW.js";
+import { t as c } from "./folder-open-CYgp4wCu.js";
+import { t as l } from "./house-C7oibhrH.js";
+import { t as u } from "./user-pen-CfbXr0wp.js";
+import {
+  $t as d,
+  B as f,
+  F as p,
+  I as m,
+  In as h,
+  Kt as g,
+  L as _,
+  Nn as v,
+  Ot as y,
+  Pn as b,
+  R as x,
+  Rn as S,
+  Wt as C,
+  Xt as w,
+  bn as T,
+  dn as E,
+  hn as D,
+  jt as O,
+  mn as k,
+  nn as A,
+  z as j,
+} from "./index-B8Y-_llO.js";
+var M = e(`credit-card`, [
+    [
+      `rect`,
+      { width: `20`, height: `14`, x: `2`, y: `5`, rx: `2`, key: `ynyp8z` },
+    ],
+    [`line`, { x1: `2`, x2: `22`, y1: `10`, y2: `10`, key: `1b3vmo` }],
+  ]),
+  N = e(`message-square-warning`, [
+    [
+      `path`,
+      {
+        d: `M22 17a2 2 0 0 1-2 2H6.828a2 2 0 0 0-1.414.586l-2.202 2.202A.71.71 0 0 1 2 21.286V5a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2z`,
+        key: `18887p`,
+      },
+    ],
+    [`path`, { d: `M12 15h.01`, key: `q59x07` }],
+    [`path`, { d: `M12 7v4`, key: `xawao1` }],
+  ]),
+  P = t(i()),
+  F = n(),
+  I = [
+    {
+      to: `/schemes`,
+      icon: d,
+      label: `Apply for Scheme`,
+      desc: `Discover active welfare programs`,
+    },
+    {
+      to: `/eligibility`,
+      icon: C,
+      label: `Check Eligibility`,
+      desc: `Instant automated criteria test`,
+    },
+    {
+      to: `/citizen/applications`,
+      icon: w,
+      label: `Track Application`,
+      desc: `Real-time verification telemetry`,
+    },
+    {
+      to: `/citizen/family`,
+      icon: y,
+      label: `My Family Tree`,
+      desc: `Verified household roster`,
+    },
+    {
+      to: `/citizen/documents`,
+      icon: c,
+      label: `Civil Documents`,
+      desc: `Attested digital certificates`,
+    },
+    {
+      to: `/citizen/benefits`,
+      icon: g,
+      label: `Benefit Disbursements`,
+      desc: `Direct benefit transfer logs`,
+    },
+    {
+      to: `/citizen/family`,
+      icon: u,
+      label: `Report Life Event`,
+      desc: `Birth, marriage & address changes`,
+    },
+    {
+      to: `/citizen/grievances`,
+      icon: N,
+      label: `Lodge Grievance`,
+      desc: `Direct supervisory escalation`,
+    },
+  ];
+function L() {
+  let { state: e } = k(),
+    t = S(),
+    [n, i] = (0, P.useState)([]),
+    [u, g] = (0, P.useState)(null),
+    [C, N] = (0, P.useState)(`Good day`),
+    { data: L } = h({
+      queryKey: [`my-family`, e.session?.apiUserId],
+      queryFn: () => T(e.session),
+      enabled: !!e.session,
+    });
+  ((0, P.useEffect)(() => {
+    let e = new Date().getHours();
+    N(e < 12 ? `Good morning` : e < 17 ? `Good afternoon` : `Good evening`);
+  }, []),
+    (0, P.useEffect)(() => {
+      if (!e.session?.apiToken) return;
+      let t = !0;
+      return (
+        D(e.session, `/api/v1/documents?owner_type=CITIZEN`)
+          .then((e) => {
+            t && i(e.data.filter((e) => e.status !== `REVOKED`).slice(0, 5));
+          })
+          .catch(() => {
+            t && i([]);
+          }),
+        () => {
+          t = !1;
+        }
+      );
+    }, [e.session?.apiToken, e.session?.apiUserId]));
+  let R = e.applications,
+    z = R.filter(
+      (e) =>
+        e.status === `Verification Required` ||
+        e.status === `Additional Evidence Required` ||
+        e.status === `Draft`,
+    ),
+    B = R.filter(
+      (e) => ![`Draft`, `Approved`, `Rejected`].includes(e.status),
+    ).length,
+    V = e.benefits.filter((e) =>
+      [`Disbursed`, `Completed`].includes(e.status),
+    ).length,
+    H = n.filter((e) => e.verification_status === `VERIFIED`).length,
+    U = e.session?.name || `Rajesh Sharma`,
+    W = L?.household_name || `Sharma Family`,
+    G = L?.household_public_id || `MIRA-FAM-10482`,
+    K = L?.members?.length || 11;
+  return (0, F.jsxs)(`div`, {
+    className: `space-y-7 pb-12 animate-in fade-in duration-200`,
+    children: [
+      (0, F.jsx)(_, {
+        context: `Citizen account`,
+        title: `${C}, ${U}`,
+        description: `Unified welfare eligibility, household civil registry, and verified direct entitlement services.`,
+        actions: (0, F.jsxs)(`div`, {
+          className: `flex items-center gap-2`,
+          children: [
+            (0, F.jsx)(r, {
+              size: `sm`,
+              variant: `outline`,
+              asChild: !0,
+              className: `h-8.5 rounded-lg border-border/80 bg-background/80 px-3.5 text-xs font-medium shadow-2xs hover:bg-muted`,
+              children: (0, F.jsxs)(a, {
+                to: `/citizen/family`,
+                children: [
+                  (0, F.jsx)(y, {
+                    className: `mr-1.5 h-3.5 w-3.5 text-muted-foreground`,
+                  }),
+                  `View Family Tree`,
+                ],
+              }),
+            }),
+            (0, F.jsx)(r, {
+              size: `sm`,
+              asChild: !0,
+              className: `h-8.5 rounded-lg bg-primary px-3.5 text-xs font-medium text-primary-foreground shadow-2xs hover:bg-primary/95`,
+              children: (0, F.jsxs)(a, {
+                to: `/schemes`,
+                children: [
+                  (0, F.jsx)(d, { className: `mr-1.5 h-3.5 w-3.5` }),
+                  `Explore Schemes`,
+                ],
+              }),
+            }),
+          ],
+        }),
+      }),
+      (0, F.jsx)(`div`, {
+        className: `rounded-xl border border-border/80 bg-gradient-to-b from-card via-card to-muted/20 p-5 shadow-xs`,
+        children: (0, F.jsxs)(`div`, {
+          className: `flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between`,
+          children: [
+            (0, F.jsxs)(`div`, {
+              className: `flex items-start gap-4`,
+              children: [
+                (0, F.jsx)(`div`, {
+                  className: `flex h-11 w-11 shrink-0 items-center justify-center rounded-lg border border-primary/20 bg-primary/5 text-primary`,
+                  children: (0, F.jsx)(l, { className: `h-5 w-5` }),
+                }),
+                (0, F.jsxs)(`div`, {
+                  children: [
+                    (0, F.jsxs)(`div`, {
+                      className: `flex flex-wrap items-center gap-2.5`,
+                      children: [
+                        (0, F.jsx)(`h2`, {
+                          className: `text-base font-semibold tracking-tight text-foreground`,
+                          children: W,
+                        }),
+                        (0, F.jsx)(`span`, {
+                          className: `font-mono text-xs font-medium text-muted-foreground bg-muted/60 px-2 py-0.5 rounded border border-border/60`,
+                          children: G,
+                        }),
+                        (0, F.jsx)(f, {
+                          status: L?.verification_status || `Verified`,
+                        }),
+                      ],
+                    }),
+                    (0, F.jsxs)(`p`, {
+                      className: `mt-1 text-xs text-muted-foreground leading-normal`,
+                      children: [
+                        (0, F.jsxs)(`span`, {
+                          className: `font-medium text-foreground`,
+                          children: [K, ` registered members`],
+                        }),
+                        ` ·`,
+                        ` `,
+                        L?.bpl_status || `BPL Category A`,
+                        ` · `,
+                        L?.income_category || `Annual Income < ₹1.2L`,
+                        ` · Verified via Civil Registration`,
+                      ],
+                    }),
+                  ],
+                }),
+              ],
+            }),
+            (0, F.jsx)(`div`, {
+              className: `flex items-center gap-2 sm:self-center`,
+              children: (0, F.jsx)(r, {
+                size: `sm`,
+                variant: `outline`,
+                asChild: !0,
+                className: `h-8 rounded-lg text-xs font-medium`,
+                children: (0, F.jsxs)(a, {
+                  to: `/citizen/family`,
+                  children: [
+                    `Manage Household`,
+                    (0, F.jsx)(E, {
+                      className: `ml-1.5 h-3.5 w-3.5 text-muted-foreground`,
+                    }),
+                  ],
+                }),
+              }),
+            }),
+          ],
+        }),
+      }),
+      z.some(
+        (e) =>
+          e.status === `Additional Evidence Required` ||
+          e.status === `Verification Required`,
+      ) &&
+        (0, F.jsx)(`div`, {
+          className: `rounded-xl border border-amber-500/30 bg-amber-500/10 p-4.5 text-amber-950 dark:text-amber-200`,
+          children: (0, F.jsxs)(`div`, {
+            className: `flex flex-col sm:flex-row sm:items-center justify-between gap-3`,
+            children: [
+              (0, F.jsxs)(`div`, {
+                className: `flex items-start gap-3`,
+                children: [
+                  (0, F.jsx)(O, {
+                    className: `h-4.5 w-4.5 shrink-0 text-amber-600 dark:text-amber-400 mt-0.5`,
+                  }),
+                  (0, F.jsxs)(`div`, {
+                    children: [
+                      (0, F.jsx)(`h3`, {
+                        className: `text-xs font-semibold tracking-tight`,
+                        children: `Officer Clarification Requested`,
+                      }),
+                      (0, F.jsx)(`p`, {
+                        className: `mt-0.5 text-xs text-amber-900/90 dark:text-amber-300/90 leading-relaxed`,
+                        children: `The verification officer has requested supporting documentation for your pending application. Review details and upload attested documents to prevent SLA delays.`,
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              (0, F.jsx)(r, {
+                size: `sm`,
+                asChild: !0,
+                className: `h-8 rounded-lg bg-amber-700 hover:bg-amber-800 text-white text-xs font-medium shrink-0 shadow-2xs`,
+                children: (0, F.jsxs)(a, {
+                  to: `/citizen/applications`,
+                  children: [
+                    `Respond to Request`,
+                    (0, F.jsx)(E, { className: `ml-1.5 h-3.5 w-3.5` }),
+                  ],
+                }),
+              }),
+            ],
+          }),
+        }),
+      (0, F.jsxs)(`div`, {
+        className: `grid grid-cols-2 gap-4 lg:grid-cols-4`,
+        children: [
+          (0, F.jsx)(j, {
+            title: `Applications in Progress`,
+            value: B,
+            subtext: `Under statutory review`,
+            icon: w,
+          }),
+          (0, F.jsx)(j, {
+            title: `Disbursed Benefits`,
+            value: V,
+            subtext: `Direct bank transfers`,
+            icon: M,
+            trend: { label: `Active`, tone: `positive` },
+          }),
+          (0, F.jsx)(j, {
+            title: `Verified Documents`,
+            value: H,
+            subtext: `of ${n.length || 5} civil proofs`,
+            icon: c,
+            trend: { label: `Attested`, tone: `positive` },
+          }),
+          (0, F.jsx)(j, {
+            title: `Household Members`,
+            value: K,
+            subtext: `Verified kinship registry`,
+            icon: y,
+          }),
+        ],
+      }),
+      (0, F.jsxs)(`div`, {
+        className: `grid gap-6 lg:grid-cols-3`,
+        children: [
+          (0, F.jsxs)(`div`, {
+            className: `space-y-4 lg:col-span-2`,
+            children: [
+              (0, F.jsxs)(p, {
+                className: `p-5`,
+                children: [
+                  (0, F.jsx)(x, {
+                    title: `Active Applications`,
+                    description: `Real-time statutory status and verification progression.`,
+                    action: (0, F.jsx)(r, {
+                      size: `sm`,
+                      variant: `ghost`,
+                      asChild: !0,
+                      className: `h-7 text-xs text-muted-foreground hover:text-foreground`,
+                      children: (0, F.jsxs)(a, {
+                        to: `/citizen/applications`,
+                        children: [`View all (`, R.length, `)`],
+                      }),
+                    }),
+                  }),
+                  R.length === 0
+                    ? (0, F.jsx)(m, {
+                        icon: w,
+                        title: `No active applications`,
+                        description: `Explore schemes and check eligibility to apply for welfare support.`,
+                        action: (0, F.jsx)(r, {
+                          size: `sm`,
+                          asChild: !0,
+                          className: `mt-2 text-xs`,
+                          children: (0, F.jsx)(a, {
+                            to: `/schemes`,
+                            children: `Apply for Scheme`,
+                          }),
+                        }),
+                      })
+                    : (0, F.jsx)(`div`, {
+                        className: `mt-3 divide-y divide-border/60`,
+                        children: R.slice(0, 4).map((e) =>
+                          (0, F.jsxs)(
+                            `div`,
+                            {
+                              className: `flex flex-col sm:flex-row sm:items-center justify-between gap-3 py-3.5 first:pt-1 last:pb-1`,
+                              children: [
+                                (0, F.jsxs)(`div`, {
+                                  className: `space-y-1 min-w-0`,
+                                  children: [
+                                    (0, F.jsxs)(`div`, {
+                                      className: `flex items-center gap-2 flex-wrap`,
+                                      children: [
+                                        (0, F.jsx)(`span`, {
+                                          className: `text-xs font-medium font-mono text-muted-foreground`,
+                                          children: e.id,
+                                        }),
+                                        (0, F.jsx)(f, { status: e.status }),
+                                        e.duplicate &&
+                                          (0, F.jsx)(`span`, {
+                                            className: `rounded bg-amber-500/10 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-400 border border-amber-500/20`,
+                                            children: `Duplicate Alert`,
+                                          }),
+                                      ],
+                                    }),
+                                    (0, F.jsx)(`h4`, {
+                                      className: `text-sm font-semibold text-foreground truncate`,
+                                      children:
+                                        b(e.schemeId)?.name ||
+                                        `Welfare Assistance Scheme`,
+                                    }),
+                                    (0, F.jsxs)(`p`, {
+                                      className: `text-[11px] text-muted-foreground`,
+                                      children: [
+                                        `Updated `,
+                                        v(e.updatedOn),
+                                        ` · Assigned to district verification queue`,
+                                      ],
+                                    }),
+                                  ],
+                                }),
+                                (0, F.jsx)(`div`, {
+                                  className: `flex items-center gap-2 shrink-0`,
+                                  children: (0, F.jsx)(r, {
+                                    size: `sm`,
+                                    variant: `outline`,
+                                    asChild: !0,
+                                    className: `h-7.5 text-xs font-medium rounded-lg`,
+                                    children: (0, F.jsx)(a, {
+                                      to: `/citizen/applications/$id`,
+                                      params: { id: e.id },
+                                      children: `View Details`,
+                                    }),
+                                  }),
+                                }),
+                              ],
+                            },
+                            e.id,
+                          ),
+                        ),
+                      }),
+                ],
+              }),
+              (0, F.jsxs)(p, {
+                className: `p-5`,
+                children: [
+                  (0, F.jsx)(x, {
+                    title: `Citizen Services`,
+                    description: `Direct access to lifecycle claims, family registry updates, and scheme discovery.`,
+                  }),
+                  (0, F.jsx)(`div`, {
+                    className: `mt-3 grid grid-cols-2 gap-3 sm:grid-cols-4`,
+                    children: I.map((e) =>
+                      (0, F.jsxs)(
+                        a,
+                        {
+                          to: e.to,
+                          className: `group flex flex-col justify-between rounded-xl border border-border/70 bg-card p-3.5 transition-all duration-150 hover:border-primary/40 hover:bg-muted/30`,
+                          children: [
+                            (0, F.jsxs)(`div`, {
+                              className: `flex items-center justify-between`,
+                              children: [
+                                (0, F.jsx)(`div`, {
+                                  className: `flex h-8 w-8 items-center justify-center rounded-lg border border-border/60 bg-muted/40 text-foreground group-hover:text-primary transition-colors`,
+                                  children: (0, F.jsx)(e.icon, {
+                                    className: `h-4 w-4`,
+                                  }),
+                                }),
+                                (0, F.jsx)(E, {
+                                  className: `h-3 w-3 text-muted-foreground/40 opacity-0 transition-opacity group-hover:opacity-100`,
+                                }),
+                              ],
+                            }),
+                            (0, F.jsxs)(`div`, {
+                              className: `mt-3`,
+                              children: [
+                                (0, F.jsx)(`span`, {
+                                  className: `text-xs font-semibold text-foreground tracking-tight block`,
+                                  children: e.label,
+                                }),
+                                (0, F.jsx)(`span`, {
+                                  className: `mt-0.5 text-[10px] text-muted-foreground line-clamp-1 block`,
+                                  children: e.desc,
+                                }),
+                              ],
+                            }),
+                          ],
+                        },
+                        e.label,
+                      ),
+                    ),
+                  }),
+                ],
+              }),
+            ],
+          }),
+          (0, F.jsxs)(`div`, {
+            className: `space-y-4`,
+            children: [
+              (0, F.jsxs)(p, {
+                className: `p-5`,
+                children: [
+                  (0, F.jsx)(x, {
+                    title: `Verified Documents`,
+                    description: `Official proofs linked to your household.`,
+                    action: (0, F.jsx)(r, {
+                      size: `sm`,
+                      variant: `ghost`,
+                      onClick: () =>
+                        void t({
+                          to: `/citizen/documents`,
+                          search: { upload: !0 },
+                        }),
+                      className: `h-7 text-xs text-primary hover:text-primary/90`,
+                      children: `Upload New`,
+                    }),
+                  }),
+                  n.length === 0
+                    ? (0, F.jsx)(`p`, {
+                        className: `mt-2 text-xs text-muted-foreground`,
+                        children: `No documents uploaded yet. Attested proofs will appear here.`,
+                      })
+                    : (0, F.jsx)(`div`, {
+                        className: `mt-2 divide-y divide-border/60`,
+                        children: n
+                          .slice(0, 4)
+                          .map((e) =>
+                            (0, F.jsxs)(
+                              `button`,
+                              {
+                                onClick: () => g(e),
+                                className: `w-full text-left py-3 first:pt-1 last:pb-1 flex items-center justify-between gap-3 group hover:bg-muted/20 -mx-1 px-1 rounded transition-colors`,
+                                children: [
+                                  (0, F.jsxs)(`div`, {
+                                    className: `min-w-0`,
+                                    children: [
+                                      (0, F.jsx)(`span`, {
+                                        className: `block truncate text-xs font-medium text-foreground group-hover:text-primary transition-colors`,
+                                        children: e.original_filename,
+                                      }),
+                                      (0, F.jsxs)(`span`, {
+                                        className: `text-[11px] text-muted-foreground`,
+                                        children: [
+                                          o(e.size_bytes),
+                                          ` · `,
+                                          new Date(
+                                            e.created_at,
+                                          ).toLocaleDateString(`en-IN`),
+                                        ],
+                                      }),
+                                    ],
+                                  }),
+                                  (0, F.jsx)(f, {
+                                    status:
+                                      e.verification_status === `VERIFIED`
+                                        ? `Verified`
+                                        : `Pending`,
+                                  }),
+                                ],
+                              },
+                              e.id,
+                            ),
+                          ),
+                      }),
+                  (0, F.jsxs)(`div`, {
+                    className: `mt-4 pt-3 border-t border-border/60 flex items-center justify-between text-xs`,
+                    children: [
+                      (0, F.jsx)(`span`, {
+                        className: `text-muted-foreground`,
+                        children: `Verification Rate`,
+                      }),
+                      (0, F.jsxs)(`span`, {
+                        className: `font-semibold text-teal-600 dark:text-teal-400`,
+                        children: [
+                          n.length ? Math.round((H / n.length) * 100) : 100,
+                          `%`,
+                        ],
+                      }),
+                    ],
+                  }),
+                ],
+              }),
+              (0, F.jsx)(p, {
+                className: `p-4.5 bg-muted/30`,
+                children: (0, F.jsxs)(`div`, {
+                  className: `flex items-start gap-2.5 text-xs text-muted-foreground leading-relaxed`,
+                  children: [
+                    (0, F.jsx)(A, {
+                      className: `h-4 w-4 text-teal-600 dark:text-teal-400 shrink-0 mt-0.5`,
+                    }),
+                    (0, F.jsx)(`span`, {
+                      children: `Your household record is protected by statutory end-to-end audit seals. All eligibility determinations are reproducible on the public ledger.`,
+                    }),
+                  ],
+                }),
+              }),
+            ],
+          }),
+        ],
+      }),
+      e.session &&
+        (0, F.jsx)(s, {
+          document: u,
+          session: e.session,
+          onClose: () => g(null),
+          onChanged: () => {
+            e.session?.apiToken &&
+              D(e.session, `/api/v1/documents?owner_type=CITIZEN`)
+                .then((e) =>
+                  i(e.data.filter((e) => e.status !== `REVOKED`).slice(0, 5)),
+                )
+                .catch(() => void 0);
+          },
+        }),
+    ],
+  });
+}
+export { L as component };

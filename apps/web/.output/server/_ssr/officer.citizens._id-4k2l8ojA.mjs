@@ -1,23 +1,29 @@
-import { v as lazyRouteComponent, y as createFileRoute } from "../_libs/@tanstack/react-router+[...].mjs";
+import {
+  v as lazyRouteComponent,
+  y as createFileRoute,
+} from "../_libs/@tanstack/react-router+[...].mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/officer.citizens._id-4k2l8ojA.js
-var $$splitComponentImporter = () => import("./officer.citizens._id-uunops5g.mjs");
+var $$splitComponentImporter = () =>
+  import("./officer.citizens._id-uunops5g.mjs");
 var Route = createFileRoute("/officer/citizens/$id")({
-	head: ({ params }) => ({ meta: [
-		{ title: `Citizen ${params.id} — Officer` },
-		{
-			name: "description",
-			content: "Citizen record view for authorised officers."
-		},
-		{
-			property: "og:title",
-			content: `Citizen ${params.id}`
-		},
-		{
-			property: "og:description",
-			content: "Citizen record."
-		}
-	] }),
-	component: lazyRouteComponent($$splitComponentImporter, "component")
+  head: ({ params }) => ({
+    meta: [
+      { title: `Citizen ${params.id} — Officer` },
+      {
+        name: "description",
+        content: "Citizen record view for authorised officers.",
+      },
+      {
+        property: "og:title",
+        content: `Citizen ${params.id}`,
+      },
+      {
+        property: "og:description",
+        content: "Citizen record.",
+      },
+    ],
+  }),
+  component: lazyRouteComponent($$splitComponentImporter, "component"),
 });
 //#endregion
 export { Route as t };

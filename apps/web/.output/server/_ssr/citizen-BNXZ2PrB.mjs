@@ -5,10 +5,12 @@ import { t as MiraShell } from "./MiraShell-G5CKBUwT.mjs";
 //#region node_modules/.nitro/vite/services/ssr/assets/citizen-BNXZ2PrB.js
 var import_jsx_runtime = require_jsx_runtime();
 function CitizenLayout() {
-	return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RequireRole, {
-		role: "citizen",
-		children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MiraShell, { children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Outlet, {}) })
-	});
+  return /* @__PURE__ */ (0, import_jsx_runtime.jsx)(RequireRole, {
+    role: "citizen",
+    children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(MiraShell, {
+      children: /* @__PURE__ */ (0, import_jsx_runtime.jsx)(Outlet, {}),
+    }),
+  });
 }
 //#endregion
 export { CitizenLayout as component };

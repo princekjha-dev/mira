@@ -177,7 +177,9 @@ export function ComposeSheet({
                 <label className="font-semibold text-slate-800 dark:text-slate-200">
                   Application Context (Optional)
                 </label>
-                <span className="text-[10px] text-muted-foreground">e.g. APP-2026-000318</span>
+                <span className="text-[10px] text-muted-foreground">
+                  e.g. APP-2026-000318
+                </span>
               </div>
               <Input
                 value={applicationId}
@@ -265,7 +267,12 @@ export function ComposeSheet({
               <Button
                 type="submit"
                 size="sm"
-                disabled={isSending || !toEmail.trim() || !subject.trim() || !body.trim()}
+                disabled={
+                  isSending ||
+                  !toEmail.trim() ||
+                  !subject.trim() ||
+                  !body.trim()
+                }
                 className="h-8 text-xs bg-gov text-white hover:bg-gov/90 gap-1.5 font-medium shadow-2xs"
               >
                 {isSending ? (

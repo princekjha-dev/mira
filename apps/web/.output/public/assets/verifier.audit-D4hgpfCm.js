@@ -1,1 +1,96 @@
-import{l as e}from"./button-KmRTh43o.js";import{D as t,Mt as n,mn as r}from"./index-B8Y-_llO.js";import{n as i,t as a}from"./card-DNkZ-jvk.js";var o=e();function s(){let{state:e}=r(),s=e.audit||[];return(0,o.jsxs)(`div`,{className:`space-y-6`,children:[(0,o.jsx)(t,{title:`Verification Audit Ledger`,desc:`Immutable event stream of determinations, status updates, evidence submissions, and overrides.`,crumbs:[{label:`Verifier`,to:`/verifier/dashboard`},{label:`Audit`}]}),(0,o.jsx)(a,{className:`border-border/80 shadow-xs`,children:(0,o.jsx)(i,{className:`p-0`,children:(0,o.jsx)(`div`,{className:`divide-y divide-border text-xs`,children:s.map(e=>(0,o.jsxs)(`div`,{className:`p-4 flex flex-col gap-1 hover:bg-muted/30 transition-colors`,children:[(0,o.jsxs)(`div`,{className:`flex items-center justify-between`,children:[(0,o.jsxs)(`div`,{className:`flex items-center gap-2`,children:[(0,o.jsx)(n,{className:`h-4 w-4 text-emerald-600 shrink-0`}),(0,o.jsx)(`span`,{className:`font-semibold text-foreground`,children:e.action}),e.application&&(0,o.jsx)(`span`,{className:`font-mono text-[11px] text-primary`,children:e.application})]}),(0,o.jsx)(`span`,{className:`font-mono text-[11px] text-muted-foreground`,children:e.ts})]}),(0,o.jsxs)(`div`,{className:`text-muted-foreground`,children:[`Actor: `,(0,o.jsx)(`span`,{className:`text-foreground`,children:e.actor}),e.prev&&e.next&&(0,o.jsxs)(`span`,{children:[` · State: `,e.prev,` → `,(0,o.jsx)(`strong`,{className:`text-foreground`,children:e.next})]})]}),e.reason&&(0,o.jsxs)(`p`,{className:`mt-1 text-[11px] italic text-muted-foreground bg-muted/40 p-2 rounded`,children:[`"`,e.reason,`"`]})]},e.id))})})})]})}export{s as component};
+import { l as e } from "./button-KmRTh43o.js";
+import { D as t, Mt as n, mn as r } from "./index-B8Y-_llO.js";
+import { n as i, t as a } from "./card-DNkZ-jvk.js";
+var o = e();
+function s() {
+  let { state: e } = r(),
+    s = e.audit || [];
+  return (0, o.jsxs)(`div`, {
+    className: `space-y-6`,
+    children: [
+      (0, o.jsx)(t, {
+        title: `Verification Audit Ledger`,
+        desc: `Immutable event stream of determinations, status updates, evidence submissions, and overrides.`,
+        crumbs: [
+          { label: `Verifier`, to: `/verifier/dashboard` },
+          { label: `Audit` },
+        ],
+      }),
+      (0, o.jsx)(a, {
+        className: `border-border/80 shadow-xs`,
+        children: (0, o.jsx)(i, {
+          className: `p-0`,
+          children: (0, o.jsx)(`div`, {
+            className: `divide-y divide-border text-xs`,
+            children: s.map((e) =>
+              (0, o.jsxs)(
+                `div`,
+                {
+                  className: `p-4 flex flex-col gap-1 hover:bg-muted/30 transition-colors`,
+                  children: [
+                    (0, o.jsxs)(`div`, {
+                      className: `flex items-center justify-between`,
+                      children: [
+                        (0, o.jsxs)(`div`, {
+                          className: `flex items-center gap-2`,
+                          children: [
+                            (0, o.jsx)(n, {
+                              className: `h-4 w-4 text-emerald-600 shrink-0`,
+                            }),
+                            (0, o.jsx)(`span`, {
+                              className: `font-semibold text-foreground`,
+                              children: e.action,
+                            }),
+                            e.application &&
+                              (0, o.jsx)(`span`, {
+                                className: `font-mono text-[11px] text-primary`,
+                                children: e.application,
+                              }),
+                          ],
+                        }),
+                        (0, o.jsx)(`span`, {
+                          className: `font-mono text-[11px] text-muted-foreground`,
+                          children: e.ts,
+                        }),
+                      ],
+                    }),
+                    (0, o.jsxs)(`div`, {
+                      className: `text-muted-foreground`,
+                      children: [
+                        `Actor: `,
+                        (0, o.jsx)(`span`, {
+                          className: `text-foreground`,
+                          children: e.actor,
+                        }),
+                        e.prev &&
+                          e.next &&
+                          (0, o.jsxs)(`span`, {
+                            children: [
+                              ` · State: `,
+                              e.prev,
+                              ` → `,
+                              (0, o.jsx)(`strong`, {
+                                className: `text-foreground`,
+                                children: e.next,
+                              }),
+                            ],
+                          }),
+                      ],
+                    }),
+                    e.reason &&
+                      (0, o.jsxs)(`p`, {
+                        className: `mt-1 text-[11px] italic text-muted-foreground bg-muted/40 p-2 rounded`,
+                        children: [`"`, e.reason, `"`],
+                      }),
+                  ],
+                },
+                e.id,
+              ),
+            ),
+          }),
+        }),
+      }),
+    ],
+  });
+}
+export { s as component };

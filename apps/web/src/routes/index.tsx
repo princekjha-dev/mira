@@ -1,11 +1,33 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
 import { useEffect, useId, useState } from "react";
 import {
-  Activity, ArrowRight, CheckCircle2, ChevronRight, Compass,
-  FileCheck2, FilePlus2, FileUp, FolderArchive, History,
-  ListChecks, Search, ShieldCheck, Sparkles, Users, UserPen,
-  Building2, GraduationCap, HeartPulse, Sprout, Landmark,
-  Baby, Briefcase, Trees, HandHeart, Check, Network,
+  Activity,
+  ArrowRight,
+  CheckCircle2,
+  ChevronRight,
+  Compass,
+  FileCheck2,
+  FilePlus2,
+  FileUp,
+  FolderArchive,
+  History,
+  ListChecks,
+  Search,
+  ShieldCheck,
+  Sparkles,
+  Users,
+  UserPen,
+  Building2,
+  GraduationCap,
+  HeartPulse,
+  Sprout,
+  Landmark,
+  Baby,
+  Briefcase,
+  Trees,
+  HandHeart,
+  Check,
+  Network,
 } from "lucide-react";
 import { useApp } from "@/lib/app-state";
 import { CATEGORIES, CATEGORY_IMAGE, SCHEMES, type Category } from "@/lib/data";
@@ -22,7 +44,10 @@ export const Route = createFileRoute("/")({
         content:
           "Public records, welfare schemes, and citizen benefits in one place. Discover eligible schemes, manage documents, submit applications and track decisions.",
       },
-      { property: "og:title", content: "Mira — Unified Citizen Welfare Platform" },
+      {
+        property: "og:title",
+        content: "Mira — Unified Citizen Welfare Platform",
+      },
       {
         property: "og:description",
         content:
@@ -116,7 +141,10 @@ const QUICK_ACTIONS = [
 ] as const;
 
 // Category icons for Explore section
-const CATEGORY_ICONS: Record<Category, React.ComponentType<{ className?: string }>> = {
+const CATEGORY_ICONS: Record<
+  Category,
+  React.ComponentType<{ className?: string }>
+> = {
   Housing: Building2,
   Education: GraduationCap,
   Healthcare: HeartPulse,
@@ -175,7 +203,8 @@ function Index() {
   // Hero carousel state
   const [currentSlide, setCurrentSlide] = useState(0);
   const [searchQuery, setSearchQuery] = useState("");
-  const [searchCategory, setSearchCategory] = useState<SearchCategory>("All Categories");
+  const [searchCategory, setSearchCategory] =
+    useState<SearchCategory>("All Categories");
 
   // Preload hero images to avoid flicker
   useEffect(() => {
@@ -205,7 +234,11 @@ function Index() {
     e.preventDefault();
     const query = searchQuery.trim();
 
-    if (searchCategory === "Schemes" || searchCategory === "All Categories" || searchCategory === "Services") {
+    if (
+      searchCategory === "Schemes" ||
+      searchCategory === "All Categories" ||
+      searchCategory === "Services"
+    ) {
       nav({
         to: "/schemes",
         search: query ? { q: query } : undefined,
@@ -219,7 +252,10 @@ function Index() {
     }
 
     if (searchCategory === "Applications") {
-      if (query && (query.toUpperCase().startsWith("APP-") || /^\d+$/.test(query))) {
+      if (
+        query &&
+        (query.toUpperCase().startsWith("APP-") || /^\d+$/.test(query))
+      ) {
         nav({ to: "/track", search: { id: query } });
       } else {
         nav({ to: "/citizen/applications" });
@@ -245,10 +281,13 @@ function Index() {
   };
 
   // Curate schemes count per category
-  const schemeCounts = CATEGORIES.reduce((acc, cat) => {
-    acc[cat] = SCHEMES.filter((s) => s.category === cat).length;
-    return acc;
-  }, {} as Record<Category, number>);
+  const schemeCounts = CATEGORIES.reduce(
+    (acc, cat) => {
+      acc[cat] = SCHEMES.filter((s) => s.category === cat).length;
+      return acc;
+    },
+    {} as Record<Category, number>,
+  );
 
   // Curated showcase of schemes
   const featuredSchemes = SCHEMES.slice(0, 3);
@@ -267,7 +306,9 @@ function Index() {
               <div
                 key={img.src}
                 className={`absolute inset-0 transition-opacity duration-1000 ease-in-out ${
-                  isActive ? "opacity-100 z-10" : "opacity-0 z-0 pointer-events-none"
+                  isActive
+                    ? "opacity-100 z-10"
+                    : "opacity-0 z-0 pointer-events-none"
                 }`}
                 aria-hidden={!isActive}
               >
@@ -296,7 +337,8 @@ function Index() {
 
           {/* Supporting Copy */}
           <p className="mt-5 max-w-2xl text-base sm:text-lg text-white/90 font-normal leading-relaxed">
-            Access household records, discover eligible schemes, manage documents, submit applications and track decisions.
+            Access household records, discover eligible schemes, manage
+            documents, submit applications and track decisions.
           </p>
 
           {/* Search Interface */}
@@ -330,7 +372,9 @@ function Index() {
                   <select
                     id={selectId}
                     value={searchCategory}
-                    onChange={(e) => setSearchCategory(e.target.value as SearchCategory)}
+                    onChange={(e) =>
+                      setSearchCategory(e.target.value as SearchCategory)
+                    }
                     className="h-10 sm:h-11 rounded-lg border-0 bg-stone-100 px-3 text-xs sm:text-sm font-medium text-slate-700 hover:bg-stone-200/80 focus:outline-none focus:ring-1 focus:ring-blue-500/40 cursor-pointer transition-colors"
                   >
                     {SEARCH_CATEGORIES.map((cat) => (
@@ -365,7 +409,9 @@ function Index() {
                 type="button"
                 onClick={() => setCurrentSlide(i)}
                 className={`h-1.5 rounded-full transition-all duration-300 ${
-                  i === currentSlide ? "w-7 bg-white" : "w-2 bg-white/40 hover:bg-white/60"
+                  i === currentSlide
+                    ? "w-7 bg-white"
+                    : "w-2 bg-white/40 hover:bg-white/60"
                 }`}
                 aria-label={`Go to slide ${i + 1}`}
                 aria-current={i === currentSlide}
@@ -431,7 +477,10 @@ function Index() {
       {/* =========================================================================
           GOVERNMENT SCHEMES SECTION
          ========================================================================= */}
-      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-20" aria-labelledby="schemes-heading">
+      <section
+        className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-20"
+        aria-labelledby="schemes-heading"
+      >
         {/* Header */}
         <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-4 pb-8 border-b border-slate-200/80">
           <div>
@@ -445,7 +494,8 @@ function Index() {
               Government Schemes
             </h2>
             <p className="mt-2 text-sm sm:text-base text-muted-foreground max-w-2xl leading-relaxed">
-              Discover schemes across education, healthcare, housing, agriculture, pension, employment and more.
+              Discover schemes across education, healthcare, housing,
+              agriculture, pension, employment and more.
             </p>
           </div>
 
@@ -498,7 +548,9 @@ function Index() {
                     {cat}
                   </h3>
                   <p className="text-[11px] text-white/80 mt-0.5">
-                    {count > 0 ? `${count} ${count === 1 ? "scheme" : "schemes"}` : "Eligible schemes"}
+                    {count > 0
+                      ? `${count} ${count === 1 ? "scheme" : "schemes"}`
+                      : "Eligible schemes"}
                   </p>
                 </div>
               </Link>
@@ -510,9 +562,12 @@ function Index() {
         <div className="mt-14">
           <div className="flex items-center justify-between mb-6">
             <div>
-              <h3 className="text-lg font-semibold text-navy">Featured Welfare Schemes</h3>
+              <h3 className="text-lg font-semibold text-navy">
+                Featured Welfare Schemes
+              </h3>
               <p className="text-xs text-muted-foreground mt-0.5">
-                Immediate eligibility verification with verified household records
+                Immediate eligibility verification with verified household
+                records
               </p>
             </div>
             <Link
@@ -535,7 +590,10 @@ function Index() {
       {/* =========================================================================
           "HOW MIRA WORKS" SECTION
          ========================================================================= */}
-      <section className="border-y border-slate-200/80 bg-slate-50/70 py-20" aria-labelledby="process-heading">
+      <section
+        className="border-y border-slate-200/80 bg-slate-50/70 py-20"
+        aria-labelledby="process-heading"
+      >
         <div className="mx-auto w-full max-w-7xl px-4 sm:px-6">
           <div className="text-center max-w-2xl mx-auto mb-14">
             <span className="text-xs font-semibold tracking-wider uppercase text-gov">
@@ -603,13 +661,22 @@ function Index() {
 
           {/* Direct CTA underneath process */}
           <div className="mt-14 pt-8 border-t border-slate-200/60 flex flex-wrap items-center justify-center gap-4">
-            <Button size="lg" asChild className="rounded-xl bg-navy hover:bg-navy/90 text-white px-7">
+            <Button
+              size="lg"
+              asChild
+              className="rounded-xl bg-navy hover:bg-navy/90 text-white px-7"
+            >
               <Link to="/eligibility">
                 <Check className="mr-2 h-4 w-4" />
                 <span>Check Your Eligibility Now</span>
               </Link>
             </Button>
-            <Button size="lg" variant="outline" asChild className="rounded-xl border-slate-300">
+            <Button
+              size="lg"
+              variant="outline"
+              asChild
+              className="rounded-xl border-slate-300"
+            >
               <Link to="/track">
                 <span>Track an Application</span>
               </Link>
@@ -621,7 +688,10 @@ function Index() {
       {/* =========================================================================
           CONSENT-BASED LINKING LAYER / WHY MIRA EXISTS
          ========================================================================= */}
-      <section className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-20" aria-labelledby="why-mira">
+      <section
+        className="mx-auto w-full max-w-7xl px-4 sm:px-6 py-20"
+        aria-labelledby="why-mira"
+      >
         <div className="grid gap-12 lg:grid-cols-[1.1fr_1.3fr] items-center">
           <div>
             <span className="text-xs font-semibold tracking-wider uppercase text-gov">
@@ -634,10 +704,16 @@ function Index() {
               Verified once, trusted everywhere
             </h2>
             <p className="mt-4 text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Today, a citizen&apos;s records sit fragmented across different line departments. Citizens are repeatedly asked to produce the same physical documents, and departments struggle to avoid duplication.
+              Today, a citizen&apos;s records sit fragmented across different
+              line departments. Citizens are repeatedly asked to produce the
+              same physical documents, and departments struggle to avoid
+              duplication.
             </p>
             <p className="mt-3 text-sm sm:text-base text-muted-foreground leading-relaxed">
-              Mira connects records through household and citizen identifiers with explicit consent. Each department retains statutory ownership of its data while enabling verified, friction-free delivery of welfare benefits.
+              Mira connects records through household and citizen identifiers
+              with explicit consent. Each department retains statutory ownership
+              of its data while enabling verified, friction-free delivery of
+              welfare benefits.
             </p>
 
             <ul className="mt-6 space-y-3 text-sm text-slate-700">
@@ -657,10 +733,18 @@ function Index() {
             </ul>
 
             <div className="mt-8 flex flex-wrap gap-3">
-              <Button asChild variant="outline" className="rounded-xl border-slate-300">
+              <Button
+                asChild
+                variant="outline"
+                className="rounded-xl border-slate-300"
+              >
                 <Link to="/help">Read Architecture FAQs</Link>
               </Button>
-              <Button asChild variant="ghost" className="rounded-xl text-gov hover:bg-slate-100">
+              <Button
+                asChild
+                variant="ghost"
+                className="rounded-xl text-gov hover:bg-slate-100"
+              >
                 <Link to="/officer/login">Officer & Department Login →</Link>
               </Button>
             </div>
@@ -680,7 +764,9 @@ function Index() {
                   className="rounded-xl border border-slate-200 bg-white p-3 shadow-2xs"
                 >
                   <p className="text-xs font-semibold text-navy">{src.title}</p>
-                  <p className="text-[10px] text-muted-foreground mt-0.5">{src.sub}</p>
+                  <p className="text-[10px] text-muted-foreground mt-0.5">
+                    {src.sub}
+                  </p>
                 </div>
               ))}
             </div>
@@ -695,7 +781,8 @@ function Index() {
                 Consent-Based Linking Layer
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                References source records by verified citizen and household ID · Verifies once · Audits every access
+                References source records by verified citizen and household ID ·
+                Verifies once · Audits every access
               </p>
             </div>
 

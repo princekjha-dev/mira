@@ -58,14 +58,10 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
   const email =
     state.session?.email ||
     (role === "citizen" ? CITIZEN.email : roleConfig.demoEmail);
-  const phone =
-    role === "citizen"
-      ? CITIZEN.mobile
-      : "+91 94150 82910";
+  const phone = role === "citizen" ? CITIZEN.mobile : "+91 94150 82910";
   const department =
     state.session?.department || roleConfig.defaultIdentity.organization;
-  const idBadge =
-    state.session?.id || roleConfig.defaultIdentity.idBadge;
+  const idBadge = state.session?.id || roleConfig.defaultIdentity.idBadge;
 
   // Active language label
   const curLang = LANGUAGES.find((l) => l.code === state.lang) ?? LANGUAGES[0];
@@ -83,7 +79,9 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
   };
 
   // Fetch Personal Audit Activity from PostgreSQL
-  const { data: myAuditEvents = [], isLoading: isLoadingAudit } = useQuery<ApiMyAuditEvent[]>({
+  const { data: myAuditEvents = [], isLoading: isLoadingAudit } = useQuery<
+    ApiMyAuditEvent[]
+  >({
     queryKey: ["my-audit-activity", state.session?.apiUserId],
     queryFn: () => fetchMyAuditActivity(state.session),
     enabled: !!state.session,
@@ -147,7 +145,10 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
       </header>
 
       {/* Section 23: Identity & Account Information */}
-      <ProfileSection title="Account Identity" description="Official credentials recorded in state directory">
+      <ProfileSection
+        title="Account Identity"
+        description="Official credentials recorded in state directory"
+      >
         <ProfileRow
           icon={User}
           title="Full Name"
@@ -176,7 +177,10 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
       </ProfileSection>
 
       {/* Section 23: Contact Information */}
-      <ProfileSection title="Contact Information" description="Channels for official dispatches and OTP verification">
+      <ProfileSection
+        title="Contact Information"
+        description="Channels for official dispatches and OTP verification"
+      >
         <ProfileRow
           icon={Mail}
           title="Official Email"
@@ -193,7 +197,10 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
       </ProfileSection>
 
       {/* Section 23: Preferences & Accessibility */}
-      <ProfileSection title="Preferences & Appearance" description="Language localization and workstation accessibility">
+      <ProfileSection
+        title="Preferences & Appearance"
+        description="Language localization and workstation accessibility"
+      >
         {/* Language selector */}
         <ProfileRow
           icon={Globe}
@@ -202,7 +209,11 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
           value={
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
-                <Button variant="ghost" size="sm" className="h-7 text-xs font-semibold gap-1">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  className="h-7 text-xs font-semibold gap-1"
+                >
                   <span>{curLang.label}</span>
                   <span className="text-slate-400">▾</span>
                 </Button>
@@ -222,7 +233,9 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
                     className="flex justify-between text-xs cursor-pointer"
                   >
                     <span>{l.label}</span>
-                    {state.lang === l.code && <span className="text-gov font-bold">✓</span>}
+                    {state.lang === l.code && (
+                      <span className="text-gov font-bold">✓</span>
+                    )}
                   </DropdownMenuItem>
                 ))}
               </DropdownMenuContent>
@@ -239,7 +252,9 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
             <Switch
               checked={state.notifPrefs.app}
               onCheckedChange={(val) => {
-                set((s) => ({ notifPrefs: { ...s.notifPrefs, app: val, email: val } }));
+                set((s) => ({
+                  notifPrefs: { ...s.notifPrefs, app: val, email: val },
+                }));
                 toast.success("Notification preferences saved");
               }}
             />
@@ -257,7 +272,9 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
               onCheckedChange={(val) => {
                 set({ highContrast: val });
                 document.documentElement.classList.toggle("hc", val);
-                toast.success(val ? "High contrast enabled" : "High contrast disabled");
+                toast.success(
+                  val ? "High contrast enabled" : "High contrast disabled",
+                );
               }}
             />
           }
@@ -274,7 +291,9 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
               onCheckedChange={(val) => {
                 set({ reducedMotion: val });
                 document.documentElement.classList.toggle("reduce-motion", val);
-                toast.success(val ? "Reduced motion enabled" : "Standard motion enabled");
+                toast.success(
+                  val ? "Reduced motion enabled" : "Standard motion enabled",
+                );
               }}
             />
           }
@@ -286,7 +305,10 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
       {roleSpecificSection}
 
       {/* Section 23: Security & Active Sessions */}
-      <ProfileSection title="Security & Authentication" description="Cryptographic tokens, sign-in sessions, and audit status">
+      <ProfileSection
+        title="Security & Authentication"
+        description="Cryptographic tokens, sign-in sessions, and audit status"
+      >
         <ProfileRow
           icon={KeyRound}
           title="Sign-In Mechanism"
@@ -350,7 +372,10 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
                           {ev.event_type}
                         </span>
                         <p className="text-[10px] text-muted-foreground">
-                          Request: {ev.request_id ? `${ev.request_id.slice(0, 8)}...` : "System-anchored"}
+                          Request:{" "}
+                          {ev.request_id
+                            ? `${ev.request_id.slice(0, 8)}...`
+                            : "System-anchored"}
                         </p>
                       </div>
                     </div>
@@ -371,7 +396,12 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
                       Authorized Operational Access: Full Audit Ledger Available
                     </span>
                   </div>
-                  <Button asChild size="sm" variant="outline" className="h-7 text-xs gap-1 font-semibold">
+                  <Button
+                    asChild
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs gap-1 font-semibold"
+                  >
                     <Link
                       to={
                         role === "auditor"
@@ -388,7 +418,9 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
                 </div>
               ) : (
                 <p className="text-[11px] text-muted-foreground pt-1">
-                  Showing authenticated personal operations. Institutional system audit records are restricted under Section 8 of the Welfare Information Act.
+                  Showing authenticated personal operations. Institutional
+                  system audit records are restricted under Section 8 of the
+                  Welfare Information Act.
                 </p>
               )}
             </div>
@@ -397,7 +429,10 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
       </ProfileSection>
 
       {/* Danger Zone */}
-      <ProfileSection title="Account Session" description="Terminate your authenticated session">
+      <ProfileSection
+        title="Account Session"
+        description="Terminate your authenticated session"
+      >
         <ProfileRow
           icon={LogOut}
           title="Sign Out of Mira"

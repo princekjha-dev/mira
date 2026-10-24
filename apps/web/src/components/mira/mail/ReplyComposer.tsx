@@ -93,7 +93,7 @@ export function ReplyComposer({
         "rounded-2xl border transition-all duration-200 bg-white dark:bg-slate-900/90 shadow-2xs",
         isFocused
           ? "border-gov/60 ring-2 ring-gov/15 dark:ring-gov/30 shadow-xs"
-          : "border-slate-200/80 dark:border-slate-800"
+          : "border-slate-200/80 dark:border-slate-800",
       )}
     >
       <form onSubmit={handleSubmit} className="flex flex-col">
@@ -112,7 +112,9 @@ export function ReplyComposer({
 
           <div className="flex items-center gap-1.5 text-[11px] text-muted-foreground">
             <ShieldCheck className="h-3 w-3 text-emerald-600 dark:text-emerald-400" />
-            <span className="hidden sm:inline">Official record · Recorded in audit history</span>
+            <span className="hidden sm:inline">
+              Official record · Recorded in audit history
+            </span>
             <span className="sm:hidden">Official Record</span>
           </div>
         </div>

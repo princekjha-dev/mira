@@ -5,7 +5,11 @@ export const Route = createFileRoute("/verifier/inbox")({
   head: () => ({
     meta: [
       { title: "Communications — Verifier Workstation" },
-      { name: "description", content: "Official messages, citizen clarifications, assignments and departmental correspondence." },
+      {
+        name: "description",
+        content:
+          "Official messages, citizen clarifications, assignments and departmental correspondence.",
+      },
     ],
   }),
   component: VerifierInboxPage,

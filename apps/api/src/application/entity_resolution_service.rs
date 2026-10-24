@@ -54,7 +54,8 @@ impl EntityResolutionService {
 
         if let Some(r) = row {
             let blocking_val: serde_json::Value = r.get("blocking_strategies");
-            let blocking_vec: Vec<String> = serde_json::from_value(blocking_val).unwrap_or_default();
+            let blocking_vec: Vec<String> =
+                serde_json::from_value(blocking_val).unwrap_or_default();
 
             MatchingModelConfig {
                 version: r.get("version"),
@@ -98,7 +99,12 @@ impl EntityResolutionService {
                 )
                 .fetch_optional(pool)
                 .await?
-                .ok_or_else(|| AppError::NotFound(format!("Source person {} not found", payload.source_entity_id)))?;
+                .ok_or_else(|| {
+                    AppError::NotFound(format!(
+                        "Source person {} not found",
+                        payload.source_entity_id
+                    ))
+                })?;
 
                 format!("{} {}", p.first_name, p.last_name)
             }
@@ -107,18 +113,33 @@ impl EntityResolutionService {
                     .bind(payload.source_entity_id)
                     .fetch_optional(pool)
                     .await?
-                    .ok_or_else(|| AppError::NotFound(format!("Source household {} not found", payload.source_entity_id)))?;
+                    .ok_or_else(|| {
+                        AppError::NotFound(format!(
+                            "Source household {} not found",
+                            payload.source_entity_id
+                        ))
+                    })?;
                 name
             }
             "PROPERTY" => {
-                let addr: String = sqlx::query_scalar("SELECT address_line FROM properties WHERE id = $1")
-                    .bind(payload.source_entity_id)
-                    .fetch_optional(pool)
-                    .await?
-                    .ok_or_else(|| AppError::NotFound(format!("Source property {} not found", payload.source_entity_id)))?;
+                let addr: String =
+                    sqlx::query_scalar("SELECT address_line FROM properties WHERE id = $1")
+                        .bind(payload.source_entity_id)
+                        .fetch_optional(pool)
+                        .await?
+                        .ok_or_else(|| {
+                            AppError::NotFound(format!(
+                                "Source property {} not found",
+                                payload.source_entity_id
+                            ))
+                        })?;
                 addr
             }
-            _ => return Err(AppError::BadRequest("Invalid entity_type. Expected PERSON, HOUSEHOLD, or PROPERTY".to_string())),
+            _ => {
+                return Err(AppError::BadRequest(
+                    "Invalid entity_type. Expected PERSON, HOUSEHOLD, or PROPERTY".to_string(),
+                ))
+            }
         };
 
         // Insert case record
@@ -136,7 +157,10 @@ impl EntityResolutionService {
         .bind(&payload.entity_type)
         .bind(payload.source_entity_id)
         .bind(&config.version)
-        .bind(format!("Entity resolution check initiated for {} ({})", source_label, payload.entity_type))
+        .bind(format!(
+            "Entity resolution check initiated for {} ({})",
+            source_label, payload.entity_type
+        ))
         .bind(caller.id)
         .execute(pool)
         .await?;
@@ -159,7 +183,8 @@ impl EntityResolutionService {
             .fetch_one(pool)
             .await?;
 
-            let candidate_ids = BlockingEngine::generate_person_candidates(pool, &source_person, &config).await?;
+            let candidate_ids =
+                BlockingEngine::generate_person_candidates(pool, &source_person, &config).await?;
 
             let mut rank = 1;
             for cid in candidate_ids {
@@ -177,7 +202,14 @@ impl EntityResolutionService {
                 .await?;
 
                 if let Some(cp) = cand_person {
-                    let mut evaluated = PersonEvaluator::evaluate_person_pair(pool, &source_person, &cp, &config, rank).await?;
+                    let mut evaluated = PersonEvaluator::evaluate_person_pair(
+                        pool,
+                        &source_person,
+                        &cp,
+                        &config,
+                        rank,
+                    )
+                    .await?;
                     evaluated.case_id = case_id;
 
                     // Persist candidate
@@ -237,7 +269,9 @@ impl EntityResolutionService {
 
                     if evaluated.overall_assessment == "STRONG_MATCH" {
                         highest_priority = "HIGH";
-                    } else if evaluated.overall_assessment == "POSSIBLE_MATCH" && highest_priority != "HIGH" {
+                    } else if evaluated.overall_assessment == "POSSIBLE_MATCH"
+                        && highest_priority != "HIGH"
+                    {
                         highest_priority = "MEDIUM";
                     }
 
@@ -251,7 +285,11 @@ impl EntityResolutionService {
         let summary_text = if evaluated_candidates.is_empty() {
             "No candidate matches found across blocking blocks.".to_string()
         } else {
-            format!("Surfaced {} potential candidate match(es). Highest assessment: {}", evaluated_candidates.len(), highest_priority)
+            format!(
+                "Surfaced {} potential candidate match(es). Highest assessment: {}",
+                evaluated_candidates.len(),
+                highest_priority
+            )
         };
 
         sqlx::query(
@@ -312,7 +350,10 @@ impl EntityResolutionService {
         }
 
         qb.push(" ORDER BY CASE c.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 ELSE 3 END, c.created_at DESC ");
-        qb.push(" LIMIT ").push_bind(limit).push(" OFFSET ").push_bind(offset);
+        qb.push(" LIMIT ")
+            .push_bind(limit)
+            .push(" OFFSET ")
+            .push_bind(offset);
 
         let rows = qb.build().fetch_all(pool).await?;
         let mut cases = Vec::new();
@@ -324,10 +365,12 @@ impl EntityResolutionService {
 
             let s_label = match etype.as_str() {
                 "PERSON" => {
-                    sqlx::query_scalar::<_, String>("SELECT (first_name || ' ' || last_name) FROM persons WHERE id = $1")
-                        .bind(s_id)
-                        .fetch_optional(pool)
-                        .await?
+                    sqlx::query_scalar::<_, String>(
+                        "SELECT (first_name || ' ' || last_name) FROM persons WHERE id = $1",
+                    )
+                    .bind(s_id)
+                    .fetch_optional(pool)
+                    .await?
                 }
                 "HOUSEHOLD" => {
                     sqlx::query_scalar::<_, String>("SELECT name FROM households WHERE id = $1")
@@ -336,10 +379,12 @@ impl EntityResolutionService {
                         .await?
                 }
                 "PROPERTY" => {
-                    sqlx::query_scalar::<_, String>("SELECT address_line FROM properties WHERE id = $1")
-                        .bind(s_id)
-                        .fetch_optional(pool)
-                        .await?
+                    sqlx::query_scalar::<_, String>(
+                        "SELECT address_line FROM properties WHERE id = $1",
+                    )
+                    .bind(s_id)
+                    .fetch_optional(pool)
+                    .await?
                 }
                 _ => None,
             };
@@ -384,17 +429,21 @@ impl EntityResolutionService {
         .bind(case_id)
         .fetch_optional(pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Entity resolution case {} not found", case_id)))?;
+        .ok_or_else(|| {
+            AppError::NotFound(format!("Entity resolution case {} not found", case_id))
+        })?;
 
         let etype: String = r.get("entity_type");
         let s_id: Uuid = r.get("source_entity_id");
 
         let s_label = match etype.as_str() {
             "PERSON" => {
-                sqlx::query_scalar::<_, String>("SELECT (first_name || ' ' || last_name) FROM persons WHERE id = $1")
-                    .bind(s_id)
-                    .fetch_optional(pool)
-                    .await?
+                sqlx::query_scalar::<_, String>(
+                    "SELECT (first_name || ' ' || last_name) FROM persons WHERE id = $1",
+                )
+                .bind(s_id)
+                .fetch_optional(pool)
+                .await?
             }
             "HOUSEHOLD" => {
                 sqlx::query_scalar::<_, String>("SELECT name FROM households WHERE id = $1")
@@ -434,10 +483,12 @@ impl EntityResolutionService {
 
             let c_label = match etype.as_str() {
                 "PERSON" => {
-                    sqlx::query_scalar::<_, String>("SELECT (first_name || ' ' || last_name) FROM persons WHERE id = $1")
-                        .bind(cand_entity_id)
-                        .fetch_optional(pool)
-                        .await?
+                    sqlx::query_scalar::<_, String>(
+                        "SELECT (first_name || ' ' || last_name) FROM persons WHERE id = $1",
+                    )
+                    .bind(cand_entity_id)
+                    .fetch_optional(pool)
+                    .await?
                 }
                 "HOUSEHOLD" => {
                     sqlx::query_scalar::<_, String>("SELECT name FROM households WHERE id = $1")
@@ -446,10 +497,12 @@ impl EntityResolutionService {
                         .await?
                 }
                 "PROPERTY" => {
-                    sqlx::query_scalar::<_, String>("SELECT address_line FROM properties WHERE id = $1")
-                        .bind(cand_entity_id)
-                        .fetch_optional(pool)
-                        .await?
+                    sqlx::query_scalar::<_, String>(
+                        "SELECT address_line FROM properties WHERE id = $1",
+                    )
+                    .bind(cand_entity_id)
+                    .fetch_optional(pool)
+                    .await?
                 }
                 _ => None,
             };
@@ -533,11 +586,16 @@ impl EntityResolutionService {
         payload: ResolveERCaseRequest,
     ) -> Result<EntityResolutionCase, AppError> {
         let is_authorized = caller.roles.iter().any(|r| {
-            matches!(r.as_str(), "VERIFICATION_OFFICER" | "DEPARTMENT_ADMIN" | "SUPER_ADMIN")
+            matches!(
+                r.as_str(),
+                "VERIFICATION_OFFICER" | "DEPARTMENT_ADMIN" | "SUPER_ADMIN"
+            )
         });
 
         if !is_authorized {
-            return Err(AppError::Forbidden("Only verification officers and admins can resolve entity cases".to_string()));
+            return Err(AppError::Forbidden(
+                "Only verification officers and admins can resolve entity cases".to_string(),
+            ));
         }
 
         let new_status = match payload.decision.as_str() {

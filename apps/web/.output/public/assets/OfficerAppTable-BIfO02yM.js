@@ -1,1 +1,154 @@
-import{f as e,l as t,t as n,u as r}from"./button-KmRTh43o.js";import{t as i}from"./link-gIn96cdo.js";import{t as a}from"./octagon-alert-Ca3H8Dym.js";import{Mn as o,Nn as s,Pn as c,S as l,U as u,f as d,g as f,h as p,j as m,jt as h,m as g,p as _}from"./index-B8Y-_llO.js";import{a as v,i as y,n as b,o as x,r as S,t as C}from"./table-HtxyrupA.js";var w=e(r(),1),T=t();function E({apps:e,statusFilter:t=!0}){let[r,E]=(0,w.useState)(``),[D,O]=(0,w.useState)(`all`),k=e.filter(e=>(D===`all`||e.status===D)&&(!r||(e.id+e.applicant+(c(e.schemeId)?.name??``)).toLowerCase().includes(r.toLowerCase())));return(0,T.jsxs)(`div`,{children:[(0,T.jsxs)(`div`,{className:`mb-3 flex flex-wrap gap-2`,children:[(0,T.jsx)(u,{value:r,onChange:e=>E(e.target.value),placeholder:`Filter by ID, applicant or scheme`,className:`max-w-xs`,"aria-label":`Filter`}),t&&(0,T.jsxs)(d,{value:D,onValueChange:O,children:[(0,T.jsx)(p,{className:`w-60`,children:(0,T.jsx)(f,{})}),(0,T.jsxs)(_,{children:[(0,T.jsx)(g,{value:`all`,children:`All statuses`}),o.filter(e=>e!==`Draft`).map(e=>(0,T.jsx)(g,{value:e,children:e},e))]})]})]}),k.length===0?(0,T.jsx)(l,{title:`No applications in this view`}):(0,T.jsx)(`div`,{className:`overflow-x-auto rounded-lg border bg-card`,children:(0,T.jsxs)(C,{children:[(0,T.jsx)(v,{children:(0,T.jsxs)(x,{children:[(0,T.jsx)(y,{children:`Application ID`}),(0,T.jsx)(y,{children:`Applicant`}),(0,T.jsx)(y,{children:`Scheme`}),(0,T.jsx)(y,{children:`Received`}),(0,T.jsx)(y,{children:`Flags`}),(0,T.jsx)(y,{children:`Status`}),(0,T.jsx)(y,{})]})}),(0,T.jsx)(b,{children:k.map(e=>(0,T.jsxs)(x,{children:[(0,T.jsx)(S,{className:`font-mono text-xs`,children:e.id}),(0,T.jsx)(S,{children:e.applicant}),(0,T.jsx)(S,{className:`min-w-48`,children:c(e.schemeId)?.name}),(0,T.jsx)(S,{children:s(e.appliedOn)}),(0,T.jsx)(S,{children:(0,T.jsxs)(`div`,{className:`flex gap-1`,children:[e.duplicate&&(0,T.jsx)(`span`,{title:`Duplicate alert`,children:(0,T.jsx)(a,{className:`h-4 w-4 text-destructive`})}),e.mismatch&&(0,T.jsx)(`span`,{title:`Data mismatch`,children:(0,T.jsx)(h,{className:`h-4 w-4 text-warning`})})]})}),(0,T.jsx)(S,{children:(0,T.jsx)(m,{s:e.status})}),(0,T.jsx)(S,{children:(0,T.jsx)(n,{size:`sm`,asChild:!0,children:(0,T.jsx)(i,{to:`/officer/applications/$id`,params:{id:e.id},children:`Review`})})})]},e.id))})]})})]})}export{E as t};
+import { f as e, l as t, t as n, u as r } from "./button-KmRTh43o.js";
+import { t as i } from "./link-gIn96cdo.js";
+import { t as a } from "./octagon-alert-Ca3H8Dym.js";
+import {
+  Mn as o,
+  Nn as s,
+  Pn as c,
+  S as l,
+  U as u,
+  f as d,
+  g as f,
+  h as p,
+  j as m,
+  jt as h,
+  m as g,
+  p as _,
+} from "./index-B8Y-_llO.js";
+import {
+  a as v,
+  i as y,
+  n as b,
+  o as x,
+  r as S,
+  t as C,
+} from "./table-HtxyrupA.js";
+var w = e(r(), 1),
+  T = t();
+function E({ apps: e, statusFilter: t = !0 }) {
+  let [r, E] = (0, w.useState)(``),
+    [D, O] = (0, w.useState)(`all`),
+    k = e.filter(
+      (e) =>
+        (D === `all` || e.status === D) &&
+        (!r ||
+          (e.id + e.applicant + (c(e.schemeId)?.name ?? ``))
+            .toLowerCase()
+            .includes(r.toLowerCase())),
+    );
+  return (0, T.jsxs)(`div`, {
+    children: [
+      (0, T.jsxs)(`div`, {
+        className: `mb-3 flex flex-wrap gap-2`,
+        children: [
+          (0, T.jsx)(u, {
+            value: r,
+            onChange: (e) => E(e.target.value),
+            placeholder: `Filter by ID, applicant or scheme`,
+            className: `max-w-xs`,
+            "aria-label": `Filter`,
+          }),
+          t &&
+            (0, T.jsxs)(d, {
+              value: D,
+              onValueChange: O,
+              children: [
+                (0, T.jsx)(p, {
+                  className: `w-60`,
+                  children: (0, T.jsx)(f, {}),
+                }),
+                (0, T.jsxs)(_, {
+                  children: [
+                    (0, T.jsx)(g, { value: `all`, children: `All statuses` }),
+                    o
+                      .filter((e) => e !== `Draft`)
+                      .map((e) => (0, T.jsx)(g, { value: e, children: e }, e)),
+                  ],
+                }),
+              ],
+            }),
+        ],
+      }),
+      k.length === 0
+        ? (0, T.jsx)(l, { title: `No applications in this view` })
+        : (0, T.jsx)(`div`, {
+            className: `overflow-x-auto rounded-lg border bg-card`,
+            children: (0, T.jsxs)(C, {
+              children: [
+                (0, T.jsx)(v, {
+                  children: (0, T.jsxs)(x, {
+                    children: [
+                      (0, T.jsx)(y, { children: `Application ID` }),
+                      (0, T.jsx)(y, { children: `Applicant` }),
+                      (0, T.jsx)(y, { children: `Scheme` }),
+                      (0, T.jsx)(y, { children: `Received` }),
+                      (0, T.jsx)(y, { children: `Flags` }),
+                      (0, T.jsx)(y, { children: `Status` }),
+                      (0, T.jsx)(y, {}),
+                    ],
+                  }),
+                }),
+                (0, T.jsx)(b, {
+                  children: k.map((e) =>
+                    (0, T.jsxs)(
+                      x,
+                      {
+                        children: [
+                          (0, T.jsx)(S, {
+                            className: `font-mono text-xs`,
+                            children: e.id,
+                          }),
+                          (0, T.jsx)(S, { children: e.applicant }),
+                          (0, T.jsx)(S, {
+                            className: `min-w-48`,
+                            children: c(e.schemeId)?.name,
+                          }),
+                          (0, T.jsx)(S, { children: s(e.appliedOn) }),
+                          (0, T.jsx)(S, {
+                            children: (0, T.jsxs)(`div`, {
+                              className: `flex gap-1`,
+                              children: [
+                                e.duplicate &&
+                                  (0, T.jsx)(`span`, {
+                                    title: `Duplicate alert`,
+                                    children: (0, T.jsx)(a, {
+                                      className: `h-4 w-4 text-destructive`,
+                                    }),
+                                  }),
+                                e.mismatch &&
+                                  (0, T.jsx)(`span`, {
+                                    title: `Data mismatch`,
+                                    children: (0, T.jsx)(h, {
+                                      className: `h-4 w-4 text-warning`,
+                                    }),
+                                  }),
+                              ],
+                            }),
+                          }),
+                          (0, T.jsx)(S, {
+                            children: (0, T.jsx)(m, { s: e.status }),
+                          }),
+                          (0, T.jsx)(S, {
+                            children: (0, T.jsx)(n, {
+                              size: `sm`,
+                              asChild: !0,
+                              children: (0, T.jsx)(i, {
+                                to: `/officer/applications/$id`,
+                                params: { id: e.id },
+                                children: `Review`,
+                              }),
+                            }),
+                          }),
+                        ],
+                      },
+                      e.id,
+                    ),
+                  ),
+                }),
+              ],
+            }),
+          }),
+    ],
+  });
+}
+export { E as t };

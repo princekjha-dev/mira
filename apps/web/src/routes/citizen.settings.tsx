@@ -12,7 +12,11 @@ import {
   Link as LinkIcon,
   ShieldCheck,
 } from "lucide-react";
-import { ProfilePage, ProfileSection, ProfileRow } from "@/components/mira/profile";
+import {
+  ProfilePage,
+  ProfileSection,
+  ProfileRow,
+} from "@/components/mira/profile";
 import { Button } from "@/components/ui/button";
 import {
   AlertDialog,
@@ -29,7 +33,11 @@ export const Route = createFileRoute("/citizen/settings")({
   head: () => ({
     meta: [
       { title: "Profile & Account — Citizen" },
-      { name: "description", content: "Citizen profile, authenticated identity, connected government records, and preferences." },
+      {
+        name: "description",
+        content:
+          "Citizen profile, authenticated identity, connected government records, and preferences.",
+      },
     ],
   }),
   component: CitizenProfileRoute,
@@ -37,11 +45,36 @@ export const Route = createFileRoute("/citizen/settings")({
 
 function CitizenProfileRoute() {
   const [records, setRecords] = useState([
-    { id: "civil", label: "Civil Registration (Birth & Family Tree)", linked: true, icon: FileCheck },
-    { id: "revenue", label: "Revenue Registry (Income & Caste Certificates)", linked: true, icon: Building },
-    { id: "land", label: "Tehsil Bhulekh (Land & Holding Records)", linked: true, icon: Landmark },
-    { id: "bpl", label: "Rural Development (NFSA & BPL Roster)", linked: true, icon: FileSpreadsheet },
-    { id: "dbt", label: "DBT Direct Benefit Bank Account (PFMS)", linked: false, icon: Banknote },
+    {
+      id: "civil",
+      label: "Civil Registration (Birth & Family Tree)",
+      linked: true,
+      icon: FileCheck,
+    },
+    {
+      id: "revenue",
+      label: "Revenue Registry (Income & Caste Certificates)",
+      linked: true,
+      icon: Building,
+    },
+    {
+      id: "land",
+      label: "Tehsil Bhulekh (Land & Holding Records)",
+      linked: true,
+      icon: Landmark,
+    },
+    {
+      id: "bpl",
+      label: "Rural Development (NFSA & BPL Roster)",
+      linked: true,
+      icon: FileSpreadsheet,
+    },
+    {
+      id: "dbt",
+      label: "DBT Direct Benefit Bank Account (PFMS)",
+      linked: false,
+      icon: Banknote,
+    },
   ]);
   const [revokeTarget, setRevokeTarget] = useState<string | null>(null);
 
@@ -50,7 +83,7 @@ function CitizenProfileRoute() {
       setRevokeTarget(item.label);
     } else {
       setRecords((prev) =>
-        prev.map((r) => (r.id === item.id ? { ...r, linked: true } : r))
+        prev.map((r) => (r.id === item.id ? { ...r, linked: true } : r)),
       );
       toast.success(`${item.label} successfully linked.`);
     }
@@ -59,7 +92,7 @@ function CitizenProfileRoute() {
   const confirmUnlink = () => {
     if (!revokeTarget) return;
     setRecords((prev) =>
-      prev.map((r) => (r.label === revokeTarget ? { ...r, linked: false } : r))
+      prev.map((r) => (r.label === revokeTarget ? { ...r, linked: false } : r)),
     );
     toast.info(`${revokeTarget} unlinked from real-time verification.`);
     setRevokeTarget(null);
@@ -141,7 +174,8 @@ function CitizenProfileRoute() {
                     size="sm"
                     onClick={() =>
                       toast.success("Forensic disclosure report prepared", {
-                        description: "Available in your Notifications within 24 hours.",
+                        description:
+                          "Available in your Notifications within 24 hours.",
                       })
                     }
                     className="h-7 text-xs"
@@ -167,12 +201,14 @@ function CitizenProfileRoute() {
               Disconnect {revokeTarget}?
             </AlertDialogTitle>
             <AlertDialogDescription className="text-xs text-muted-foreground">
-              Applications requiring this registry will require physical document
-              upload and slower manual tehsil verification.
+              Applications requiring this registry will require physical
+              document upload and slower manual tehsil verification.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
-            <AlertDialogCancel className="text-xs h-8">Cancel</AlertDialogCancel>
+            <AlertDialogCancel className="text-xs h-8">
+              Cancel
+            </AlertDialogCancel>
             <AlertDialogAction
               onClick={confirmUnlink}
               className="text-xs h-8 bg-rose-600 hover:bg-rose-700 text-white"

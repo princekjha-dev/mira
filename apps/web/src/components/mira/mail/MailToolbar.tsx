@@ -105,7 +105,7 @@ export function MailToolbar({
                 <Star
                   className={cn(
                     "h-3.5 w-3.5",
-                    isSelectedStarred && "fill-amber-400 text-amber-500"
+                    isSelectedStarred && "fill-amber-400 text-amber-500",
                   )}
                 />
               </Button>
@@ -166,7 +166,9 @@ export function MailToolbar({
               title="Sort messages"
             >
               <ArrowUpDown className="h-3.5 w-3.5" />
-              <span className="hidden md:inline">{getSortLabel(sortOrder)}</span>
+              <span className="hidden md:inline">
+                {getSortLabel(sortOrder)}
+              </span>
             </Button>
           </DropdownMenuTrigger>
           <DropdownMenuContent align="end" className="w-40 text-xs">
@@ -174,18 +176,20 @@ export function MailToolbar({
               Sort By
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
-            {(["newest", "oldest", "unread_first"] as SortOrder[]).map((order) => (
-              <DropdownMenuItem
-                key={order}
-                onClick={() => onSortChange(order)}
-                className="flex items-center justify-between text-xs cursor-pointer"
-              >
-                <span>{getSortLabel(order)}</span>
-                {sortOrder === order && (
-                  <span className="text-gov font-bold">✓</span>
-                )}
-              </DropdownMenuItem>
-            ))}
+            {(["newest", "oldest", "unread_first"] as SortOrder[]).map(
+              (order) => (
+                <DropdownMenuItem
+                  key={order}
+                  onClick={() => onSortChange(order)}
+                  className="flex items-center justify-between text-xs cursor-pointer"
+                >
+                  <span>{getSortLabel(order)}</span>
+                  {sortOrder === order && (
+                    <span className="text-gov font-bold">✓</span>
+                  )}
+                </DropdownMenuItem>
+              ),
+            )}
           </DropdownMenuContent>
         </DropdownMenu>
 
@@ -198,7 +202,10 @@ export function MailToolbar({
           title="Refresh messages"
         >
           <RotateCw
-            className={cn("h-3.5 w-3.5", isRefreshing && "animate-spin text-gov")}
+            className={cn(
+              "h-3.5 w-3.5",
+              isRefreshing && "animate-spin text-gov",
+            )}
           />
         </Button>
       </div>

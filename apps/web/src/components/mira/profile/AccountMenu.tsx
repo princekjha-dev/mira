@@ -66,7 +66,7 @@ export function AccountMenu({ className, compact = false }: AccountMenuProps) {
           type="button"
           className={cn(
             "group flex items-center gap-2.5 rounded-xl border border-transparent p-1 sm:px-2.5 sm:py-1.5 transition-all text-left outline-none hover:bg-slate-100/80 hover:border-slate-200/60 dark:hover:bg-slate-800/80 dark:hover:border-slate-700/60",
-            className
+            className,
           )}
           aria-label="User account menu"
         >
@@ -92,7 +92,10 @@ export function AccountMenu({ className, compact = false }: AccountMenuProps) {
         </button>
       </DropdownMenuTrigger>
 
-      <DropdownMenuContent align="end" className="w-56 p-1.5 rounded-xl border border-slate-200/80 shadow-lg dark:border-slate-800">
+      <DropdownMenuContent
+        align="end"
+        className="w-56 p-1.5 rounded-xl border border-slate-200/80 shadow-lg dark:border-slate-800"
+      >
         <DropdownMenuLabel className="p-2 space-y-1">
           <div className="flex items-center justify-between">
             <span className="text-xs font-bold text-slate-900 dark:text-slate-100 truncate">
@@ -114,15 +117,27 @@ export function AccountMenu({ className, compact = false }: AccountMenuProps) {
 
         <DropdownMenuSeparator />
 
-        <DropdownMenuItem asChild className="cursor-pointer text-xs py-2 rounded-lg">
-          <Link to={profileUrl as "/"} className="flex items-center gap-2.5 w-full">
+        <DropdownMenuItem
+          asChild
+          className="cursor-pointer text-xs py-2 rounded-lg"
+        >
+          <Link
+            to={profileUrl as "/"}
+            className="flex items-center gap-2.5 w-full"
+          >
             <User className="h-3.5 w-3.5 text-slate-500" />
             <span>View Profile</span>
           </Link>
         </DropdownMenuItem>
 
-        <DropdownMenuItem asChild className="cursor-pointer text-xs py-2 rounded-lg">
-          <Link to={notificationsUrl as "/"} className="flex items-center gap-2.5 w-full">
+        <DropdownMenuItem
+          asChild
+          className="cursor-pointer text-xs py-2 rounded-lg"
+        >
+          <Link
+            to={notificationsUrl as "/"}
+            className="flex items-center gap-2.5 w-full"
+          >
             <Bell className="h-3.5 w-3.5 text-slate-500" />
             <span>Notifications</span>
           </Link>

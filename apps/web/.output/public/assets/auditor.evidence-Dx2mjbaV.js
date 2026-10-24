@@ -1,1 +1,21 @@
-import{l as e}from"./button-KmRTh43o.js";import{D as t}from"./index-B8Y-_llO.js";import{t as n}from"./FilesExplorer-lhESH-5n.js";var r=e();function i(){return(0,r.jsxs)(`div`,{className:`space-y-6`,children:[(0,r.jsx)(t,{title:`Forensic Evidence & Document Vault`,desc:`Read-only forensic inspection of uploaded affidavits, land deeds, income certificates, and version trees.`,crumbs:[{label:`Auditor`,to:`/auditor/dashboard`},{label:`Evidence Vault`}]}),(0,r.jsx)(n,{})]})}export{i as component};
+import { l as e } from "./button-KmRTh43o.js";
+import { D as t } from "./index-B8Y-_llO.js";
+import { t as n } from "./FilesExplorer-lhESH-5n.js";
+var r = e();
+function i() {
+  return (0, r.jsxs)(`div`, {
+    className: `space-y-6`,
+    children: [
+      (0, r.jsx)(t, {
+        title: `Forensic Evidence & Document Vault`,
+        desc: `Read-only forensic inspection of uploaded affidavits, land deeds, income certificates, and version trees.`,
+        crumbs: [
+          { label: `Auditor`, to: `/auditor/dashboard` },
+          { label: `Evidence Vault` },
+        ],
+      }),
+      (0, r.jsx)(n, {}),
+    ],
+  });
+}
+export { i as component };

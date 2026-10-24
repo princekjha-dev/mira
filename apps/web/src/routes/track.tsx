@@ -83,11 +83,15 @@ function ApplicationTrackCard({ app }: { app: Application }) {
       <dl className="grid gap-3 py-4 text-sm sm:grid-cols-3">
         <div>
           <dt className="text-xs text-muted-foreground">Submitted</dt>
-          <dd className="mt-1 font-medium text-foreground">{fmtDate(app.appliedOn)}</dd>
+          <dd className="mt-1 font-medium text-foreground">
+            {fmtDate(app.appliedOn)}
+          </dd>
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Last updated</dt>
-          <dd className="mt-1 font-medium text-foreground">{fmtDate(app.updatedOn)}</dd>
+          <dd className="mt-1 font-medium text-foreground">
+            {fmtDate(app.updatedOn)}
+          </dd>
         </div>
         <div>
           <dt className="text-xs text-muted-foreground">Next step</dt>
@@ -161,11 +165,10 @@ function Track() {
     void refresh();
   }, [refresh]);
 
-  const displayedApps = session?.apiToken ? applications : [];
-  const submittedApps = useMemo(
-    () => displayedApps.filter((app) => app.status !== "Draft"),
-    [displayedApps],
-  );
+  const submittedApps = useMemo(() => {
+    if (!session?.apiToken) return [];
+    return applications.filter((app) => app.status !== "Draft");
+  }, [session?.apiToken, applications]);
   const searched = submittedId
     ? submittedApps.find((app) => referenceMatches(app, submittedId))
     : null;

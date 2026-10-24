@@ -1240,7 +1240,8 @@ export interface MessageThread {
 export const SEED_MESSAGES: MessageThread[] = [
   {
     id: "MSG-2026-901",
-    subject: "Clarification Required: Address Proof Variation for APP-2026-10482",
+    subject:
+      "Clarification Required: Address Proof Variation for APP-2026-10482",
     sender: {
       name: "Vikram Malhotra",
       email: "demo.verifier@mira.demo",
@@ -1252,7 +1253,8 @@ export const SEED_MESSAGES: MessageThread[] = [
       email: "demo.citizen@mira.demo",
       role: "citizen",
     },
-    preview: "Preliminary document extraction found address text variation with municipal database. Please upload current electricity bill or residence certificate.",
+    preview:
+      "Preliminary document extraction found address text variation with municipal database. Please upload current electricity bill or residence certificate.",
     timestamp: "2026-01-14 11:00",
     status: "unread",
     isStarred: true,
@@ -1316,7 +1318,8 @@ export const SEED_MESSAGES: MessageThread[] = [
       email: "demo.citizen@mira.demo",
       role: "citizen",
     },
-    preview: "Physical dwelling inspection scheduled for verification of rural sanitation dwelling status.",
+    preview:
+      "Physical dwelling inspection scheduled for verification of rural sanitation dwelling status.",
     timestamp: "2026-01-16 10:15",
     status: "read",
     isStarred: false,
@@ -1348,7 +1351,8 @@ export const SEED_MESSAGES: MessageThread[] = [
       email: "verifier@mira.local",
       role: "verifier",
     },
-    preview: "State family register synchronised for Lucknow district. Household SH-HH-10482 attested.",
+    preview:
+      "State family register synchronised for Lucknow district. Household SH-HH-10482 attested.",
     timestamp: "2026-10-20 16:45",
     status: "read",
     isStarred: false,
@@ -1380,7 +1384,8 @@ export const SEED_MESSAGES: MessageThread[] = [
       email: "admin@mira.local",
       role: "admin",
     },
-    preview: "Requesting immutable decision exports for block grants exceeding ₹1,00,000.",
+    preview:
+      "Requesting immutable decision exports for block grants exceeding ₹1,00,000.",
     timestamp: "2026-10-19 09:30",
     status: "read",
     isStarred: true,
@@ -1549,12 +1554,29 @@ export const SEED_FIELD_VISITS: FieldVisit[] = [
     schemeName: "Rural Housing Assistance Scheme",
     dwellingType: "Kutcha",
     checklist: [
-      { id: "c1", label: "Verify physical co-residence of all 5 household members", checked: true },
-      { id: "c2", label: "Confirm absence of pucca RCC roof dwelling on plot", checked: true },
-      { id: "c3", label: "Inspect electricity meter and domestic load (< 1 kW)", checked: false },
-      { id: "c4", label: "Verify Khasra land title boundary with neighbouring plots", checked: true },
+      {
+        id: "c1",
+        label: "Verify physical co-residence of all 5 household members",
+        checked: true,
+      },
+      {
+        id: "c2",
+        label: "Confirm absence of pucca RCC roof dwelling on plot",
+        checked: true,
+      },
+      {
+        id: "c3",
+        label: "Inspect electricity meter and domestic load (< 1 kW)",
+        checked: false,
+      },
+      {
+        id: "c4",
+        label: "Verify Khasra land title boundary with neighbouring plots",
+        checked: true,
+      },
     ],
-    officerNotes: "Household resides in ancestral thatched/mud dwelling. Family members present. High priority for pucca housing sanction under state guidelines.",
+    officerNotes:
+      "Household resides in ancestral thatched/mud dwelling. Family members present. High priority for pucca housing sanction under state guidelines.",
     evidencePhotos: ["/hero/civic-1.jpg", "/hero/civic-2.jpg"],
     citizenConfirmation: {
       confirmed: true,
@@ -1577,10 +1599,19 @@ export const SEED_FIELD_VISITS: FieldVisit[] = [
     dwellingType: "Semi-Pucca",
     checklist: [
       { id: "c1", label: "Inspect Khasra 302 boundary stones", checked: false },
-      { id: "c2", label: "Verify neighbor partition declaration", checked: false },
-      { id: "c3", label: "Check prior benefit receipt from Nagar Panchayat", checked: false },
+      {
+        id: "c2",
+        label: "Verify neighbor partition declaration",
+        checked: false,
+      },
+      {
+        id: "c3",
+        label: "Check prior benefit receipt from Nagar Panchayat",
+        checked: false,
+      },
     ],
-    officerNotes: "Cross-check plot overlap alert DA-2026-0088 with adjacent household application.",
+    officerNotes:
+      "Cross-check plot overlap alert DA-2026-0088 with adjacent household application.",
     evidencePhotos: [],
     citizenConfirmation: { confirmed: false },
   },
@@ -1598,10 +1629,19 @@ export const SEED_FIELD_VISITS: FieldVisit[] = [
     schemeName: "National Old Age Pension",
     dwellingType: "Pucca",
     checklist: [
-      { id: "c1", label: "Inspect civil hospital age certificate", checked: true },
-      { id: "c2", label: "Confirm bank account linkage with Aadhaar", checked: true },
+      {
+        id: "c1",
+        label: "Inspect civil hospital age certificate",
+        checked: true,
+      },
+      {
+        id: "c2",
+        label: "Confirm bank account linkage with Aadhaar",
+        checked: true,
+      },
     ],
-    officerNotes: "Applicant is 68 years old. Living with dependent spouse. Bank DBT details verified.",
+    officerNotes:
+      "Applicant is 68 years old. Living with dependent spouse. Bank DBT details verified.",
     evidencePhotos: ["/hero/civic-3.jpg"],
     citizenConfirmation: {
       confirmed: true,
@@ -1627,14 +1667,22 @@ export interface FileVersionEntry {
 export interface FileRecord {
   id: string;
   name: string;
-  category: "My Files" | "Application Files" | "Household Files" | "Evidence" | "Shared With Me" | "Requested Documents" | "Archived";
+  category:
+    | "My Files"
+    | "Application Files"
+    | "Household Files"
+    | "Evidence"
+    | "Shared With Me"
+    | "Requested Documents"
+    | "Archived";
   type: string;
   mimeType: string;
   sizeBytes: number;
   uploadedBy: string;
   uploadedRole: string;
   uploadedDate: string;
-  verificationStatus: "Verified" | "Pending Review" | "Action Required" | "Mismatch Detected";
+  verificationStatus:
+    "Verified" | "Pending Review" | "Action Required" | "Mismatch Detected";
   relatedRecordId?: string;
   currentVersion: number;
   versions: FileVersionEntry[];
@@ -1685,7 +1733,8 @@ export const SEED_FILES: FileRecord[] = [
         sizeBytes: 292864,
         uploadedBy: "Ananya Sharma",
         uploadedAt: "2026-10-22 15:00",
-        reason: "Uploaded high-resolution attested copy per Officer Neha Verma request",
+        reason:
+          "Uploaded high-resolution attested copy per Officer Neha Verma request",
       },
       {
         versionNumber: 1,
@@ -1776,10 +1825,12 @@ export const SEED_DECISIONS: DecisionRecord[] = [
     decidedBy: "Sunita Verma (Scheme Officer)",
     officerRole: "SCHEME_OFFICER",
     decidedAt: "2026-10-18 16:30",
-    justification: "Applicant meets age criterion (>65 years) and BPL priority household threshold. Aadhaar biometric authentication attested.",
+    justification:
+      "Applicant meets age criterion (>65 years) and BPL priority household threshold. Aadhaar biometric authentication attested.",
     statutoryRuleRef: "NOAPS Guidelines Section 3(a)",
     benefitAmount: 1000,
-    auditHash: "SHA256:7f9a2b8c4d1e3f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a",
+    auditHash:
+      "SHA256:7f9a2b8c4d1e3f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a",
   },
   {
     id: "DEC-2026-0089",
@@ -1790,9 +1841,11 @@ export const SEED_DECISIONS: DecisionRecord[] = [
     decidedBy: "Neha Verma (Verification Officer)",
     officerRole: "VERIFICATION_OFFICER",
     decidedAt: "2026-10-22 14:35",
-    justification: "Income certificate stamp partially obscured. Clarification required before second-stage approval per Verification Cell protocol.",
+    justification:
+      "Income certificate stamp partially obscured. Clarification required before second-stage approval per Verification Cell protocol.",
     statutoryRuleRef: "Verification Manual Circular 42/2025",
-    auditHash: "SHA256:4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b",
+    auditHash:
+      "SHA256:4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b",
   },
   {
     id: "DEC-2026-0074",
@@ -1803,9 +1856,11 @@ export const SEED_DECISIONS: DecisionRecord[] = [
     decidedBy: "Sunita Verma (Scheme Officer)",
     officerRole: "SCHEME_OFFICER",
     decidedAt: "2026-10-14 11:20",
-    justification: "Household declared income exceeds SECC 2011 deprivation criteria. Non-qualifying household under state health rules.",
+    justification:
+      "Household declared income exceeds SECC 2011 deprivation criteria. Non-qualifying household under state health rules.",
     statutoryRuleRef: "PM-JAY Deprivation Criteria D1-D7 Exclusion",
-    auditHash: "SHA256:1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
+    auditHash:
+      "SHA256:1e2f3a4b5c6d7e8f9a0b1c2d3e4f5a6b7c8d9e0f1a2b3c4d5e6f7a8b9c0d1e2f",
   },
 ];
 
@@ -1840,8 +1895,10 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     householdId: "MIRA-FAM-10482",
     badge: "Verified Citizen",
     avatarSeed: "Rajesh",
-    description: "Citizen managing 35-member Sharma family tree, scholarship applications, and benefit tracking.",
-    accessScope: "Personal Household Record (MIRA-FAM-10482) & Self Applications",
+    description:
+      "Citizen managing 35-member Sharma family tree, scholarship applications, and benefit tracking.",
+    accessScope:
+      "Personal Household Record (MIRA-FAM-10482) & Self Applications",
   },
   officer: {
     name: "Sunita Verma",
@@ -1853,7 +1910,8 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     phone: "+91 94150 11223",
     badge: "Scheme Officer",
     avatarSeed: "Sunita",
-    description: "Reviews verified welfare applications, validates statutory criteria, and sanctions direct benefits.",
+    description:
+      "Reviews verified welfare applications, validates statutory criteria, and sanctions direct benefits.",
     accessScope: "Assigned Welfare Scheme Sanction & Direct Benefit Portfolio",
   },
   verifier: {
@@ -1866,8 +1924,10 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     phone: "+91 94520 33445",
     badge: "Verification Cell",
     avatarSeed: "Vikram",
-    description: "Examines OCR extracted certificates, verifies multi-generational family trees, and resolves document discrepancies.",
-    accessScope: "State Intake Queue, OCR Extractor & Document Intelligence Workstation",
+    description:
+      "Examines OCR extracted certificates, verifies multi-generational family trees, and resolves document discrepancies.",
+    accessScope:
+      "State Intake Queue, OCR Extractor & Document Intelligence Workstation",
   },
   supervisor: {
     name: "Arun Deshmukh",
@@ -1879,8 +1939,10 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     phone: "+91 94151 55667",
     badge: "Supervisor Tier-2",
     avatarSeed: "Arun",
-    description: "Reviews second-signoff escalations, complex household splits, and exceptional policy appeals.",
-    accessScope: "Supervisory Escalation Queue & Exceptional Policy Determination",
+    description:
+      "Reviews second-signoff escalations, complex household splits, and exceptional policy appeals.",
+    accessScope:
+      "Supervisory Escalation Queue & Exceptional Policy Determination",
   },
   admin: {
     name: "System Administrator",
@@ -1892,8 +1954,10 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     phone: "+91 94151 99881",
     badge: "System Authority",
     avatarSeed: "System",
-    description: "Configures welfare schemes, manages eligibility rules, resets demo state, and monitors queues.",
-    accessScope: "Department-Wide Scheme Master, Rule Engine & Operational Configuration",
+    description:
+      "Configures welfare schemes, manages eligibility rules, resets demo state, and monitors queues.",
+    accessScope:
+      "Department-Wide Scheme Master, Rule Engine & Operational Configuration",
   },
   auditor: {
     name: "Kavita Rao",
@@ -1905,8 +1969,10 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     phone: "+91 94152 77889",
     badge: "Read-Only Compliance",
     avatarSeed: "Kavita",
-    description: "Inspects immutable audit trails, historical decisions, rule versions, and officer actions.",
-    accessScope: "STRICTLY READ-ONLY: All Historical Decisional Timelines & Audit Ledgers",
+    description:
+      "Inspects immutable audit trails, historical decisions, rule versions, and officer actions.",
+    accessScope:
+      "STRICTLY READ-ONLY: All Historical Decisional Timelines & Audit Ledgers",
   },
 };
 

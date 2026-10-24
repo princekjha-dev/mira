@@ -19,7 +19,8 @@ import { SCHEMES } from "@/lib/data";
 
 interface SearchResultItem {
   id: string;
-  category: "Application" | "Scheme" | "Document" | "Message" | "Audit" | "Citizen";
+  category:
+    "Application" | "Scheme" | "Document" | "Message" | "Audit" | "Citizen";
   title: string;
   subtitle: string;
   url: string;
@@ -60,7 +61,9 @@ export function GlobalSearchDialog({
       if (
         role === "citizen" &&
         state.session?.name &&
-        !app.applicant.toLowerCase().includes(state.session.name.toLowerCase()) &&
+        !app.applicant
+          .toLowerCase()
+          .includes(state.session.name.toLowerCase()) &&
         !app.id.toLowerCase().includes(q)
       ) {
         return;
@@ -109,11 +112,12 @@ export function GlobalSearchDialog({
 
     // 3. Documents & Files
     state.files.forEach((f) => {
-      if (f.name.toLowerCase().includes(q) || f.type.toLowerCase().includes(q)) {
+      if (
+        f.name.toLowerCase().includes(q) ||
+        f.type.toLowerCase().includes(q)
+      ) {
         const dest =
-          role === "verifier"
-            ? `/verifier/documents`
-            : `/citizen/documents`;
+          role === "verifier" ? `/verifier/documents` : `/citizen/documents`;
         items.push({
           id: f.id,
           category: "Document",
@@ -219,9 +223,12 @@ export function GlobalSearchDialog({
         <div className="max-h-[60vh] overflow-y-auto p-2 bg-slate-50/50">
           {!query.trim() ? (
             <div className="p-6 text-center text-xs text-muted-foreground">
-              <p className="font-medium text-slate-700">Quick Search across Mira</p>
+              <p className="font-medium text-slate-700">
+                Quick Search across Mira
+              </p>
               <p className="mt-1">
-                Type an Application ID (e.g. <code>APP-2026-000318</code>), scheme name, document, or citizen message.
+                Type an Application ID (e.g. <code>APP-2026-000318</code>),
+                scheme name, document, or citizen message.
               </p>
             </div>
           ) : results.length === 0 ? (

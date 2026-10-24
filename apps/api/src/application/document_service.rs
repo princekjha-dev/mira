@@ -17,8 +17,8 @@ use crate::{
             matching::{DocumentEntityMatchResult, DocumentMatcher},
             models::{
                 AccessAction, AccessPurpose, Document, DocumentAccessLog, DocumentExtraction,
-                DocumentStatus, DocumentType, DocumentVerification, DocumentVersion, ExtractionStatus,
-                OcrResult, VerificationDecision, VersionType,
+                DocumentStatus, DocumentType, DocumentVerification, DocumentVersion,
+                ExtractionStatus, OcrResult, VerificationDecision, VersionType,
             },
             ocr::{BilingualOcrProvider, OCRProvider},
             scanner::{MalwareScanner, SecurityScanner},
@@ -90,9 +90,14 @@ impl DocumentService {
         let scan_report = self.scanner.scan(&validated.sanitized_filename, data)?;
         if !scan_report.is_clean || scan_report.quarantine_recommended {
             // Quarantine malicious upload safely
-            self.storage.quarantine_file(&validated.storage_key, data).await?;
+            self.storage
+                .quarantine_file(&validated.storage_key, data)
+                .await?;
 
-            let doc_public_id = format!("DOC-QUARANTINED-{}", Uuid::new_v4().to_string()[..8].to_uppercase());
+            let doc_public_id = format!(
+                "DOC-QUARANTINED-{}",
+                Uuid::new_v4().to_string()[..8].to_uppercase()
+            );
             let sha = compute_sha256(data);
 
             let row = sqlx::query_as!(
@@ -119,11 +124,15 @@ impl DocumentService {
             )
             .fetch_one(&self.pool)
             .await
-            .map_err(|e| AppError::Internal(format!("Failed to record quarantined document: {}", e)))?;
+            .map_err(|e| {
+                AppError::Internal(format!("Failed to record quarantined document: {}", e))
+            })?;
 
             return Err(AppError::Validation(format!(
                 "Security scan violation: Document quarantined. Threat: {}",
-                scan_report.threat_detected.unwrap_or_else(|| "Suspicious payload".into())
+                scan_report
+                    .threat_detected
+                    .unwrap_or_else(|| "Suspicious payload".into())
             )));
         }
 
@@ -143,7 +152,9 @@ impl DocumentService {
         )
         .fetch_optional(&self.pool)
         .await
-        .map_err(|e| AppError::Internal(format!("Database error checking duplicate hash: {}", e)))?;
+        .map_err(|e| {
+            AppError::Internal(format!("Database error checking duplicate hash: {}", e))
+        })?;
 
         if let Some(existing_doc) = existing {
             // Log access
@@ -154,7 +165,8 @@ impl DocumentService {
                 AccessPurpose::from_str(&payload.access_purpose),
                 ip_address,
                 user_agent,
-            ).await?;
+            )
+            .await?;
             return Ok(existing_doc);
         }
 
@@ -170,22 +182,35 @@ impl DocumentService {
             let key = format!("source_{}.{}", Uuid::new_v4(), ext);
             self.storage.put(&key, original).await?;
             Some(key)
-        } else { None };
+        } else {
+            None
+        };
         self.storage.put(&validated.storage_key, data).await?;
 
         // 7. Initial Document Classification
         let (inferred_type, _, _) = DocumentClassifier::classify(
             &validated.sanitized_filename,
-            if let Ok(s) = std::str::from_utf8(data) { s } else { "" },
+            if let Ok(s) = std::str::from_utf8(data) {
+                s
+            } else {
+                ""
+            },
         );
-        let final_doc_type = payload.specified_doc_type
+        let final_doc_type = payload
+            .specified_doc_type
             .map(|s| DocumentType::from_str(&s))
             .unwrap_or(inferred_type);
 
-        let doc_public_id = format!("DOC-{}-{}", final_doc_type.as_str().split('_').next().unwrap_or("DOC"), Uuid::new_v4().to_string()[..6].to_uppercase());
+        let doc_public_id = format!(
+            "DOC-{}-{}",
+            final_doc_type.as_str().split('_').next().unwrap_or("DOC"),
+            Uuid::new_v4().to_string()[..6].to_uppercase()
+        );
 
         // 8. Create Document Record
-        let safe_display_filename = payload.display_filename.as_deref()
+        let safe_display_filename = payload
+            .display_filename
+            .as_deref()
             .map(FileTypeRegistry::sanitize_filename)
             .unwrap_or_else(|| validated.sanitized_filename.clone());
         let doc = sqlx::query_as!(
@@ -209,7 +234,9 @@ impl DocumentService {
             file_sha256,
             validated.storage_key,
             user.id,
-            original_data.map(|original| original.len() as i64).unwrap_or(validated.size_bytes)
+            original_data
+                .map(|original| original.len() as i64)
+                .unwrap_or(validated.size_bytes)
         )
         .fetch_one(&self.pool)
         .await
@@ -221,12 +248,20 @@ impl DocumentService {
             "original_size_bytes": original_data.map(|source| source.len() as i64).unwrap_or(validated.size_bytes),
             "mime_type": validated.detected_mime,
         })).await?;
-        if let Some(source) = original_data.filter(|source| source.len() > validated.size_bytes as usize) {
-            self.log_document_event("DOCUMENT_COMPRESSED", user, &doc, serde_json::json!({
-                "original_size_bytes": source.len(),
-                "optimized_size_bytes": validated.size_bytes,
-                "bytes_saved": source.len() - validated.size_bytes as usize,
-            })).await?;
+        if let Some(source) =
+            original_data.filter(|source| source.len() > validated.size_bytes as usize)
+        {
+            self.log_document_event(
+                "DOCUMENT_COMPRESSED",
+                user,
+                &doc,
+                serde_json::json!({
+                    "original_size_bytes": source.len(),
+                    "optimized_size_bytes": validated.size_bytes,
+                    "bytes_saved": source.len() - validated.size_bytes as usize,
+                }),
+            )
+            .await?;
         }
 
         // 9. Record the source bytes and the optimized upload as separate immutable versions.
@@ -287,14 +322,18 @@ impl DocumentService {
             AccessPurpose::from_str(&payload.access_purpose),
             ip_address,
             user_agent,
-        ).await?;
+        )
+        .await?;
 
         // 12. Run OCR & Quality Extraction
-        let ocr_output = self.ocr.process_document(
-            &validated.sanitized_filename,
-            &validated.detected_mime,
-            data,
-        ).await?;
+        let ocr_output = self
+            .ocr
+            .process_document(
+                &validated.sanitized_filename,
+                &validated.detected_mime,
+                data,
+            )
+            .await?;
 
         sqlx::query!(
             r#"
@@ -316,11 +355,17 @@ impl DocumentService {
         .map_err(|e| AppError::Internal(format!("Failed to record OCR results: {}", e)))?;
 
         // 13. Structured Field Extraction with Bounding Boxes
-        let all_regions: Vec<crate::domain::document::models::BoundingBox> = ocr_output.pages.iter().flat_map(|p| p.regions.clone()).collect();
-        let extracted_fields = DocumentExtractor::extract(&final_doc_type, &ocr_output.full_text, &all_regions);
+        let all_regions: Vec<crate::domain::document::models::BoundingBox> = ocr_output
+            .pages
+            .iter()
+            .flat_map(|p| p.regions.clone())
+            .collect();
+        let extracted_fields =
+            DocumentExtractor::extract(&final_doc_type, &ocr_output.full_text, &all_regions);
 
         for f in extracted_fields {
-            let region_json = serde_json::to_value(&f.source_region).unwrap_or(serde_json::json!({}));
+            let region_json =
+                serde_json::to_value(&f.source_region).unwrap_or(serde_json::json!({}));
             sqlx::query!(
                 r#"
                 INSERT INTO document_extractions (
@@ -369,14 +414,12 @@ impl DocumentService {
         ip: Option<String>,
         ua: Option<String>,
     ) -> Result<Document, AppError> {
-        let doc = sqlx::query_as::<_, Document>(
-            r#"SELECT * FROM documents WHERE id = $1"#,
-        )
-        .bind(doc_id)
-        .fetch_optional(&self.pool)
-        .await
-        .map_err(|e| AppError::Internal(e.to_string()))?
-        .ok_or_else(|| AppError::NotFound("Document not found".into()))?;
+        let doc = sqlx::query_as::<_, Document>(r#"SELECT * FROM documents WHERE id = $1"#)
+            .bind(doc_id)
+            .fetch_optional(&self.pool)
+            .await
+            .map_err(|e| AppError::Internal(e.to_string()))?
+            .ok_or_else(|| AppError::NotFound("Document not found".into()))?;
 
         self.authorize_document_access(user, &doc).await?;
 
@@ -387,7 +430,8 @@ impl DocumentService {
             AccessPurpose::from_str(purpose),
             ip,
             ua,
-        ).await?;
+        )
+        .await?;
 
         Ok(doc)
     }
@@ -399,9 +443,13 @@ impl DocumentService {
         ip: Option<String>,
         ua: Option<String>,
     ) -> Result<Document, AppError> {
-        let doc = self.get_document(doc_id, user, "CITIZEN_SELF_SERVICE", ip.clone(), ua.clone()).await?;
+        let doc = self
+            .get_document(doc_id, user, "CITIZEN_SELF_SERVICE", ip.clone(), ua.clone())
+            .await?;
         if doc.created_by != Some(user.id) && doc.owner_id != user.id {
-            return Err(AppError::Forbidden("Only the document owner can archive this file.".into()));
+            return Err(AppError::Forbidden(
+                "Only the document owner can archive this file.".into(),
+            ));
         }
         let archived = sqlx::query_as::<_, Document>(
             "UPDATE documents SET status = 'REVOKED', updated_at = NOW() WHERE id = $1 RETURNING *",
@@ -410,8 +458,22 @@ impl DocumentService {
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Internal(format!("Failed to archive document: {e}")))?;
-        self.log_document_event("DOCUMENT_ARCHIVED", user, &archived, serde_json::json!({"reason": "Owner archived from document library"})).await?;
-        self.log_access(doc.id, Some(user.id), AccessAction::Revoke, AccessPurpose::CitizenSelfService, ip, ua).await?;
+        self.log_document_event(
+            "DOCUMENT_ARCHIVED",
+            user,
+            &archived,
+            serde_json::json!({"reason": "Owner archived from document library"}),
+        )
+        .await?;
+        self.log_access(
+            doc.id,
+            Some(user.id),
+            AccessAction::Revoke,
+            AccessPurpose::CitizenSelfService,
+            ip,
+            ua,
+        )
+        .await?;
         Ok(archived)
     }
 
@@ -424,7 +486,9 @@ impl DocumentService {
         ip: Option<String>,
         ua: Option<String>,
     ) -> Result<(Document, Vec<u8>), AppError> {
-        let doc = self.get_document(doc_id, user, purpose, ip.clone(), ua.clone()).await?;
+        let doc = self
+            .get_document(doc_id, user, purpose, ip.clone(), ua.clone())
+            .await?;
 
         let bytes = self.storage.get(&doc.storage_reference).await?;
 
@@ -435,7 +499,8 @@ impl DocumentService {
             AccessPurpose::from_str(purpose),
             ip,
             ua,
-        ).await?;
+        )
+        .await?;
 
         Ok((doc, bytes))
     }
@@ -447,7 +512,10 @@ impl DocumentService {
         owner_type: Option<&str>,
         owner_id: Option<Uuid>,
     ) -> Result<Vec<Document>, AppError> {
-        let can_view_all = user.roles.iter().any(|role| matches!(role.as_str(), "SUPER_ADMIN" | "AUDITOR"));
+        let can_view_all = user
+            .roles
+            .iter()
+            .any(|role| matches!(role.as_str(), "SUPER_ADMIN" | "AUDITOR"));
         let is_department_admin = user.roles.iter().any(|role| role == "DEPARTMENT_ADMIN");
         let is_officer = user.roles.iter().any(|role| {
             matches!(
@@ -548,7 +616,8 @@ impl DocumentService {
         payload: ExtractionVerificationPayload,
         user: &AuthenticatedUser,
     ) -> Result<DocumentVerification, AppError> {
-        self.get_document(doc_id, user, "APPLICATION_VERIFICATION", None, None).await?;
+        self.get_document(doc_id, user, "APPLICATION_VERIFICATION", None, None)
+            .await?;
         // Enforce Officer RBAC
         let is_officer = user.roles.iter().any(|r| {
             r == "VERIFICATION_OFFICER"
@@ -557,7 +626,9 @@ impl DocumentService {
                 || r == "SUPER_ADMIN"
         });
         if !is_officer {
-            return Err(AppError::Forbidden("Officer role required to verify document extractions.".into()));
+            return Err(AppError::Forbidden(
+                "Officer role required to verify document extractions.".into(),
+            ));
         }
 
         // Fetch target extraction
@@ -628,7 +699,9 @@ impl DocumentService {
             extraction.value,
             payload.corrected_value,
             decision.as_str(),
-            payload.verification_method.unwrap_or_else(|| "MANUAL_INSPECTION".to_string()),
+            payload
+                .verification_method
+                .unwrap_or_else(|| "MANUAL_INSPECTION".to_string()),
             payload.reason,
             user.id
         )
@@ -650,23 +723,43 @@ impl DocumentService {
         .fetch_one(&self.pool)
         .await
         .map_err(|e| AppError::Internal(e.to_string()))?;
-        let document_verification_status = if any_rejected { "REJECTED" } else if all_verified { "VERIFIED" } else { "ACTION_REQUIRED" };
-        sqlx::query("UPDATE documents SET verification_status = $1, updated_at = NOW() WHERE id = $2")
-            .bind(document_verification_status)
-            .bind(doc_id)
-            .execute(&self.pool)
-            .await
-            .map_err(|e| AppError::Internal(e.to_string()))?;
+        let document_verification_status = if any_rejected {
+            "REJECTED"
+        } else if all_verified {
+            "VERIFIED"
+        } else {
+            "ACTION_REQUIRED"
+        };
+        sqlx::query(
+            "UPDATE documents SET verification_status = $1, updated_at = NOW() WHERE id = $2",
+        )
+        .bind(document_verification_status)
+        .bind(doc_id)
+        .execute(&self.pool)
+        .await
+        .map_err(|e| AppError::Internal(e.to_string()))?;
         if document_verification_status == "VERIFIED" {
-            let document = self.get_document(doc_id, user, "APPLICATION_VERIFICATION", None, None).await?;
-            self.log_document_event("DOCUMENT_VERIFIED", user, &document, serde_json::json!({"verification_method": "MANUAL_INSPECTION"})).await?;
+            let document = self
+                .get_document(doc_id, user, "APPLICATION_VERIFICATION", None, None)
+                .await?;
+            self.log_document_event(
+                "DOCUMENT_VERIFIED",
+                user,
+                &document,
+                serde_json::json!({"verification_method": "MANUAL_INSPECTION"}),
+            )
+            .await?;
         }
 
         Ok(verification)
     }
 
     /// Case Evidence Pack Aggregator
-    pub async fn get_case_evidence_pack(&self, case_id: Uuid, user: &AuthenticatedUser) -> Result<EvidencePack, AppError> {
+    pub async fn get_case_evidence_pack(
+        &self,
+        case_id: Uuid,
+        user: &AuthenticatedUser,
+    ) -> Result<EvidencePack, AppError> {
         // Find application
         let app_row = sqlx::query!(
             r#"
@@ -739,10 +832,22 @@ impl DocumentService {
         };
 
         // Extract key query fields for matching and consistency
-        let extracted_name = extractions.iter().find(|e| e.field == "NAME").map(|e| e.value.as_str());
-        let extracted_dob = extractions.iter().find(|e| e.field == "DATE_OF_BIRTH").map(|e| e.normalized_value.as_str());
-        let extracted_prop = extractions.iter().find(|e| e.field == "PROPERTY_ID").map(|e| e.value.as_str());
-        let extracted_addr = extractions.iter().find(|e| e.field == "ADDRESS").map(|e| e.value.as_str());
+        let extracted_name = extractions
+            .iter()
+            .find(|e| e.field == "NAME")
+            .map(|e| e.value.as_str());
+        let extracted_dob = extractions
+            .iter()
+            .find(|e| e.field == "DATE_OF_BIRTH")
+            .map(|e| e.normalized_value.as_str());
+        let extracted_prop = extractions
+            .iter()
+            .find(|e| e.field == "PROPERTY_ID")
+            .map(|e| e.value.as_str());
+        let extracted_addr = extractions
+            .iter()
+            .find(|e| e.field == "ADDRESS")
+            .map(|e| e.value.as_str());
 
         // Match Entities
         let entity_matches = DocumentMatcher::match_entities(
@@ -751,7 +856,8 @@ impl DocumentService {
             extracted_dob,
             extracted_prop,
             extracted_addr,
-        ).await?;
+        )
+        .await?;
 
         // Authoritative Record comparison
         let person_record = sqlx::query!(
@@ -762,8 +868,12 @@ impl DocumentService {
         .await
         .unwrap_or(None);
 
-        let rec_dob = person_record.as_ref().and_then(|p| p.date_of_birth.map(|d| d.format("%Y-%m-%d").to_string()));
-        let rec_name = person_record.as_ref().map(|p| format!("{} {}", p.first_name, p.last_name));
+        let rec_dob = person_record
+            .as_ref()
+            .and_then(|p| p.date_of_birth.map(|d| d.format("%Y-%m-%d").to_string()));
+        let rec_name = person_record
+            .as_ref()
+            .map(|p| format!("{} {}", p.first_name, p.last_name));
 
         let consistency = ConsistencyEngine::evaluate_consistency(
             Some(case_id),
@@ -780,7 +890,8 @@ impl DocumentService {
         );
 
         // Grounded AI Summary
-        let conflicts: Vec<String> = consistency.checks
+        let conflicts: Vec<String> = consistency
+            .checks
             .iter()
             .filter(|c| c.result == "CONFLICT")
             .map(|c| c.explanation.clone())
@@ -792,14 +903,27 @@ impl DocumentService {
             .collect();
 
         let ai_summary = if self.ai.is_enabled() {
-            let doc_type = documents.first().map(|d| DocumentType::from_str(&d.document_type)).unwrap_or(DocumentType::Other);
-            self.ai.generate_case_summary(
-                &doc_type,
-                &fields_tuples,
-                &conflicts,
-                entity_matches.person_matches.first().map(|p| p.full_name.as_str()),
-                entity_matches.property_matches.first().map(|p| p.public_id.as_str()),
-            ).await.ok().map(|s| s.summary_text)
+            let doc_type = documents
+                .first()
+                .map(|d| DocumentType::from_str(&d.document_type))
+                .unwrap_or(DocumentType::Other);
+            self.ai
+                .generate_case_summary(
+                    &doc_type,
+                    &fields_tuples,
+                    &conflicts,
+                    entity_matches
+                        .person_matches
+                        .first()
+                        .map(|p| p.full_name.as_str()),
+                    entity_matches
+                        .property_matches
+                        .first()
+                        .map(|p| p.public_id.as_str()),
+                )
+                .await
+                .ok()
+                .map(|s| s.summary_text)
         } else {
             None
         };
@@ -873,7 +997,11 @@ impl DocumentService {
     }
 
     /// Authorization Rule: User must own the entity or hold an officer role
-    fn authorize_owner_access(user: &AuthenticatedUser, owner_type: &str, owner_id: Uuid) -> Result<(), AppError> {
+    fn authorize_owner_access(
+        user: &AuthenticatedUser,
+        owner_type: &str,
+        owner_id: Uuid,
+    ) -> Result<(), AppError> {
         let is_privileged = user.roles.iter().any(|r| {
             r == "VERIFICATION_OFFICER"
                 || r == "FIELD_OFFICIAL"
@@ -896,11 +1024,19 @@ impl DocumentService {
     }
 
     /// Authorization Rule: Check access to specific document
-    async fn authorize_document_access(&self, user: &AuthenticatedUser, doc: &Document) -> Result<(), AppError> {
+    async fn authorize_document_access(
+        &self,
+        user: &AuthenticatedUser,
+        doc: &Document,
+    ) -> Result<(), AppError> {
         if doc.created_by == Some(user.id) || doc.owner_id == user.id {
             return Ok(());
         }
-        if user.roles.iter().any(|role| matches!(role.as_str(), "SUPER_ADMIN" | "AUDITOR")) {
+        if user
+            .roles
+            .iter()
+            .any(|role| matches!(role.as_str(), "SUPER_ADMIN" | "AUDITOR"))
+        {
             return Ok(());
         }
         if user.roles.iter().any(|role| role == "DEPARTMENT_ADMIN") {
@@ -909,7 +1045,9 @@ impl DocumentService {
                     "SELECT EXISTS(SELECT 1 FROM user_organizations WHERE user_id = $1 AND organization_id = $2)",
                 ).bind(doc.created_by.unwrap_or(doc.owner_id)).bind(org_id).fetch_one(&self.pool).await
                     .map_err(|e| AppError::Internal(e.to_string()))?;
-                if same_org { return Ok(()); }
+                if same_org {
+                    return Ok(());
+                }
             }
         }
         let is_officer = user.roles.iter().any(|role| {
@@ -932,8 +1070,12 @@ impl DocumentService {
             .fetch_one(&self.pool)
             .await
             .map_err(|e| AppError::Internal(e.to_string()))?;
-            if linked_to_app { return Ok(()); }
+            if linked_to_app {
+                return Ok(());
+            }
         }
-        Err(AppError::Forbidden("Access to this private document is outside your authorized scope.".into()))
+        Err(AppError::Forbidden(
+            "Access to this private document is outside your authorized scope.".into(),
+        ))
     }
 }

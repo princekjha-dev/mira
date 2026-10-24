@@ -5,7 +5,11 @@ export const Route = createFileRoute("/auditor/inbox")({
   head: () => ({
     meta: [
       { title: "Communications — Forensic Audit Authority" },
-      { name: "description", content: "Official messages, citizen clarifications, assignments and departmental correspondence." },
+      {
+        name: "description",
+        content:
+          "Official messages, citizen clarifications, assignments and departmental correspondence.",
+      },
     ],
   }),
   component: AuditorInboxPage,

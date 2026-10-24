@@ -16,13 +16,7 @@ CREATE TABLE IF NOT EXISTS notifications (
 CREATE INDEX IF NOT EXISTS idx_notifications_user ON notifications(user_id, read);
 CREATE INDEX IF NOT EXISTS idx_notifications_created ON notifications(created_at DESC);
 
-DO $$
-BEGIN
-    IF NOT EXISTS (
-        SELECT 1 FROM pg_constraint WHERE conname = 'applications_status_check' AND conrelid = 'applications'::regclass
-    ) THEN
-        ALTER TABLE applications ADD CONSTRAINT applications_status_check CHECK (status IN (
-            'DRAFT', 'SUBMITTED', 'UNDER_VERIFICATION', 'EVIDENCE_REQUIRED', 'APPROVED', 'REJECTED', 'WITHDRAWN', 'DISBURSED'
-        ));
-    END IF;
-END $$;
+ALTER TABLE applications DROP CONSTRAINT IF EXISTS applications_status_check;
+ALTER TABLE applications ADD CONSTRAINT applications_status_check CHECK (status IN (
+    'DRAFT', 'SUBMITTED', 'UNDER_VERIFICATION', 'EVIDENCE_REQUIRED', 'APPROVED', 'REJECTED', 'WITHDRAWN', 'DISBURSED'
+));

@@ -19,3 +19,13 @@ dist/
 *.log
 .vscode/
 .idea/
+
+# TanStack Start / Nitro build outputs
+.output/
+.tanstack/
+.wrangler/
+
+# Local file storage
+apps/api/data/storage/safe_store/*
+!apps/api/data/storage/safe_store/.gitkeep
+

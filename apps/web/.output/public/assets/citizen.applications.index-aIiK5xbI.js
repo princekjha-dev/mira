@@ -1,1 +1,158 @@
-import{f as e,l as t,t as n,u as r}from"./button-KmRTh43o.js";import{t as i}from"./link-gIn96cdo.js";import{t as a}from"./download-DTWQ6dGd.js";import{D as o,Mn as s,Nn as c,Pn as l,S as u,f as d,fn as f,g as p,h as m,j as h,m as g,mn as _,p as v}from"./index-B8Y-_llO.js";import{a as y,i as b,n as x,o as S,r as C,t as w}from"./table-HtxyrupA.js";var T=e(r()),E=t();function D(){let{state:e}=_(),[t,r]=(0,T.useState)(`all`),D=e.applications.filter(e=>t===`all`||e.status===t);return(0,E.jsxs)(`div`,{children:[(0,E.jsx)(o,{title:`My Applications`,desc:`Applications made by you or for members of your household.`,actions:(0,E.jsx)(n,{asChild:!0,children:(0,E.jsx)(i,{to:`/schemes`,children:`New application`})})}),(0,E.jsxs)(`div`,{className:`mb-3 flex items-center gap-2`,children:[(0,E.jsx)(`span`,{className:`text-sm text-muted-foreground`,children:`Status`}),(0,E.jsxs)(d,{value:t,onValueChange:r,children:[(0,E.jsx)(m,{className:`w-64`,children:(0,E.jsx)(p,{})}),(0,E.jsxs)(v,{children:[(0,E.jsx)(g,{value:`all`,children:`All statuses`}),s.map(e=>(0,E.jsx)(g,{value:e,children:e},e))]})]})]}),D.length===0?(0,E.jsx)(u,{title:`No applications with this status`,action:(0,E.jsx)(n,{variant:`outline`,onClick:()=>r(`all`),children:`Show all`})}):(0,E.jsx)(`div`,{className:`overflow-x-auto rounded-lg border bg-card`,children:(0,E.jsxs)(w,{children:[(0,E.jsx)(y,{children:(0,E.jsxs)(S,{children:[(0,E.jsx)(b,{children:`Application ID`}),(0,E.jsx)(b,{children:`Scheme`}),(0,E.jsx)(b,{children:`Applicant`}),(0,E.jsx)(b,{children:`Applied`}),(0,E.jsx)(b,{children:`Current Stage`}),(0,E.jsx)(b,{children:`Last Updated`}),(0,E.jsx)(b,{className:`text-right`,children:`Action`})]})}),(0,E.jsx)(x,{children:D.map(e=>(0,E.jsxs)(S,{children:[(0,E.jsx)(C,{className:`font-mono text-xs`,children:e.id}),(0,E.jsx)(C,{className:`min-w-48`,children:l(e.schemeId)?.name}),(0,E.jsx)(C,{children:e.applicant}),(0,E.jsx)(C,{children:c(e.appliedOn)}),(0,E.jsx)(C,{children:(0,E.jsx)(h,{s:e.status})}),(0,E.jsx)(C,{children:c(e.updatedOn)}),(0,E.jsxs)(C,{className:`whitespace-nowrap text-right`,children:[(0,E.jsx)(n,{size:`sm`,variant:`outline`,asChild:!0,children:(0,E.jsx)(i,{to:`/citizen/applications/$id`,params:{id:e.id},children:e.status===`Draft`?`Continue`:`View Details`})}),e.status!==`Draft`&&(0,E.jsx)(n,{size:`icon`,variant:`ghost`,"aria-label":`Download acknowledgement`,onClick:()=>f(e,l(e.schemeId)?.name??``),children:(0,E.jsx)(a,{className:`h-4 w-4`})})]})]},e.id))})]})})]})}export{D as component};
+import { f as e, l as t, t as n, u as r } from "./button-KmRTh43o.js";
+import { t as i } from "./link-gIn96cdo.js";
+import { t as a } from "./download-DTWQ6dGd.js";
+import {
+  D as o,
+  Mn as s,
+  Nn as c,
+  Pn as l,
+  S as u,
+  f as d,
+  fn as f,
+  g as p,
+  h as m,
+  j as h,
+  m as g,
+  mn as _,
+  p as v,
+} from "./index-B8Y-_llO.js";
+import {
+  a as y,
+  i as b,
+  n as x,
+  o as S,
+  r as C,
+  t as w,
+} from "./table-HtxyrupA.js";
+var T = e(r()),
+  E = t();
+function D() {
+  let { state: e } = _(),
+    [t, r] = (0, T.useState)(`all`),
+    D = e.applications.filter((e) => t === `all` || e.status === t);
+  return (0, E.jsxs)(`div`, {
+    children: [
+      (0, E.jsx)(o, {
+        title: `My Applications`,
+        desc: `Applications made by you or for members of your household.`,
+        actions: (0, E.jsx)(n, {
+          asChild: !0,
+          children: (0, E.jsx)(i, {
+            to: `/schemes`,
+            children: `New application`,
+          }),
+        }),
+      }),
+      (0, E.jsxs)(`div`, {
+        className: `mb-3 flex items-center gap-2`,
+        children: [
+          (0, E.jsx)(`span`, {
+            className: `text-sm text-muted-foreground`,
+            children: `Status`,
+          }),
+          (0, E.jsxs)(d, {
+            value: t,
+            onValueChange: r,
+            children: [
+              (0, E.jsx)(m, { className: `w-64`, children: (0, E.jsx)(p, {}) }),
+              (0, E.jsxs)(v, {
+                children: [
+                  (0, E.jsx)(g, { value: `all`, children: `All statuses` }),
+                  s.map((e) => (0, E.jsx)(g, { value: e, children: e }, e)),
+                ],
+              }),
+            ],
+          }),
+        ],
+      }),
+      D.length === 0
+        ? (0, E.jsx)(u, {
+            title: `No applications with this status`,
+            action: (0, E.jsx)(n, {
+              variant: `outline`,
+              onClick: () => r(`all`),
+              children: `Show all`,
+            }),
+          })
+        : (0, E.jsx)(`div`, {
+            className: `overflow-x-auto rounded-lg border bg-card`,
+            children: (0, E.jsxs)(w, {
+              children: [
+                (0, E.jsx)(y, {
+                  children: (0, E.jsxs)(S, {
+                    children: [
+                      (0, E.jsx)(b, { children: `Application ID` }),
+                      (0, E.jsx)(b, { children: `Scheme` }),
+                      (0, E.jsx)(b, { children: `Applicant` }),
+                      (0, E.jsx)(b, { children: `Applied` }),
+                      (0, E.jsx)(b, { children: `Current Stage` }),
+                      (0, E.jsx)(b, { children: `Last Updated` }),
+                      (0, E.jsx)(b, {
+                        className: `text-right`,
+                        children: `Action`,
+                      }),
+                    ],
+                  }),
+                }),
+                (0, E.jsx)(x, {
+                  children: D.map((e) =>
+                    (0, E.jsxs)(
+                      S,
+                      {
+                        children: [
+                          (0, E.jsx)(C, {
+                            className: `font-mono text-xs`,
+                            children: e.id,
+                          }),
+                          (0, E.jsx)(C, {
+                            className: `min-w-48`,
+                            children: l(e.schemeId)?.name,
+                          }),
+                          (0, E.jsx)(C, { children: e.applicant }),
+                          (0, E.jsx)(C, { children: c(e.appliedOn) }),
+                          (0, E.jsx)(C, {
+                            children: (0, E.jsx)(h, { s: e.status }),
+                          }),
+                          (0, E.jsx)(C, { children: c(e.updatedOn) }),
+                          (0, E.jsxs)(C, {
+                            className: `whitespace-nowrap text-right`,
+                            children: [
+                              (0, E.jsx)(n, {
+                                size: `sm`,
+                                variant: `outline`,
+                                asChild: !0,
+                                children: (0, E.jsx)(i, {
+                                  to: `/citizen/applications/$id`,
+                                  params: { id: e.id },
+                                  children:
+                                    e.status === `Draft`
+                                      ? `Continue`
+                                      : `View Details`,
+                                }),
+                              }),
+                              e.status !== `Draft` &&
+                                (0, E.jsx)(n, {
+                                  size: `icon`,
+                                  variant: `ghost`,
+                                  "aria-label": `Download acknowledgement`,
+                                  onClick: () =>
+                                    f(e, l(e.schemeId)?.name ?? ``),
+                                  children: (0, E.jsx)(a, {
+                                    className: `h-4 w-4`,
+                                  }),
+                                }),
+                            ],
+                          }),
+                        ],
+                      },
+                      e.id,
+                    ),
+                  ),
+                }),
+              ],
+            }),
+          }),
+    ],
+  });
+}
+export { D as component };

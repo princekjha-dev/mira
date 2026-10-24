@@ -22,7 +22,11 @@ export const Route = createFileRoute("/verifier/queue")({
   head: () => ({
     meta: [
       { title: "Verification Queue — Verifier Workstation" },
-      { name: "description", content: "High-density queue of welfare applications awaiting verification." },
+      {
+        name: "description",
+        content:
+          "High-density queue of welfare applications awaiting verification.",
+      },
     ],
   }),
   component: VerifierQueuePage,
@@ -46,7 +50,10 @@ function VerifierQueuePage() {
 
       const matchesStatus =
         statusFilter === "all" ||
-        (statusFilter === "pending" && (a.status === "Documents Under Review" || a.status === "Verification Required" || a.status === "Officer Review")) ||
+        (statusFilter === "pending" &&
+          (a.status === "Documents Under Review" ||
+            a.status === "Verification Required" ||
+            a.status === "Officer Review")) ||
         a.status === statusFilter;
 
       const matchesMismatch = !mismatchOnly || !!a.mismatch;
@@ -60,7 +67,10 @@ function VerifierQueuePage() {
       <PageHeader
         title="Verification Determination Queue"
         desc="Interactive triage table. Review applicant records, registry mismatches, and submit statutory findings."
-        crumbs={[{ label: "Verifier", to: "/verifier/dashboard" }, { label: "Queue" }]}
+        crumbs={[
+          { label: "Verifier", to: "/verifier/dashboard" },
+          { label: "Queue" },
+        ]}
       />
 
       {/* Control Bar */}
@@ -132,13 +142,20 @@ function VerifierQueuePage() {
               </thead>
               <tbody className="divide-y divide-border">
                 {filtered.map((a) => (
-                  <tr key={a.id} className="hover:bg-muted/30 transition-colors">
+                  <tr
+                    key={a.id}
+                    className="hover:bg-muted/30 transition-colors"
+                  >
                     <td className="p-3.5 pl-4 font-mono font-semibold text-primary">
                       {a.id}
                     </td>
                     <td className="p-3.5">
-                      <div className="font-medium text-foreground">{a.applicant}</div>
-                      <div className="text-[11px] text-muted-foreground">{a.householdId}</div>
+                      <div className="font-medium text-foreground">
+                        {a.applicant}
+                      </div>
+                      <div className="text-[11px] text-muted-foreground">
+                        {a.householdId}
+                      </div>
                     </td>
                     <td className="p-3.5 max-w-[200px] truncate text-foreground">
                       {getScheme(a.schemeId)?.name || "Welfare Assistance"}
@@ -146,27 +163,39 @@ function VerifierQueuePage() {
                     <td className="p-3.5">
                       <div className="flex items-center gap-1.5">
                         <StatusBadge s={a.status} />
-                        <span className="text-[10px] text-muted-foreground">Stage {a.stage}/6</span>
+                        <span className="text-[10px] text-muted-foreground">
+                          Stage {a.stage}/6
+                        </span>
                       </div>
                     </td>
                     <td className="p-3.5">
                       {a.mismatch ? (
-                        <Badge variant="outline" className="border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px]">
+                        <Badge
+                          variant="outline"
+                          className="border-amber-400 bg-amber-500/10 text-amber-700 dark:text-amber-300 text-[10px]"
+                        >
                           Mismatch: {a.mismatch.field}
                         </Badge>
                       ) : a.duplicate ? (
-                        <Badge variant="outline" className="border-blue-400 bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[10px]">
+                        <Badge
+                          variant="outline"
+                          className="border-blue-400 bg-blue-500/10 text-blue-700 dark:text-blue-300 text-[10px]"
+                        >
                           Overlap Signal
                         </Badge>
                       ) : (
                         <span className="text-[11px] text-muted-foreground flex items-center gap-1">
-                          <CheckCircle2 className="h-3 w-3 text-teal-600" /> Consistent
+                          <CheckCircle2 className="h-3 w-3 text-teal-600" />{" "}
+                          Consistent
                         </span>
                       )}
                     </td>
                     <td className="p-3.5 pr-4 text-right">
                       <Button size="sm" asChild className="h-7 text-xs">
-                        <Link to="/verifier/applications/$id" params={{ id: a.id }}>
+                        <Link
+                          to="/verifier/applications/$id"
+                          params={{ id: a.id }}
+                        >
                           Inspect <ArrowRight className="ml-1 h-3 w-3" />
                         </Link>
                       </Button>

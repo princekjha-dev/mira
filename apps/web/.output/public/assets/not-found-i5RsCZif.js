@@ -1,1 +1,8 @@
-function e(e={}){if(e.isNotFound=!0,e.throw)throw e;return e}function t(e){return e?.isNotFound===!0}export{e as n,t};
+function e(e = {}) {
+  if (((e.isNotFound = !0), e.throw)) throw e;
+  return e;
+}
+function t(e) {
+  return e?.isNotFound === !0;
+}
+export { e as n, t };

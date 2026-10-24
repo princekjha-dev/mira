@@ -18,7 +18,7 @@ export function MessageRow({
 }: MessageRowProps) {
   const isUnread = thread.status === "unread";
   const hasAttachments = thread.messages.some(
-    (m) => m.attachments && m.attachments.length > 0
+    (m) => m.attachments && m.attachments.length > 0,
   );
 
   const getRoleBadge = (roleStr: string) => {
@@ -57,7 +57,7 @@ export function MessageRow({
         "group relative w-full text-left px-3.5 py-3 transition-colors duration-150 cursor-pointer border-b border-slate-100 dark:border-slate-800/80 outline-none select-none",
         isSelected
           ? "bg-slate-100/80 dark:bg-slate-800/70"
-          : "hover:bg-slate-50/70 dark:hover:bg-slate-850/50 bg-transparent"
+          : "hover:bg-slate-50/70 dark:hover:bg-slate-850/50 bg-transparent",
       )}
     >
       {/* Active Accent Indicator Bar on Left */}
@@ -73,7 +73,7 @@ export function MessageRow({
               "h-2 w-2 rounded-full shrink-0 transition-opacity",
               isUnread
                 ? "bg-gov shadow-2xs shadow-gov/50 opacity-100"
-                : "opacity-0"
+                : "opacity-0",
             )}
             title={isUnread ? "Unread message" : undefined}
           />
@@ -88,7 +88,7 @@ export function MessageRow({
               "truncate text-xs",
               isUnread
                 ? "font-bold text-slate-950 dark:text-white"
-                : "font-medium text-slate-700 dark:text-slate-300"
+                : "font-medium text-slate-700 dark:text-slate-300",
             )}
           >
             {thread.sender.name}
@@ -97,7 +97,7 @@ export function MessageRow({
           <span
             className={cn(
               "rounded px-1 py-0.2 text-[9px] font-mono uppercase font-medium border shrink-0 hidden sm:inline",
-              getRoleBadge(thread.sender.role)
+              getRoleBadge(thread.sender.role),
             )}
           >
             {thread.sender.role}
@@ -110,7 +110,7 @@ export function MessageRow({
             "text-[11px] font-mono tabular-nums shrink-0 ml-1",
             isUnread
               ? "font-semibold text-gov dark:text-gov/90"
-              : "text-muted-foreground"
+              : "text-muted-foreground",
           )}
         >
           {formatMailDate(thread.timestamp)}
@@ -124,7 +124,7 @@ export function MessageRow({
             "truncate text-xs leading-snug",
             isUnread
               ? "font-semibold text-slate-900 dark:text-slate-100"
-              : "font-normal text-slate-700 dark:text-slate-300"
+              : "font-normal text-slate-700 dark:text-slate-300",
           )}
         >
           {thread.subject}
@@ -163,7 +163,7 @@ export function MessageRow({
                   "h-3.5 w-3.5 transition-colors",
                   thread.isStarred
                     ? "fill-amber-400 text-amber-500"
-                    : "text-slate-300 dark:text-slate-600 hover:text-amber-500"
+                    : "text-slate-300 dark:text-slate-600 hover:text-amber-500",
                 )}
               />
             </button>

@@ -163,10 +163,7 @@ function Help() {
         title="How can we help?"
         desc="Find answers, understand your applications, or get help with Mira services."
       />
-      <MiraCard
-        variant="elevated"
-        className="mb-7 p-4 sm:p-5"
-      >
+      <MiraCard variant="elevated" className="mb-7 p-4 sm:p-5">
         <form onSubmit={searchHelp} role="search">
           <label
             htmlFor="help-search"

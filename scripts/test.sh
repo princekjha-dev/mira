@@ -7,9 +7,8 @@ echo "=========================================================="
 
 # 1. Backend tests
 echo ""
-echo "--> [1/2] Running Rust Backend Integration & Security Tests (V1 + V2 + V3)..."
 cd apps/api
-DATABASE_URL="postgres://postgres@127.0.0.1:5433/mira_test" cargo test -- --nocapture
+DATABASE_URL="${DATABASE_URL:-postgres://postgres:postgrespassword@127.0.0.1:5433/mira_test}" cargo test -- --nocapture
 cd ../..
 
 # 2. Frontend tests

@@ -1,1 +1,160 @@
-import{f as e,l as t,t as n,u as r}from"./button-KmRTh43o.js";import{t as i}from"./link-gIn96cdo.js";import{D as a,Mt as o,Pn as s,U as c,Zt as l,j as u,mn as d}from"./index-B8Y-_llO.js";import{n as f,t as p}from"./card-DNkZ-jvk.js";var m=e(r()),h=t();function g(){let{state:e}=d(),[t,r]=(0,m.useState)(``),g=e.applications.filter(e=>{let n=t.trim().toLowerCase(),r=s(e.schemeId)?.name||``;return!n||e.id.toLowerCase().includes(n)||e.applicant.toLowerCase().includes(n)||e.householdId.toLowerCase().includes(n)||r.toLowerCase().includes(n)});return(0,h.jsxs)(`div`,{className:`space-y-6`,children:[(0,h.jsx)(a,{title:`Application Records Audit Inspection`,desc:`Examine complete application data trails, stage transitions, and verification evidence without write locks.`,crumbs:[{label:`Auditor`,to:`/auditor/dashboard`},{label:`Applications`}]}),(0,h.jsx)(`div`,{className:`flex items-center max-w-md`,children:(0,h.jsx)(c,{value:t,onChange:e=>r(e.target.value),placeholder:`Filter by application, citizen, or household ID…`,className:`text-xs`})}),(0,h.jsx)(p,{className:`border-border/80 shadow-xs overflow-hidden`,children:(0,h.jsx)(f,{className:`p-0`,children:(0,h.jsxs)(`table`,{className:`w-full text-left text-xs`,children:[(0,h.jsx)(`thead`,{className:`border-b bg-muted/40 font-medium text-muted-foreground`,children:(0,h.jsxs)(`tr`,{children:[(0,h.jsx)(`th`,{className:`p-3.5 pl-4`,children:`Application ID`}),(0,h.jsx)(`th`,{className:`p-3.5`,children:`Applicant & Household`}),(0,h.jsx)(`th`,{className:`p-3.5`,children:`Scheme`}),(0,h.jsx)(`th`,{className:`p-3.5`,children:`Status`}),(0,h.jsx)(`th`,{className:`p-3.5`,children:`Audit Integrity`}),(0,h.jsx)(`th`,{className:`p-3.5 pr-4 text-right`,children:`Inspection`})]})}),(0,h.jsx)(`tbody`,{className:`divide-y divide-border`,children:g.map(e=>(0,h.jsxs)(`tr`,{className:`hover:bg-muted/30 transition-colors`,children:[(0,h.jsx)(`td`,{className:`p-3.5 pl-4 font-mono font-semibold text-primary`,children:e.id}),(0,h.jsxs)(`td`,{className:`p-3.5`,children:[(0,h.jsx)(`div`,{className:`font-medium`,children:e.applicant}),(0,h.jsx)(`div`,{className:`text-[11px] text-muted-foreground`,children:e.householdId})]}),(0,h.jsx)(`td`,{className:`p-3.5 text-muted-foreground`,children:s(e.schemeId)?.name||`Welfare Assistance`}),(0,h.jsx)(`td`,{className:`p-3.5`,children:(0,h.jsx)(u,{s:e.status})}),(0,h.jsx)(`td`,{className:`p-3.5`,children:(0,h.jsxs)(`span`,{className:`flex items-center gap-1 text-teal-600 font-medium text-[11px]`,children:[(0,h.jsx)(o,{className:`h-3 w-3`}),` Sealed SHA-256`]})}),(0,h.jsx)(`td`,{className:`p-3.5 pr-4 text-right`,children:(0,h.jsx)(n,{size:`sm`,variant:`outline`,asChild:!0,className:`h-7 text-xs`,children:(0,h.jsxs)(i,{to:`/officer/applications/$id`,params:{id:e.id},children:[(0,h.jsx)(l,{className:`mr-1 h-3 w-3`}),` View Provenance`]})})})]},e.id))})]})})})]})}export{g as component};
+import { f as e, l as t, t as n, u as r } from "./button-KmRTh43o.js";
+import { t as i } from "./link-gIn96cdo.js";
+import {
+  D as a,
+  Mt as o,
+  Pn as s,
+  U as c,
+  Zt as l,
+  j as u,
+  mn as d,
+} from "./index-B8Y-_llO.js";
+import { n as f, t as p } from "./card-DNkZ-jvk.js";
+var m = e(r()),
+  h = t();
+function g() {
+  let { state: e } = d(),
+    [t, r] = (0, m.useState)(``),
+    g = e.applications.filter((e) => {
+      let n = t.trim().toLowerCase(),
+        r = s(e.schemeId)?.name || ``;
+      return (
+        !n ||
+        e.id.toLowerCase().includes(n) ||
+        e.applicant.toLowerCase().includes(n) ||
+        e.householdId.toLowerCase().includes(n) ||
+        r.toLowerCase().includes(n)
+      );
+    });
+  return (0, h.jsxs)(`div`, {
+    className: `space-y-6`,
+    children: [
+      (0, h.jsx)(a, {
+        title: `Application Records Audit Inspection`,
+        desc: `Examine complete application data trails, stage transitions, and verification evidence without write locks.`,
+        crumbs: [
+          { label: `Auditor`, to: `/auditor/dashboard` },
+          { label: `Applications` },
+        ],
+      }),
+      (0, h.jsx)(`div`, {
+        className: `flex items-center max-w-md`,
+        children: (0, h.jsx)(c, {
+          value: t,
+          onChange: (e) => r(e.target.value),
+          placeholder: `Filter by application, citizen, or household ID…`,
+          className: `text-xs`,
+        }),
+      }),
+      (0, h.jsx)(p, {
+        className: `border-border/80 shadow-xs overflow-hidden`,
+        children: (0, h.jsx)(f, {
+          className: `p-0`,
+          children: (0, h.jsxs)(`table`, {
+            className: `w-full text-left text-xs`,
+            children: [
+              (0, h.jsx)(`thead`, {
+                className: `border-b bg-muted/40 font-medium text-muted-foreground`,
+                children: (0, h.jsxs)(`tr`, {
+                  children: [
+                    (0, h.jsx)(`th`, {
+                      className: `p-3.5 pl-4`,
+                      children: `Application ID`,
+                    }),
+                    (0, h.jsx)(`th`, {
+                      className: `p-3.5`,
+                      children: `Applicant & Household`,
+                    }),
+                    (0, h.jsx)(`th`, {
+                      className: `p-3.5`,
+                      children: `Scheme`,
+                    }),
+                    (0, h.jsx)(`th`, {
+                      className: `p-3.5`,
+                      children: `Status`,
+                    }),
+                    (0, h.jsx)(`th`, {
+                      className: `p-3.5`,
+                      children: `Audit Integrity`,
+                    }),
+                    (0, h.jsx)(`th`, {
+                      className: `p-3.5 pr-4 text-right`,
+                      children: `Inspection`,
+                    }),
+                  ],
+                }),
+              }),
+              (0, h.jsx)(`tbody`, {
+                className: `divide-y divide-border`,
+                children: g.map((e) =>
+                  (0, h.jsxs)(
+                    `tr`,
+                    {
+                      className: `hover:bg-muted/30 transition-colors`,
+                      children: [
+                        (0, h.jsx)(`td`, {
+                          className: `p-3.5 pl-4 font-mono font-semibold text-primary`,
+                          children: e.id,
+                        }),
+                        (0, h.jsxs)(`td`, {
+                          className: `p-3.5`,
+                          children: [
+                            (0, h.jsx)(`div`, {
+                              className: `font-medium`,
+                              children: e.applicant,
+                            }),
+                            (0, h.jsx)(`div`, {
+                              className: `text-[11px] text-muted-foreground`,
+                              children: e.householdId,
+                            }),
+                          ],
+                        }),
+                        (0, h.jsx)(`td`, {
+                          className: `p-3.5 text-muted-foreground`,
+                          children: s(e.schemeId)?.name || `Welfare Assistance`,
+                        }),
+                        (0, h.jsx)(`td`, {
+                          className: `p-3.5`,
+                          children: (0, h.jsx)(u, { s: e.status }),
+                        }),
+                        (0, h.jsx)(`td`, {
+                          className: `p-3.5`,
+                          children: (0, h.jsxs)(`span`, {
+                            className: `flex items-center gap-1 text-teal-600 font-medium text-[11px]`,
+                            children: [
+                              (0, h.jsx)(o, { className: `h-3 w-3` }),
+                              ` Sealed SHA-256`,
+                            ],
+                          }),
+                        }),
+                        (0, h.jsx)(`td`, {
+                          className: `p-3.5 pr-4 text-right`,
+                          children: (0, h.jsx)(n, {
+                            size: `sm`,
+                            variant: `outline`,
+                            asChild: !0,
+                            className: `h-7 text-xs`,
+                            children: (0, h.jsxs)(i, {
+                              to: `/officer/applications/$id`,
+                              params: { id: e.id },
+                              children: [
+                                (0, h.jsx)(l, { className: `mr-1 h-3 w-3` }),
+                                ` View Provenance`,
+                              ],
+                            }),
+                          }),
+                        }),
+                      ],
+                    },
+                    e.id,
+                  ),
+                ),
+              }),
+            ],
+          }),
+        }),
+      }),
+    ],
+  });
+}
+export { g as component };

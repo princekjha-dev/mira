@@ -18,7 +18,11 @@ export const Route = createFileRoute("/department/settings")({
   head: () => ({
     meta: [
       { title: "System Configuration — Department Administration" },
-      { name: "description", content: "Department-wide governance, SLA thresholds, cross-registry synchronization, and cryptographic ledger parameters." },
+      {
+        name: "description",
+        content:
+          "Department-wide governance, SLA thresholds, cross-registry synchronization, and cryptographic ledger parameters.",
+      },
     ],
   }),
   component: DeptSettingsPage,
@@ -42,7 +46,8 @@ function DeptSettingsPage() {
           System Configuration
         </h1>
         <p className="text-xs text-muted-foreground leading-normal max-w-3xl">
-          Department-wide policy parameters, cryptographic ledger anchors, and statewide cross-registry synchronization.
+          Department-wide policy parameters, cryptographic ledger anchors, and
+          statewide cross-registry synchronization.
         </p>
       </div>
 
@@ -110,7 +115,11 @@ function DeptSettingsPage() {
           icon={Lock}
           title="Cryptographic Hardware Key Rotations"
           description="Automated 90-day HSM token lifecycle enforcement across all verification cells"
-          value={<span className="font-mono text-xs text-emerald-600 font-semibold">Active · 90-Day Policy</span>}
+          value={
+            <span className="font-mono text-xs text-emerald-600 font-semibold">
+              Active · 90-Day Policy
+            </span>
+          }
           isLast
         />
       </ProfileSection>

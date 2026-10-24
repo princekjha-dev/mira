@@ -1,4 +1,10 @@
-import React, { useState, useMemo, useRef, useEffect, useCallback } from "react";
+import React, {
+  useState,
+  useMemo,
+  useRef,
+  useEffect,
+  useCallback,
+} from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
   Users,
@@ -133,7 +139,11 @@ export function Family360({
   // Fetch Detailed 360 data when a person is selected
   const { data: person360Data, isLoading: isLoading360 } =
     useQuery<ApiPerson360Data>({
-      queryKey: ["person-360-details", selectedPersonId, state.session?.apiUserId],
+      queryKey: [
+        "person-360-details",
+        selectedPersonId,
+        state.session?.apiUserId,
+      ],
       queryFn: () => fetchPerson360(state.session, selectedPersonId!),
       enabled: !!selectedPersonId && !!state.session,
       staleTime: 1000 * 30,
@@ -188,10 +198,18 @@ export function Family360({
     });
 
     // Group members by generation
-    const g1 = assigned.filter((m) => m.gen === 1).sort((a, b) => a.birthYear - b.birthYear);
-    const g2 = assigned.filter((m) => m.gen === 2).sort((a, b) => a.birthYear - b.birthYear);
-    const g3 = assigned.filter((m) => m.gen === 3).sort((a, b) => a.birthYear - b.birthYear);
-    const g4 = assigned.filter((m) => m.gen === 4).sort((a, b) => a.birthYear - b.birthYear);
+    const g1 = assigned
+      .filter((m) => m.gen === 1)
+      .sort((a, b) => a.birthYear - b.birthYear);
+    const g2 = assigned
+      .filter((m) => m.gen === 2)
+      .sort((a, b) => a.birthYear - b.birthYear);
+    const g3 = assigned
+      .filter((m) => m.gen === 3)
+      .sort((a, b) => a.birthYear - b.birthYear);
+    const g4 = assigned
+      .filter((m) => m.gen === 4)
+      .sort((a, b) => a.birthYear - b.birthYear);
 
     const NODE_WIDTH = 210;
     const NODE_GAP_X = 26;
@@ -246,7 +264,8 @@ export function Family360({
       }
       if (roleFilter !== "ALL") {
         if (roleFilter === "HEAD" && m.relationship !== "HEAD") return false;
-        if (roleFilter === "SPOUSE" && m.relationship !== "SPOUSE") return false;
+        if (roleFilter === "SPOUSE" && m.relationship !== "SPOUSE")
+          return false;
         if (roleFilter === "CHILD" && m.relationship !== "CHILD") return false;
         if (
           roleFilter === "DEPENDENT" &&
@@ -270,7 +289,13 @@ export function Family360({
       }
       return true;
     });
-  }, [positionedMembers, generationFilter, roleFilter, verificationFilter, searchQuery]);
+  }, [
+    positionedMembers,
+    generationFilter,
+    roleFilter,
+    verificationFilter,
+    searchQuery,
+  ]);
 
   const visibleIdSet = useMemo(() => {
     const s = new Set<string>();
@@ -338,11 +363,13 @@ export function Family360({
       adj.get(b)!.push({ to: a, rel: `Related to (${r.relationship_type})` });
     });
 
-    const queue: Array<{ curr: string; path: Array<{ from: string; to: string; rel: string }> }> = [
-      { curr: pathFromId, path: [] },
-    ];
+    const queue: Array<{
+      curr: string;
+      path: Array<{ from: string; to: string; rel: string }>;
+    }> = [{ curr: pathFromId, path: [] }];
     const visited = new Set<string>([pathFromId]);
-    let foundPath: Array<{ from: string; to: string; rel: string }> | null = null;
+    let foundPath: Array<{ from: string; to: string; rel: string }> | null =
+      null;
 
     while (queue.length > 0) {
       const { curr, path } = queue.shift()!;
@@ -364,18 +391,22 @@ export function Family360({
 
     if (foundPath && foundPath.length > 0) {
       setComputedPath(foundPath);
-      toast.success(`Relationship path identified (${foundPath.length} step${foundPath.length > 1 ? "s" : ""})`);
+      toast.success(
+        `Relationship path identified (${foundPath.length} step${foundPath.length > 1 ? "s" : ""})`,
+      );
     } else {
       setComputedPath(null);
-      toast.warning("No direct verified relationship path found in the registry.");
+      toast.warning(
+        "No direct verified relationship path found in the registry.",
+      );
     }
   };
 
   // Computed Household Summary Metrics
   const summaryMetrics = useMemo(() => {
     const total = positionedMembers.length;
-    const verified = positionedMembers.filter(
-      (m) => (m.identity || "").toLowerCase().includes("verif"),
+    const verified = positionedMembers.filter((m) =>
+      (m.identity || "").toLowerCase().includes("verif"),
     ).length;
     const pending = total - verified;
     return {
@@ -410,7 +441,9 @@ export function Family360({
           Failed to load Family360 Record
         </h3>
         <p className="mt-1 text-xs text-red-700 dark:text-red-400 max-w-md">
-          {error instanceof Error ? error.message : "Access restricted or household registry unavailable."}
+          {error instanceof Error
+            ? error.message
+            : "Access restricted or household registry unavailable."}
         </p>
         <Button
           variant="outline"
@@ -527,19 +560,26 @@ export function Family360({
           </div>
 
           {/* Generation Filter */}
-          <Select
-            value={generationFilter}
-            onValueChange={setGenerationFilter}
-          >
+          <Select value={generationFilter} onValueChange={setGenerationFilter}>
             <SelectTrigger className="h-8 w-36 text-xs bg-white dark:bg-slate-950">
               <SelectValue placeholder="Generation" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="ALL">All Generations ({summaryMetrics.total})</SelectItem>
-              <SelectItem value="1">G1 • Elders ({generationCounts.g1})</SelectItem>
-              <SelectItem value="2">G2 • Parents ({generationCounts.g2})</SelectItem>
-              <SelectItem value="3">G3 • Youth ({generationCounts.g3})</SelectItem>
-              <SelectItem value="4">G4 • Infants ({generationCounts.g4})</SelectItem>
+              <SelectItem value="ALL">
+                All Generations ({summaryMetrics.total})
+              </SelectItem>
+              <SelectItem value="1">
+                G1 • Elders ({generationCounts.g1})
+              </SelectItem>
+              <SelectItem value="2">
+                G2 • Parents ({generationCounts.g2})
+              </SelectItem>
+              <SelectItem value="3">
+                G3 • Youth ({generationCounts.g3})
+              </SelectItem>
+              <SelectItem value="4">
+                G4 • Infants ({generationCounts.g4})
+              </SelectItem>
             </SelectContent>
           </Select>
 
@@ -627,7 +667,8 @@ export function Family360({
                 Statutory Relationship Traversal
               </span>
               <span className="text-[11px] text-amber-700/80 dark:text-amber-400/80">
-                Compute verified civil relationship chain between any two household members
+                Compute verified civil relationship chain between any two
+                household members
               </span>
             </div>
 
@@ -737,23 +778,83 @@ export function Family360({
 
           {/* Generation Background Tier Bands */}
           <g className="generation-bands opacity-50">
-            <rect x="20" y="50" width="2700" height="150" rx="12" fill="#f8fafc" className="dark:fill-slate-900/40" />
-            <text x="40" y="75" fill="#64748b" fontSize="12" fontWeight="700" fontFamily="monospace">
+            <rect
+              x="20"
+              y="50"
+              width="2700"
+              height="150"
+              rx="12"
+              fill="#f8fafc"
+              className="dark:fill-slate-900/40"
+            />
+            <text
+              x="40"
+              y="75"
+              fill="#64748b"
+              fontSize="12"
+              fontWeight="700"
+              fontFamily="monospace"
+            >
               TIER 1 • ELDERS & ANCESTORS (G1)
             </text>
 
-            <rect x="20" y="230" width="2700" height="150" rx="12" fill="#f1f5f9" className="dark:fill-slate-900/60" />
-            <text x="40" y="255" fill="#0284c7" fontSize="12" fontWeight="700" fontFamily="monospace">
+            <rect
+              x="20"
+              y="230"
+              width="2700"
+              height="150"
+              rx="12"
+              fill="#f1f5f9"
+              className="dark:fill-slate-900/60"
+            />
+            <text
+              x="40"
+              y="255"
+              fill="#0284c7"
+              fontSize="12"
+              fontWeight="700"
+              fontFamily="monospace"
+            >
               TIER 2 • HOUSEHOLD HEADS & PARENTS (G2)
             </text>
 
-            <rect x="20" y="410" width="2700" height="150" rx="12" fill="#f8fafc" className="dark:fill-slate-900/40" />
-            <text x="40" y="435" fill="#0d9488" fontSize="12" fontWeight="700" fontFamily="monospace">
+            <rect
+              x="20"
+              y="410"
+              width="2700"
+              height="150"
+              rx="12"
+              fill="#f8fafc"
+              className="dark:fill-slate-900/40"
+            />
+            <text
+              x="40"
+              y="435"
+              fill="#0d9488"
+              fontSize="12"
+              fontWeight="700"
+              fontFamily="monospace"
+            >
               TIER 3 • CHILDREN & STUDENTS (G3)
             </text>
 
-            <rect x="20" y="590" width="2700" height="150" rx="12" fill="#f1f5f9" className="dark:fill-slate-900/60" />
-            <text x="40" y="615" fill="#8b5cf6" fontSize="12" fontWeight="700" fontFamily="monospace">
+            <rect
+              x="20"
+              y="590"
+              width="2700"
+              height="150"
+              rx="12"
+              fill="#f1f5f9"
+              className="dark:fill-slate-900/60"
+            />
+            <text
+              x="40"
+              y="615"
+              fill="#8b5cf6"
+              fontSize="12"
+              fontWeight="700"
+              fontFamily="monospace"
+            >
               TIER 4 • INFANTS & YOUNG DEPENDENTS (G4)
             </text>
           </g>
@@ -792,7 +893,9 @@ export function Family360({
                     fill="none"
                     stroke={isHighlighted ? "url(#edgeActive)" : "#cbd5e1"}
                     strokeWidth={isHighlighted ? 3 : 1.5}
-                    strokeDasharray={rel.relationship_type === "SPOUSE" ? "4 4" : undefined}
+                    strokeDasharray={
+                      rel.relationship_type === "SPOUSE" ? "4 4" : undefined
+                    }
                     className="transition-all duration-200"
                   />
                   {isHighlighted && (
@@ -834,7 +937,9 @@ export function Family360({
               selectedPersonId === member.person_id;
 
             const isHead = member.relationship === "HEAD";
-            const isVerified = (member.identity || "").toLowerCase().includes("verif");
+            const isVerified = (member.identity || "")
+              .toLowerCase()
+              .includes("verif");
 
             return (
               <div
@@ -857,7 +962,8 @@ export function Family360({
                     ? "border-gov/60 bg-gov/[0.03] ring-1 ring-gov/20 dark:border-gov/80"
                     : "border-slate-200/90 dark:border-slate-800",
                   isHovered && "shadow-md scale-[1.03] border-blue-500 z-30",
-                  isSelected && "ring-2 ring-blue-600 border-blue-600 shadow-md z-40",
+                  isSelected &&
+                    "ring-2 ring-blue-600 border-blue-600 shadow-md z-40",
                 )}
               >
                 {/* Member Card Header */}
@@ -967,10 +1073,15 @@ export function Family360({
                         </Badge>
                       </div>
                       <p className="font-mono text-xs text-muted-foreground mt-0.5">
-                        {person360Data.person.public_id} · {person360Data.person.membership_role}
+                        {person360Data.person.public_id} ·{" "}
+                        {person360Data.person.membership_role}
                       </p>
                       <p className="text-xs text-slate-600 dark:text-slate-400 mt-1">
-                        Aadhaar: <span className="font-mono">{person360Data.person.masked_id}</span> · Age {person360Data.person.age}
+                        Aadhaar:{" "}
+                        <span className="font-mono">
+                          {person360Data.person.masked_id}
+                        </span>{" "}
+                        · Age {person360Data.person.age}
                       </p>
                     </div>
                   </div>
@@ -1006,13 +1117,17 @@ export function Family360({
                         <div>
                           <dt className="text-muted-foreground">Full Name</dt>
                           <dd className="font-medium text-slate-900 dark:text-slate-100 mt-0.5">
-                            {person360Data.person.first_name} {person360Data.person.last_name}
+                            {person360Data.person.first_name}{" "}
+                            {person360Data.person.last_name}
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-muted-foreground">Date of Birth</dt>
+                          <dt className="text-muted-foreground">
+                            Date of Birth
+                          </dt>
                           <dd className="font-medium text-slate-900 dark:text-slate-100 mt-0.5">
-                            {person360Data.person.dob} ({person360Data.person.age} years)
+                            {person360Data.person.dob} (
+                            {person360Data.person.age} years)
                           </dd>
                         </div>
                         <div>
@@ -1022,7 +1137,9 @@ export function Family360({
                           </dd>
                         </div>
                         <div>
-                          <dt className="text-muted-foreground">Household ID</dt>
+                          <dt className="text-muted-foreground">
+                            Household ID
+                          </dt>
                           <dd className="font-mono font-medium text-gov mt-0.5">
                             {person360Data.person.household_public_id}
                           </dd>
@@ -1061,7 +1178,8 @@ export function Family360({
                                 {rel.related_person_name}
                               </p>
                               <p className="font-mono text-[11px] text-muted-foreground">
-                                {rel.related_person_public_id} · {rel.relationship_type}
+                                {rel.related_person_public_id} ·{" "}
+                                {rel.relationship_type}
                               </p>
                             </div>
                             <div className="flex items-center gap-2">
@@ -1075,7 +1193,11 @@ export function Family360({
                                 variant="ghost"
                                 size="sm"
                                 className="h-7 text-xs"
-                                onClick={() => handleSelectMember(rel.related_person_public_id)}
+                                onClick={() =>
+                                  handleSelectMember(
+                                    rel.related_person_public_id,
+                                  )
+                                }
                               >
                                 Inspect
                               </Button>
@@ -1162,7 +1284,9 @@ export function Family360({
                             {/* Plain-Language Explainable Reason */}
                             <div className="mt-2.5 rounded-lg bg-slate-50 p-2.5 border border-slate-100 dark:bg-slate-800/60 dark:border-slate-800 text-[11px] text-slate-700 dark:text-slate-300">
                               <p className="font-medium">
-                                <span className="font-bold text-gov">Determination: </span>
+                                <span className="font-bold text-gov">
+                                  Determination:{" "}
+                                </span>
                                 {sch.explanation}
                               </p>
                             </div>
@@ -1242,7 +1366,8 @@ export function Family360({
             </div>
           ) : (
             <div className="flex h-full items-center justify-center p-8 text-center text-xs text-muted-foreground">
-              Select an individual on the Family360 graph to view complete profile and evidence.
+              Select an individual on the Family360 graph to view complete
+              profile and evidence.
             </div>
           )}
         </SheetContent>

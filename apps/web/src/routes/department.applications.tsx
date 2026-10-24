@@ -12,7 +12,10 @@ export const Route = createFileRoute("/department/applications")({
   head: () => ({
     meta: [
       { title: "Department Applications Console — Administrator" },
-      { name: "description", content: "Department-wide application oversight and triage." },
+      {
+        name: "description",
+        content: "Department-wide application oversight and triage.",
+      },
     ],
   }),
   component: DeptApplicationsPage,
@@ -39,7 +42,10 @@ function DeptApplicationsPage() {
       <PageHeader
         title="Department-Wide Applications Console"
         desc="Global lifecycle visibility across all schemes, districts, and officer queues."
-        crumbs={[{ label: "Department", to: "/department/dashboard" }, { label: "Applications" }]}
+        crumbs={[
+          { label: "Department", to: "/department/dashboard" },
+          { label: "Applications" },
+        ]}
       />
 
       <div className="flex items-center max-w-md">
@@ -67,19 +73,33 @@ function DeptApplicationsPage() {
             <tbody className="divide-y divide-border">
               {apps.map((a) => (
                 <tr key={a.id} className="hover:bg-muted/30 transition-colors">
-                  <td className="p-3.5 pl-4 font-mono font-semibold text-primary">{a.id}</td>
+                  <td className="p-3.5 pl-4 font-mono font-semibold text-primary">
+                    {a.id}
+                  </td>
                   <td className="p-3.5">
                     <div className="font-medium">{a.applicant}</div>
-                    <div className="text-[11px] text-muted-foreground">{a.householdId}</div>
+                    <div className="text-[11px] text-muted-foreground">
+                      {a.householdId}
+                    </div>
                   </td>
-                  <td className="p-3.5 text-muted-foreground">{getScheme(a.schemeId)?.name || "Welfare Assistance"}</td>
+                  <td className="p-3.5 text-muted-foreground">
+                    {getScheme(a.schemeId)?.name || "Welfare Assistance"}
+                  </td>
                   <td className="p-3.5">Stage {a.stage}/6</td>
                   <td className="p-3.5">
                     <StatusBadge s={a.status} />
                   </td>
                   <td className="p-3.5 pr-4 text-right">
-                    <Button size="sm" variant="outline" asChild className="h-7 text-xs">
-                      <Link to="/officer/applications/$id" params={{ id: a.id }}>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      asChild
+                      className="h-7 text-xs"
+                    >
+                      <Link
+                        to="/officer/applications/$id"
+                        params={{ id: a.id }}
+                      >
                         Inspect <ArrowRight className="ml-1 h-3 w-3" />
                       </Link>
                     </Button>

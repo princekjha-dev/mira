@@ -5,7 +5,11 @@ export const Route = createFileRoute("/citizen/inbox")({
   head: () => ({
     meta: [
       { title: "Communications — Citizen Portal" },
-      { name: "description", content: "Official messages, citizen clarifications, assignments and departmental correspondence." },
+      {
+        name: "description",
+        content:
+          "Official messages, citizen clarifications, assignments and departmental correspondence.",
+      },
     ],
   }),
   component: CitizenInboxPage,

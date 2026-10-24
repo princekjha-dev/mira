@@ -1,5 +1,5 @@
-use std::{net::SocketAddr, sync::Arc};
 use axum::middleware;
+use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 
 mod ai;

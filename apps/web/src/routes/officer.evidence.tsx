@@ -6,7 +6,11 @@ export const Route = createFileRoute("/officer/evidence")({
   head: () => ({
     meta: [
       { title: "Evidence & Document Vault — Officer Workspace" },
-      { name: "description", content: "Versioned document repository, citizen uploads, and geotagged field evidence." },
+      {
+        name: "description",
+        content:
+          "Versioned document repository, citizen uploads, and geotagged field evidence.",
+      },
     ],
   }),
   component: OfficerEvidencePage,
@@ -18,7 +22,10 @@ function OfficerEvidencePage() {
       <PageHeader
         title="Evidence & Document Vault"
         desc="Immutable document repository, field inspection geotagged photographs, and version histories."
-        crumbs={[{ label: "Officer", to: "/officer/dashboard" }, { label: "Evidence Vault" }]}
+        crumbs={[
+          { label: "Officer", to: "/officer/dashboard" },
+          { label: "Evidence Vault" },
+        ]}
       />
       <FilesExplorer />
     </div>

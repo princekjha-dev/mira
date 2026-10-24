@@ -1,4 +1,3 @@
-use std::sync::Arc;
 use argon2::{
     password_hash::{rand_core::OsRng, PasswordHash, PasswordHasher, PasswordVerifier, SaltString},
     Argon2,
@@ -11,13 +10,11 @@ use axum::{
 use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 use uuid::Uuid;
 
 use crate::{
-    config::AppConfig,
-    domain::RoleType,
-    errors::AppError,
-    infrastructure::REQUEST_ID_HEADER,
+    config::AppConfig, domain::RoleType, errors::AppError, infrastructure::REQUEST_ID_HEADER,
 };
 
 /// Password hashing utilities using Argon2id
@@ -162,9 +159,7 @@ where
             .headers
             .get(header::AUTHORIZATION)
             .and_then(|h| h.to_str().ok())
-            .ok_or_else(|| {
-                AppError::Unauthorized("Missing Authorization header".to_string())
-            })?;
+            .ok_or_else(|| AppError::Unauthorized("Missing Authorization header".to_string()))?;
 
         if !auth_header.starts_with("Bearer ") {
             return Err(AppError::Unauthorized(

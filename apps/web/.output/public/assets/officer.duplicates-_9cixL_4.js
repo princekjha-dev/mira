@@ -1,1 +1,382 @@
-import{f as e,l as t,r as n,t as r,u as i}from"./button-KmRTh43o.js";import{t as a}from"./link-gIn96cdo.js";import{$ as o,D as s,N as c,O as l,Q as u,Tt as d,X as f,Y as p,Z as m,et as h,k as g,mn as _,q as v}from"./index-B8Y-_llO.js";var y=e(i()),b=t();function x(){let{state:e,set:t,addAudit:i,updateApp:x}=_(),[S,C]=(0,y.useState)(e.alerts[0]?.id),[w,T]=(0,y.useState)(null),[E,D]=(0,y.useState)(``),O=e.alerts.find(e=>e.id===S),k=()=>{if(!(!O||!w)){if(E.trim().length<10){d.error(`Please add an explanation note of at least 10 characters`);return}t(e=>({alerts:e.alerts.map(e=>e.id===O.id?{...e,status:w}:e)})),i({actor:`${e.session?.name} (${e.session?.id})`,action:`Duplicate determination: ${w}`,application:O.appId,prev:O.status,next:w,reason:E}),(w===`Legitimate Overlap`||w===`Not Duplicate`)&&x(O.appId,{status:`Officer Review`,duplicate:!1,stage:4},`Human adjudication cleared alert (${w}): ${E}`,e.session?.name),w===`Evidence Requested`&&x(O.appId,{status:`Additional Evidence Required`},`Evidence requested on duplicate signal: ${E}`,e.session?.name),w===`Confirmed Duplicate`&&x(O.appId,{status:`Officer Review`},`Duplicate confirmed — pending final decision: ${E}`,e.session?.name),w===`Escalated`&&x(O.appId,{},`Duplicate alert escalated to supervisor: ${E}`,e.session?.name),d.success(`Determination recorded: ${w}`,{description:w===`Legitimate Overlap`?`Alert resolved. Legitimate family/scheme overlap recorded. Not treated as fraud.`:w===`Confirmed Duplicate`?`The application is not auto-rejected. Officer records decision on case file.`:`Recorded in audit trail.`}),T(null),D(``)}},A=e=>e.severity===`High`?`bad`:e.severity===`Medium`?`warn`:`neutral`;return(0,b.jsxs)(`div`,{children:[(0,b.jsx)(s,{title:`Duplicate Claim Detection (Human-in-the-Loop)`,desc:`Investigation signals flagged by entity resolution and benefit overlap rules. System never automatically rejects a citizen merely for potential duplicates — authorized officers make consequential adjudications.`}),(0,b.jsxs)(`div`,{className:`grid gap-6 lg:grid-cols-[320px_1fr]`,children:[(0,b.jsx)(`ul`,{className:`space-y-2`,children:e.alerts.map(e=>(0,b.jsx)(`li`,{children:(0,b.jsxs)(`button`,{onClick:()=>C(e.id),className:n(`w-full rounded-lg border bg-card p-3 text-left text-sm transition-all`,S===e.id&&`border-gov ring-1 ring-gov shadow-sm`),children:[(0,b.jsxs)(`div`,{className:`flex justify-between items-center`,children:[(0,b.jsx)(`span`,{className:`font-mono text-xs font-semibold`,children:e.id}),(0,b.jsx)(g,{t:A(e),children:e.severity})]}),(0,b.jsx)(`p`,{className:`mt-1 font-semibold text-navy`,children:e.applicant}),(0,b.jsx)(`p`,{className:`text-xs text-muted-foreground truncate`,children:e.scheme}),(0,b.jsx)(g,{className:`mt-2 text-[10px]`,children:e.status})]})},e.id))}),O&&(0,b.jsxs)(`div`,{className:`space-y-4`,children:[(0,b.jsxs)(l,{title:`${O.id} — ${O.scheme}`,actions:(0,b.jsxs)(a,{to:`/officer/applications/$id`,params:{id:O.appId},className:`text-xs text-gov hover:underline font-semibold`,children:[`Open application `,O.appId,` ↗`]}),children:[(0,b.jsxs)(`div`,{className:`mb-4 rounded-md bg-blue-50/70 border border-blue-200/60 p-3 text-xs text-blue-900 leading-relaxed`,children:[(0,b.jsx)(`strong`,{children:`Investigation Signal:`}),` Potential duplicate detected because two applications share matching identity references or overlapping benefit periods. Platform policy prohibits automatic rejection or fraud accusations prior to human inquiry.`]}),(0,b.jsxs)(`dl`,{className:`grid gap-3 text-sm sm:grid-cols-2`,children:[(0,b.jsxs)(`div`,{children:[(0,b.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Applicant`}),(0,b.jsx)(`dd`,{className:`font-semibold text-navy mt-0.5`,children:O.applicant})]}),(0,b.jsxs)(`div`,{children:[(0,b.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Household ID`}),(0,b.jsx)(`dd`,{className:`font-mono font-semibold text-slate-800 mt-0.5`,children:O.household})]}),(0,b.jsxs)(`div`,{className:`sm:col-span-2`,children:[(0,b.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Potential Matching Record`}),(0,b.jsx)(`dd`,{className:`text-xs font-medium text-slate-800 mt-0.5`,children:O.match})]}),(0,b.jsxs)(`div`,{className:`sm:col-span-2`,children:[(0,b.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Matching Rationale`}),(0,b.jsx)(`dd`,{className:`text-xs text-slate-700 mt-0.5 leading-relaxed`,children:O.reason})]}),(0,b.jsxs)(`div`,{className:`sm:col-span-2`,children:[(0,b.jsx)(`dt`,{className:`text-xs text-muted-foreground`,children:`Evidence Sources`}),(0,b.jsx)(`dd`,{className:`flex flex-wrap gap-1 mt-1`,children:O.sources.map(e=>(0,b.jsx)(g,{children:e},e))})]})]})]}),(0,b.jsx)(l,{title:`Field-by-Field Evidence Comparison`,children:(0,b.jsx)(`div`,{className:`overflow-x-auto`,children:(0,b.jsxs)(`table`,{className:`w-full text-xs`,children:[(0,b.jsx)(`thead`,{className:`text-left bg-slate-50 border-b text-slate-600`,children:(0,b.jsxs)(`tr`,{children:[(0,b.jsx)(`th`,{className:`p-2.5`,children:`Field`}),(0,b.jsx)(`th`,{className:`p-2.5`,children:`Current Application`}),(0,b.jsx)(`th`,{className:`p-2.5`,children:`Existing Record`}),(0,b.jsx)(`th`,{className:`p-2.5`,children:`Signal Result`})]})}),(0,b.jsx)(`tbody`,{className:`divide-y text-slate-700`,children:O.compare.map(e=>(0,b.jsxs)(`tr`,{className:n(e.same&&`bg-amber-50/40`),children:[(0,b.jsx)(`td`,{className:`p-2.5 font-semibold text-navy`,children:e.field}),(0,b.jsx)(`td`,{className:`p-2.5 font-mono`,children:e.current}),(0,b.jsx)(`td`,{className:`p-2.5 font-mono`,children:e.existing}),(0,b.jsx)(`td`,{className:`p-2.5`,children:e.same?(0,b.jsx)(g,{t:`warn`,children:`Potential Match`}):(0,b.jsx)(g,{t:`neutral`,children:`Distinct`})})]},e.field))})]})})}),(0,b.jsxs)(`div`,{className:`flex flex-wrap gap-2.5 pt-1`,children:[(0,b.jsx)(r,{className:`bg-teal hover:bg-teal/90 text-white text-xs h-9`,onClick:()=>T(`Legitimate Overlap`),children:`Legitimate Overlap (Resolve Alert)`}),(0,b.jsx)(r,{variant:`outline`,className:`text-xs h-9`,onClick:()=>T(`Not Duplicate`),children:`Mark as Distinct Application`}),(0,b.jsx)(r,{variant:`outline`,className:`text-xs h-9 text-amber-900 border-amber-300 hover:bg-amber-50`,onClick:()=>T(`Evidence Requested`),children:`Request Evidence from Citizen`}),(0,b.jsx)(r,{variant:`destructive`,className:`text-xs h-9`,onClick:()=>T(`Confirmed Duplicate`),children:`Confirm Subsumed Duplicate`}),(0,b.jsx)(r,{variant:`outline`,className:`text-xs h-9 text-slate-700`,onClick:()=>T(`Escalated`),children:`Escalate to Supervisor`})]})]})]}),(0,b.jsx)(p,{open:!!w,onOpenChange:e=>!e&&T(null),children:(0,b.jsxs)(f,{children:[(0,b.jsxs)(o,{children:[(0,b.jsx)(h,{children:w}),(0,b.jsx)(m,{children:`Your note and officer ID will be recorded in the audit trail.`})]}),(0,b.jsx)(v,{htmlFor:`dn`,children:`Officer note`}),(0,b.jsx)(c,{id:`dn`,rows:4,value:E,onChange:e=>D(e.target.value)}),(0,b.jsxs)(u,{children:[(0,b.jsx)(r,{variant:`outline`,onClick:()=>T(null),children:`Cancel`}),(0,b.jsx)(r,{onClick:k,children:`Confirm`})]})]})})]})}export{x as component};
+import { f as e, l as t, r as n, t as r, u as i } from "./button-KmRTh43o.js";
+import { t as a } from "./link-gIn96cdo.js";
+import {
+  $ as o,
+  D as s,
+  N as c,
+  O as l,
+  Q as u,
+  Tt as d,
+  X as f,
+  Y as p,
+  Z as m,
+  et as h,
+  k as g,
+  mn as _,
+  q as v,
+} from "./index-B8Y-_llO.js";
+var y = e(i()),
+  b = t();
+function x() {
+  let { state: e, set: t, addAudit: i, updateApp: x } = _(),
+    [S, C] = (0, y.useState)(e.alerts[0]?.id),
+    [w, T] = (0, y.useState)(null),
+    [E, D] = (0, y.useState)(``),
+    O = e.alerts.find((e) => e.id === S),
+    k = () => {
+      if (!(!O || !w)) {
+        if (E.trim().length < 10) {
+          d.error(`Please add an explanation note of at least 10 characters`);
+          return;
+        }
+        (t((e) => ({
+          alerts: e.alerts.map((e) =>
+            e.id === O.id ? { ...e, status: w } : e,
+          ),
+        })),
+          i({
+            actor: `${e.session?.name} (${e.session?.id})`,
+            action: `Duplicate determination: ${w}`,
+            application: O.appId,
+            prev: O.status,
+            next: w,
+            reason: E,
+          }),
+          (w === `Legitimate Overlap` || w === `Not Duplicate`) &&
+            x(
+              O.appId,
+              { status: `Officer Review`, duplicate: !1, stage: 4 },
+              `Human adjudication cleared alert (${w}): ${E}`,
+              e.session?.name,
+            ),
+          w === `Evidence Requested` &&
+            x(
+              O.appId,
+              { status: `Additional Evidence Required` },
+              `Evidence requested on duplicate signal: ${E}`,
+              e.session?.name,
+            ),
+          w === `Confirmed Duplicate` &&
+            x(
+              O.appId,
+              { status: `Officer Review` },
+              `Duplicate confirmed — pending final decision: ${E}`,
+              e.session?.name,
+            ),
+          w === `Escalated` &&
+            x(
+              O.appId,
+              {},
+              `Duplicate alert escalated to supervisor: ${E}`,
+              e.session?.name,
+            ),
+          d.success(`Determination recorded: ${w}`, {
+            description:
+              w === `Legitimate Overlap`
+                ? `Alert resolved. Legitimate family/scheme overlap recorded. Not treated as fraud.`
+                : w === `Confirmed Duplicate`
+                  ? `The application is not auto-rejected. Officer records decision on case file.`
+                  : `Recorded in audit trail.`,
+          }),
+          T(null),
+          D(``));
+      }
+    },
+    A = (e) =>
+      e.severity === `High`
+        ? `bad`
+        : e.severity === `Medium`
+          ? `warn`
+          : `neutral`;
+  return (0, b.jsxs)(`div`, {
+    children: [
+      (0, b.jsx)(s, {
+        title: `Duplicate Claim Detection (Human-in-the-Loop)`,
+        desc: `Investigation signals flagged by entity resolution and benefit overlap rules. System never automatically rejects a citizen merely for potential duplicates — authorized officers make consequential adjudications.`,
+      }),
+      (0, b.jsxs)(`div`, {
+        className: `grid gap-6 lg:grid-cols-[320px_1fr]`,
+        children: [
+          (0, b.jsx)(`ul`, {
+            className: `space-y-2`,
+            children: e.alerts.map((e) =>
+              (0, b.jsx)(
+                `li`,
+                {
+                  children: (0, b.jsxs)(`button`, {
+                    onClick: () => C(e.id),
+                    className: n(
+                      `w-full rounded-lg border bg-card p-3 text-left text-sm transition-all`,
+                      S === e.id && `border-gov ring-1 ring-gov shadow-sm`,
+                    ),
+                    children: [
+                      (0, b.jsxs)(`div`, {
+                        className: `flex justify-between items-center`,
+                        children: [
+                          (0, b.jsx)(`span`, {
+                            className: `font-mono text-xs font-semibold`,
+                            children: e.id,
+                          }),
+                          (0, b.jsx)(g, { t: A(e), children: e.severity }),
+                        ],
+                      }),
+                      (0, b.jsx)(`p`, {
+                        className: `mt-1 font-semibold text-navy`,
+                        children: e.applicant,
+                      }),
+                      (0, b.jsx)(`p`, {
+                        className: `text-xs text-muted-foreground truncate`,
+                        children: e.scheme,
+                      }),
+                      (0, b.jsx)(g, {
+                        className: `mt-2 text-[10px]`,
+                        children: e.status,
+                      }),
+                    ],
+                  }),
+                },
+                e.id,
+              ),
+            ),
+          }),
+          O &&
+            (0, b.jsxs)(`div`, {
+              className: `space-y-4`,
+              children: [
+                (0, b.jsxs)(l, {
+                  title: `${O.id} — ${O.scheme}`,
+                  actions: (0, b.jsxs)(a, {
+                    to: `/officer/applications/$id`,
+                    params: { id: O.appId },
+                    className: `text-xs text-gov hover:underline font-semibold`,
+                    children: [`Open application `, O.appId, ` ↗`],
+                  }),
+                  children: [
+                    (0, b.jsxs)(`div`, {
+                      className: `mb-4 rounded-md bg-blue-50/70 border border-blue-200/60 p-3 text-xs text-blue-900 leading-relaxed`,
+                      children: [
+                        (0, b.jsx)(`strong`, {
+                          children: `Investigation Signal:`,
+                        }),
+                        ` Potential duplicate detected because two applications share matching identity references or overlapping benefit periods. Platform policy prohibits automatic rejection or fraud accusations prior to human inquiry.`,
+                      ],
+                    }),
+                    (0, b.jsxs)(`dl`, {
+                      className: `grid gap-3 text-sm sm:grid-cols-2`,
+                      children: [
+                        (0, b.jsxs)(`div`, {
+                          children: [
+                            (0, b.jsx)(`dt`, {
+                              className: `text-xs text-muted-foreground`,
+                              children: `Applicant`,
+                            }),
+                            (0, b.jsx)(`dd`, {
+                              className: `font-semibold text-navy mt-0.5`,
+                              children: O.applicant,
+                            }),
+                          ],
+                        }),
+                        (0, b.jsxs)(`div`, {
+                          children: [
+                            (0, b.jsx)(`dt`, {
+                              className: `text-xs text-muted-foreground`,
+                              children: `Household ID`,
+                            }),
+                            (0, b.jsx)(`dd`, {
+                              className: `font-mono font-semibold text-slate-800 mt-0.5`,
+                              children: O.household,
+                            }),
+                          ],
+                        }),
+                        (0, b.jsxs)(`div`, {
+                          className: `sm:col-span-2`,
+                          children: [
+                            (0, b.jsx)(`dt`, {
+                              className: `text-xs text-muted-foreground`,
+                              children: `Potential Matching Record`,
+                            }),
+                            (0, b.jsx)(`dd`, {
+                              className: `text-xs font-medium text-slate-800 mt-0.5`,
+                              children: O.match,
+                            }),
+                          ],
+                        }),
+                        (0, b.jsxs)(`div`, {
+                          className: `sm:col-span-2`,
+                          children: [
+                            (0, b.jsx)(`dt`, {
+                              className: `text-xs text-muted-foreground`,
+                              children: `Matching Rationale`,
+                            }),
+                            (0, b.jsx)(`dd`, {
+                              className: `text-xs text-slate-700 mt-0.5 leading-relaxed`,
+                              children: O.reason,
+                            }),
+                          ],
+                        }),
+                        (0, b.jsxs)(`div`, {
+                          className: `sm:col-span-2`,
+                          children: [
+                            (0, b.jsx)(`dt`, {
+                              className: `text-xs text-muted-foreground`,
+                              children: `Evidence Sources`,
+                            }),
+                            (0, b.jsx)(`dd`, {
+                              className: `flex flex-wrap gap-1 mt-1`,
+                              children: O.sources.map((e) =>
+                                (0, b.jsx)(g, { children: e }, e),
+                              ),
+                            }),
+                          ],
+                        }),
+                      ],
+                    }),
+                  ],
+                }),
+                (0, b.jsx)(l, {
+                  title: `Field-by-Field Evidence Comparison`,
+                  children: (0, b.jsx)(`div`, {
+                    className: `overflow-x-auto`,
+                    children: (0, b.jsxs)(`table`, {
+                      className: `w-full text-xs`,
+                      children: [
+                        (0, b.jsx)(`thead`, {
+                          className: `text-left bg-slate-50 border-b text-slate-600`,
+                          children: (0, b.jsxs)(`tr`, {
+                            children: [
+                              (0, b.jsx)(`th`, {
+                                className: `p-2.5`,
+                                children: `Field`,
+                              }),
+                              (0, b.jsx)(`th`, {
+                                className: `p-2.5`,
+                                children: `Current Application`,
+                              }),
+                              (0, b.jsx)(`th`, {
+                                className: `p-2.5`,
+                                children: `Existing Record`,
+                              }),
+                              (0, b.jsx)(`th`, {
+                                className: `p-2.5`,
+                                children: `Signal Result`,
+                              }),
+                            ],
+                          }),
+                        }),
+                        (0, b.jsx)(`tbody`, {
+                          className: `divide-y text-slate-700`,
+                          children: O.compare.map((e) =>
+                            (0, b.jsxs)(
+                              `tr`,
+                              {
+                                className: n(e.same && `bg-amber-50/40`),
+                                children: [
+                                  (0, b.jsx)(`td`, {
+                                    className: `p-2.5 font-semibold text-navy`,
+                                    children: e.field,
+                                  }),
+                                  (0, b.jsx)(`td`, {
+                                    className: `p-2.5 font-mono`,
+                                    children: e.current,
+                                  }),
+                                  (0, b.jsx)(`td`, {
+                                    className: `p-2.5 font-mono`,
+                                    children: e.existing,
+                                  }),
+                                  (0, b.jsx)(`td`, {
+                                    className: `p-2.5`,
+                                    children: e.same
+                                      ? (0, b.jsx)(g, {
+                                          t: `warn`,
+                                          children: `Potential Match`,
+                                        })
+                                      : (0, b.jsx)(g, {
+                                          t: `neutral`,
+                                          children: `Distinct`,
+                                        }),
+                                  }),
+                                ],
+                              },
+                              e.field,
+                            ),
+                          ),
+                        }),
+                      ],
+                    }),
+                  }),
+                }),
+                (0, b.jsxs)(`div`, {
+                  className: `flex flex-wrap gap-2.5 pt-1`,
+                  children: [
+                    (0, b.jsx)(r, {
+                      className: `bg-teal hover:bg-teal/90 text-white text-xs h-9`,
+                      onClick: () => T(`Legitimate Overlap`),
+                      children: `Legitimate Overlap (Resolve Alert)`,
+                    }),
+                    (0, b.jsx)(r, {
+                      variant: `outline`,
+                      className: `text-xs h-9`,
+                      onClick: () => T(`Not Duplicate`),
+                      children: `Mark as Distinct Application`,
+                    }),
+                    (0, b.jsx)(r, {
+                      variant: `outline`,
+                      className: `text-xs h-9 text-amber-900 border-amber-300 hover:bg-amber-50`,
+                      onClick: () => T(`Evidence Requested`),
+                      children: `Request Evidence from Citizen`,
+                    }),
+                    (0, b.jsx)(r, {
+                      variant: `destructive`,
+                      className: `text-xs h-9`,
+                      onClick: () => T(`Confirmed Duplicate`),
+                      children: `Confirm Subsumed Duplicate`,
+                    }),
+                    (0, b.jsx)(r, {
+                      variant: `outline`,
+                      className: `text-xs h-9 text-slate-700`,
+                      onClick: () => T(`Escalated`),
+                      children: `Escalate to Supervisor`,
+                    }),
+                  ],
+                }),
+              ],
+            }),
+        ],
+      }),
+      (0, b.jsx)(p, {
+        open: !!w,
+        onOpenChange: (e) => !e && T(null),
+        children: (0, b.jsxs)(f, {
+          children: [
+            (0, b.jsxs)(o, {
+              children: [
+                (0, b.jsx)(h, { children: w }),
+                (0, b.jsx)(m, {
+                  children: `Your note and officer ID will be recorded in the audit trail.`,
+                }),
+              ],
+            }),
+            (0, b.jsx)(v, { htmlFor: `dn`, children: `Officer note` }),
+            (0, b.jsx)(c, {
+              id: `dn`,
+              rows: 4,
+              value: E,
+              onChange: (e) => D(e.target.value),
+            }),
+            (0, b.jsxs)(u, {
+              children: [
+                (0, b.jsx)(r, {
+                  variant: `outline`,
+                  onClick: () => T(null),
+                  children: `Cancel`,
+                }),
+                (0, b.jsx)(r, { onClick: k, children: `Confirm` }),
+              ],
+            }),
+          ],
+        }),
+      }),
+    ],
+  });
+}
+export { x as component };

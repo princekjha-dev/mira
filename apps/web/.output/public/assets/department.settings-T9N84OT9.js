@@ -1,1 +1,121 @@
-import{c as e,f as t,l as n,t as r,u as i}from"./button-KmRTh43o.js";import{t as a}from"./save--FCQWVxp.js";import{n as o,t as s}from"./ProfileSection-Byb9vkPr.js";import{Ht as c,J as l,Mt as u,Rt as d,Tt as f,qt as p}from"./index-B8Y-_llO.js";var m=e(`cpu`,[[`path`,{d:`M12 20v2`,key:`1lh1kg`}],[`path`,{d:`M12 2v2`,key:`tus03m`}],[`path`,{d:`M17 20v2`,key:`1rnc9c`}],[`path`,{d:`M17 2v2`,key:`11trls`}],[`path`,{d:`M2 12h2`,key:`1t8f8n`}],[`path`,{d:`M2 17h2`,key:`7oei6x`}],[`path`,{d:`M2 7h2`,key:`asdhe0`}],[`path`,{d:`M20 12h2`,key:`1q8mjw`}],[`path`,{d:`M20 17h2`,key:`1fpfkl`}],[`path`,{d:`M20 7h2`,key:`1o8tra`}],[`path`,{d:`M7 20v2`,key:`4gnj0m`}],[`path`,{d:`M7 2v2`,key:`1i4yhu`}],[`rect`,{x:`4`,y:`4`,width:`16`,height:`16`,rx:`2`,key:`1vbyd7`}],[`rect`,{x:`8`,y:`8`,width:`8`,height:`8`,rx:`1`,key:`z9xiuo`}]]),h=t(i()),g=n();function _(){let[e,t]=(0,h.useState)(!0),[n,i]=(0,h.useState)(!0),[_,v]=(0,h.useState)(!0),[y,b]=(0,h.useState)(!0);return(0,g.jsxs)(`div`,{className:`mx-auto max-w-4xl space-y-6 pb-12`,children:[(0,g.jsxs)(`div`,{className:`space-y-0.5`,children:[(0,g.jsx)(`h1`,{className:`text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100`,children:`System Configuration`}),(0,g.jsx)(`p`,{className:`text-xs text-muted-foreground leading-normal max-w-3xl`,children:`Department-wide policy parameters, cryptographic ledger anchors, and statewide cross-registry synchronization.`})]}),(0,g.jsxs)(s,{title:`Ledger Trust & Cryptographic Anchors`,description:`Statutory non-repudiation parameters governed under ISO/IEC 27001`,children:[(0,g.jsx)(o,{icon:u,title:`Immutable Audit Ledger Hashing`,description:`Generates verifiable SHA-256 Merkle root proofs on every citizen application determination`,action:(0,g.jsx)(l,{checked:e,onCheckedChange:t})}),(0,g.jsx)(o,{icon:d,title:`Live Cross-Registry Reconciliation`,description:`Continuous synchronization with state Bhulekh land registry, NFSA ration rosters, and UIDAI e-KYC`,action:(0,g.jsx)(l,{checked:n,onCheckedChange:i})}),(0,g.jsx)(o,{icon:p,title:`Citizen Public Transparency Portal`,description:`Publishes sanitized aggregate scheme disbursements and sanction statistics to public dashboard`,action:(0,g.jsx)(l,{checked:_,onCheckedChange:v}),isLast:!0})]}),(0,g.jsxs)(s,{title:`Department Operations & SLA Thresholds`,description:`Automated bottleneck alerts and supervisory escalations`,children:[(0,g.jsx)(o,{icon:m,title:`Automated 72-Hour SLA Escalation`,description:`Dispatches overdue verification queries to regional supervisor inbox automatically`,action:(0,g.jsx)(l,{checked:y,onCheckedChange:b})}),(0,g.jsx)(o,{icon:c,title:`Cryptographic Hardware Key Rotations`,description:`Automated 90-day HSM token lifecycle enforcement across all verification cells`,value:(0,g.jsx)(`span`,{className:`font-mono text-xs text-emerald-600 font-semibold`,children:`Active · 90-Day Policy`}),isLast:!0})]}),(0,g.jsx)(`div`,{className:`flex justify-end pt-2`,children:(0,g.jsxs)(r,{size:`sm`,onClick:()=>{f.success(`System configuration saved to state directory.`)},className:`text-xs bg-gov hover:bg-gov/90 text-white font-medium gap-1.5 shadow-2xs`,children:[(0,g.jsx)(a,{className:`h-3.5 w-3.5`}),`Save System Configuration`]})})]})}export{_ as component};
+import { c as e, f as t, l as n, t as r, u as i } from "./button-KmRTh43o.js";
+import { t as a } from "./save--FCQWVxp.js";
+import { n as o, t as s } from "./ProfileSection-Byb9vkPr.js";
+import {
+  Ht as c,
+  J as l,
+  Mt as u,
+  Rt as d,
+  Tt as f,
+  qt as p,
+} from "./index-B8Y-_llO.js";
+var m = e(`cpu`, [
+    [`path`, { d: `M12 20v2`, key: `1lh1kg` }],
+    [`path`, { d: `M12 2v2`, key: `tus03m` }],
+    [`path`, { d: `M17 20v2`, key: `1rnc9c` }],
+    [`path`, { d: `M17 2v2`, key: `11trls` }],
+    [`path`, { d: `M2 12h2`, key: `1t8f8n` }],
+    [`path`, { d: `M2 17h2`, key: `7oei6x` }],
+    [`path`, { d: `M2 7h2`, key: `asdhe0` }],
+    [`path`, { d: `M20 12h2`, key: `1q8mjw` }],
+    [`path`, { d: `M20 17h2`, key: `1fpfkl` }],
+    [`path`, { d: `M20 7h2`, key: `1o8tra` }],
+    [`path`, { d: `M7 20v2`, key: `4gnj0m` }],
+    [`path`, { d: `M7 2v2`, key: `1i4yhu` }],
+    [
+      `rect`,
+      { x: `4`, y: `4`, width: `16`, height: `16`, rx: `2`, key: `1vbyd7` },
+    ],
+    [
+      `rect`,
+      { x: `8`, y: `8`, width: `8`, height: `8`, rx: `1`, key: `z9xiuo` },
+    ],
+  ]),
+  h = t(i()),
+  g = n();
+function _() {
+  let [e, t] = (0, h.useState)(!0),
+    [n, i] = (0, h.useState)(!0),
+    [_, v] = (0, h.useState)(!0),
+    [y, b] = (0, h.useState)(!0);
+  return (0, g.jsxs)(`div`, {
+    className: `mx-auto max-w-4xl space-y-6 pb-12`,
+    children: [
+      (0, g.jsxs)(`div`, {
+        className: `space-y-0.5`,
+        children: [
+          (0, g.jsx)(`h1`, {
+            className: `text-xl sm:text-2xl font-bold tracking-tight text-slate-900 dark:text-slate-100`,
+            children: `System Configuration`,
+          }),
+          (0, g.jsx)(`p`, {
+            className: `text-xs text-muted-foreground leading-normal max-w-3xl`,
+            children: `Department-wide policy parameters, cryptographic ledger anchors, and statewide cross-registry synchronization.`,
+          }),
+        ],
+      }),
+      (0, g.jsxs)(s, {
+        title: `Ledger Trust & Cryptographic Anchors`,
+        description: `Statutory non-repudiation parameters governed under ISO/IEC 27001`,
+        children: [
+          (0, g.jsx)(o, {
+            icon: u,
+            title: `Immutable Audit Ledger Hashing`,
+            description: `Generates verifiable SHA-256 Merkle root proofs on every citizen application determination`,
+            action: (0, g.jsx)(l, { checked: e, onCheckedChange: t }),
+          }),
+          (0, g.jsx)(o, {
+            icon: d,
+            title: `Live Cross-Registry Reconciliation`,
+            description: `Continuous synchronization with state Bhulekh land registry, NFSA ration rosters, and UIDAI e-KYC`,
+            action: (0, g.jsx)(l, { checked: n, onCheckedChange: i }),
+          }),
+          (0, g.jsx)(o, {
+            icon: p,
+            title: `Citizen Public Transparency Portal`,
+            description: `Publishes sanitized aggregate scheme disbursements and sanction statistics to public dashboard`,
+            action: (0, g.jsx)(l, { checked: _, onCheckedChange: v }),
+            isLast: !0,
+          }),
+        ],
+      }),
+      (0, g.jsxs)(s, {
+        title: `Department Operations & SLA Thresholds`,
+        description: `Automated bottleneck alerts and supervisory escalations`,
+        children: [
+          (0, g.jsx)(o, {
+            icon: m,
+            title: `Automated 72-Hour SLA Escalation`,
+            description: `Dispatches overdue verification queries to regional supervisor inbox automatically`,
+            action: (0, g.jsx)(l, { checked: y, onCheckedChange: b }),
+          }),
+          (0, g.jsx)(o, {
+            icon: c,
+            title: `Cryptographic Hardware Key Rotations`,
+            description: `Automated 90-day HSM token lifecycle enforcement across all verification cells`,
+            value: (0, g.jsx)(`span`, {
+              className: `font-mono text-xs text-emerald-600 font-semibold`,
+              children: `Active · 90-Day Policy`,
+            }),
+            isLast: !0,
+          }),
+        ],
+      }),
+      (0, g.jsx)(`div`, {
+        className: `flex justify-end pt-2`,
+        children: (0, g.jsxs)(r, {
+          size: `sm`,
+          onClick: () => {
+            f.success(`System configuration saved to state directory.`);
+          },
+          className: `text-xs bg-gov hover:bg-gov/90 text-white font-medium gap-1.5 shadow-2xs`,
+          children: [
+            (0, g.jsx)(a, { className: `h-3.5 w-3.5` }),
+            `Save System Configuration`,
+          ],
+        }),
+      }),
+    ],
+  });
+}
+export { _ as component };

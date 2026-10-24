@@ -1,1 +1,150 @@
-import{f as e,l as t,t as n,u as r}from"./button-KmRTh43o.js";import{t as i}from"./link-gIn96cdo.js";import{D as a,Pn as o,U as s,dn as c,j as l,mn as u}from"./index-B8Y-_llO.js";import{n as d,t as f}from"./card-DNkZ-jvk.js";var p=e(r()),m=t();function h(){let{state:e}=u(),[t,r]=(0,p.useState)(``),h=e.applications.filter(e=>{let n=t.trim().toLowerCase(),r=o(e.schemeId)?.name||``;return!n||e.id.toLowerCase().includes(n)||e.applicant.toLowerCase().includes(n)||e.householdId.toLowerCase().includes(n)||r.toLowerCase().includes(n)});return(0,m.jsxs)(`div`,{className:`space-y-6`,children:[(0,m.jsx)(a,{title:`Department-Wide Applications Console`,desc:`Global lifecycle visibility across all schemes, districts, and officer queues.`,crumbs:[{label:`Department`,to:`/department/dashboard`},{label:`Applications`}]}),(0,m.jsx)(`div`,{className:`flex items-center max-w-md`,children:(0,m.jsx)(s,{value:t,onChange:e=>r(e.target.value),placeholder:`Filter by application, applicant, or household…`,className:`text-xs`})}),(0,m.jsx)(f,{className:`border-border/80 shadow-xs overflow-hidden`,children:(0,m.jsx)(d,{className:`p-0`,children:(0,m.jsxs)(`table`,{className:`w-full text-left text-xs`,children:[(0,m.jsx)(`thead`,{className:`border-b bg-muted/40 font-medium text-muted-foreground`,children:(0,m.jsxs)(`tr`,{children:[(0,m.jsx)(`th`,{className:`p-3.5 pl-4`,children:`Application ID`}),(0,m.jsx)(`th`,{className:`p-3.5`,children:`Applicant & Household`}),(0,m.jsx)(`th`,{className:`p-3.5`,children:`Scheme`}),(0,m.jsx)(`th`,{className:`p-3.5`,children:`Stage`}),(0,m.jsx)(`th`,{className:`p-3.5`,children:`Status`}),(0,m.jsx)(`th`,{className:`p-3.5 pr-4 text-right`,children:`Details`})]})}),(0,m.jsx)(`tbody`,{className:`divide-y divide-border`,children:h.map(e=>(0,m.jsxs)(`tr`,{className:`hover:bg-muted/30 transition-colors`,children:[(0,m.jsx)(`td`,{className:`p-3.5 pl-4 font-mono font-semibold text-primary`,children:e.id}),(0,m.jsxs)(`td`,{className:`p-3.5`,children:[(0,m.jsx)(`div`,{className:`font-medium`,children:e.applicant}),(0,m.jsx)(`div`,{className:`text-[11px] text-muted-foreground`,children:e.householdId})]}),(0,m.jsx)(`td`,{className:`p-3.5 text-muted-foreground`,children:o(e.schemeId)?.name||`Welfare Assistance`}),(0,m.jsxs)(`td`,{className:`p-3.5`,children:[`Stage `,e.stage,`/6`]}),(0,m.jsx)(`td`,{className:`p-3.5`,children:(0,m.jsx)(l,{s:e.status})}),(0,m.jsx)(`td`,{className:`p-3.5 pr-4 text-right`,children:(0,m.jsx)(n,{size:`sm`,variant:`outline`,asChild:!0,className:`h-7 text-xs`,children:(0,m.jsxs)(i,{to:`/officer/applications/$id`,params:{id:e.id},children:[`Inspect `,(0,m.jsx)(c,{className:`ml-1 h-3 w-3`})]})})})]},e.id))})]})})})]})}export{h as component};
+import { f as e, l as t, t as n, u as r } from "./button-KmRTh43o.js";
+import { t as i } from "./link-gIn96cdo.js";
+import {
+  D as a,
+  Pn as o,
+  U as s,
+  dn as c,
+  j as l,
+  mn as u,
+} from "./index-B8Y-_llO.js";
+import { n as d, t as f } from "./card-DNkZ-jvk.js";
+var p = e(r()),
+  m = t();
+function h() {
+  let { state: e } = u(),
+    [t, r] = (0, p.useState)(``),
+    h = e.applications.filter((e) => {
+      let n = t.trim().toLowerCase(),
+        r = o(e.schemeId)?.name || ``;
+      return (
+        !n ||
+        e.id.toLowerCase().includes(n) ||
+        e.applicant.toLowerCase().includes(n) ||
+        e.householdId.toLowerCase().includes(n) ||
+        r.toLowerCase().includes(n)
+      );
+    });
+  return (0, m.jsxs)(`div`, {
+    className: `space-y-6`,
+    children: [
+      (0, m.jsx)(a, {
+        title: `Department-Wide Applications Console`,
+        desc: `Global lifecycle visibility across all schemes, districts, and officer queues.`,
+        crumbs: [
+          { label: `Department`, to: `/department/dashboard` },
+          { label: `Applications` },
+        ],
+      }),
+      (0, m.jsx)(`div`, {
+        className: `flex items-center max-w-md`,
+        children: (0, m.jsx)(s, {
+          value: t,
+          onChange: (e) => r(e.target.value),
+          placeholder: `Filter by application, applicant, or household…`,
+          className: `text-xs`,
+        }),
+      }),
+      (0, m.jsx)(f, {
+        className: `border-border/80 shadow-xs overflow-hidden`,
+        children: (0, m.jsx)(d, {
+          className: `p-0`,
+          children: (0, m.jsxs)(`table`, {
+            className: `w-full text-left text-xs`,
+            children: [
+              (0, m.jsx)(`thead`, {
+                className: `border-b bg-muted/40 font-medium text-muted-foreground`,
+                children: (0, m.jsxs)(`tr`, {
+                  children: [
+                    (0, m.jsx)(`th`, {
+                      className: `p-3.5 pl-4`,
+                      children: `Application ID`,
+                    }),
+                    (0, m.jsx)(`th`, {
+                      className: `p-3.5`,
+                      children: `Applicant & Household`,
+                    }),
+                    (0, m.jsx)(`th`, {
+                      className: `p-3.5`,
+                      children: `Scheme`,
+                    }),
+                    (0, m.jsx)(`th`, { className: `p-3.5`, children: `Stage` }),
+                    (0, m.jsx)(`th`, {
+                      className: `p-3.5`,
+                      children: `Status`,
+                    }),
+                    (0, m.jsx)(`th`, {
+                      className: `p-3.5 pr-4 text-right`,
+                      children: `Details`,
+                    }),
+                  ],
+                }),
+              }),
+              (0, m.jsx)(`tbody`, {
+                className: `divide-y divide-border`,
+                children: h.map((e) =>
+                  (0, m.jsxs)(
+                    `tr`,
+                    {
+                      className: `hover:bg-muted/30 transition-colors`,
+                      children: [
+                        (0, m.jsx)(`td`, {
+                          className: `p-3.5 pl-4 font-mono font-semibold text-primary`,
+                          children: e.id,
+                        }),
+                        (0, m.jsxs)(`td`, {
+                          className: `p-3.5`,
+                          children: [
+                            (0, m.jsx)(`div`, {
+                              className: `font-medium`,
+                              children: e.applicant,
+                            }),
+                            (0, m.jsx)(`div`, {
+                              className: `text-[11px] text-muted-foreground`,
+                              children: e.householdId,
+                            }),
+                          ],
+                        }),
+                        (0, m.jsx)(`td`, {
+                          className: `p-3.5 text-muted-foreground`,
+                          children: o(e.schemeId)?.name || `Welfare Assistance`,
+                        }),
+                        (0, m.jsxs)(`td`, {
+                          className: `p-3.5`,
+                          children: [`Stage `, e.stage, `/6`],
+                        }),
+                        (0, m.jsx)(`td`, {
+                          className: `p-3.5`,
+                          children: (0, m.jsx)(l, { s: e.status }),
+                        }),
+                        (0, m.jsx)(`td`, {
+                          className: `p-3.5 pr-4 text-right`,
+                          children: (0, m.jsx)(n, {
+                            size: `sm`,
+                            variant: `outline`,
+                            asChild: !0,
+                            className: `h-7 text-xs`,
+                            children: (0, m.jsxs)(i, {
+                              to: `/officer/applications/$id`,
+                              params: { id: e.id },
+                              children: [
+                                `Inspect `,
+                                (0, m.jsx)(c, { className: `ml-1 h-3 w-3` }),
+                              ],
+                            }),
+                          }),
+                        }),
+                      ],
+                    },
+                    e.id,
+                  ),
+                ),
+              }),
+            ],
+          }),
+        }),
+      }),
+    ],
+  });
+}
+export { h as component };
