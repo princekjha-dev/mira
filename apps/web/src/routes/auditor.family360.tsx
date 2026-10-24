@@ -51,7 +51,7 @@ export function AuditorFamily360Page() {
               title="Family360 Forensic Inspection"
               desc="Read-only statutory inspection of household relationships, cryptographic evidence links, and state modification trails."
               crumbs={[
-                { label: "Audit Overview", href: "/auditor/dashboard" },
+                { label: "Audit Overview", to: "/auditor/dashboard" },
                 { label: "Family360" },
               ]}
             />
@@ -120,7 +120,7 @@ export function AuditorFamily360Page() {
         </Link>
 
         <Link
-          to="/auditor/compliance"
+          to="/auditor/reports"
           className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs hover:border-gov/50 transition-colors dark:border-slate-800 dark:bg-slate-900"
         >
           <div className="flex items-center justify-between">

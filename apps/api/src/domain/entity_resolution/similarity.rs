@@ -26,11 +26,15 @@ pub fn levenshtein_distance(s1: &str, s2: &str) -> usize {
 
     for i in 1..=m {
         for j in 1..=n {
-            let cost = if s1_chars[i - 1] == s2_chars[j - 1] { 0 } else { 1 };
+            let cost = if s1_chars[i - 1] == s2_chars[j - 1] {
+                0
+            } else {
+                1
+            };
             dp[i][j] = min(
                 dp[i - 1][j] + 1, // deletion
                 min(
-                    dp[i][j - 1] + 1, // insertion
+                    dp[i][j - 1] + 1,        // insertion
                     dp[i - 1][j - 1] + cost, // substitution
                 ),
             );
@@ -198,8 +202,16 @@ pub fn compare_names(n1: &str, n2: &str) -> NameComparisonResult {
     let has_devanagari2 = raw2.chars().any(|c| ('\u{0900}'..='\u{097F}').contains(&c));
 
     let (t1, t2, is_translit) = if has_devanagari1 || has_devanagari2 {
-        let lat1 = if has_devanagari1 { transliterate_devanagari_to_latin(n1) } else { raw1.clone() };
-        let lat2 = if has_devanagari2 { transliterate_devanagari_to_latin(n2) } else { raw2.clone() };
+        let lat1 = if has_devanagari1 {
+            transliterate_devanagari_to_latin(n1)
+        } else {
+            raw1.clone()
+        };
+        let lat2 = if has_devanagari2 {
+            transliterate_devanagari_to_latin(n2)
+        } else {
+            raw2.clone()
+        };
         (lat1, lat2, true)
     } else {
         (raw1.clone(), raw2.clone(), false)
@@ -209,11 +221,21 @@ pub fn compare_names(n1: &str, n2: &str) -> NameComparisonResult {
     let norm2 = normalize_name(&t2);
 
     if norm1 == norm2 {
-        let method = if is_translit { "TRANSLITERATION_MATCH" } else { "NORMALIZED_NAME_MATCH" };
-        let explanation = if is_translit {
-            format!("Phonetic transliteration match between Devanagari and Latin script ('{}' ≈ '{}')", n1, n2)
+        let method = if is_translit {
+            "TRANSLITERATION_MATCH"
         } else {
-            format!("Normalized name match ignoring titles ('{}' == '{}')", n1, n2)
+            "NORMALIZED_NAME_MATCH"
+        };
+        let explanation = if is_translit {
+            format!(
+                "Phonetic transliteration match between Devanagari and Latin script ('{}' ≈ '{}')",
+                n1, n2
+            )
+        } else {
+            format!(
+                "Normalized name match ignoring titles ('{}' == '{}')",
+                n1, n2
+            )
         };
         return NameComparisonResult {
             similarity: 1.0,
@@ -234,7 +256,11 @@ pub fn compare_names(n1: &str, n2: &str) -> NameComparisonResult {
     let p1 = fold_phonetics(&norm1);
     let p2 = fold_phonetics(&norm2);
     if p1 == p2 {
-        let method = if is_translit { "TRANSLITERATION_MATCH" } else { "PHONETIC_VARIATION_MATCH" };
+        let method = if is_translit {
+            "TRANSLITERATION_MATCH"
+        } else {
+            "PHONETIC_VARIATION_MATCH"
+        };
         let explanation = format!("Phonetic equivalence match ('{}' ≈ '{}')", n1, n2);
         return NameComparisonResult {
             similarity: 0.98,
@@ -250,7 +276,6 @@ pub fn compare_names(n1: &str, n2: &str) -> NameComparisonResult {
 
     let token_sim = token_similarity(&norm1, &norm2);
     let lev_sim = levenshtein_similarity(&norm1, &norm2);
-
 
     // Blended score favoring Jaro-Winkler with token overlap
     let score = (jw * 0.6) + (token_sim * 0.25) + (lev_sim * 0.15);
@@ -290,13 +315,16 @@ mod tests {
     #[test]
     fn test_compare_names_transliteration() {
         let res = compare_names("सुनीता देवी", "Sunita Devi");
-        assert!(res.similarity >= 0.85, "Transliteration similarity should be high: got {}", res.similarity);
+        assert!(
+            res.similarity >= 0.85,
+            "Transliteration similarity should be high: got {}",
+            res.similarity
+        );
         assert!(res.method.contains("TRANSLITERAT"));
 
         let res_rahul = compare_names("राहुल कुमार", "Rahul Kumar");
         assert!(res_rahul.similarity >= 0.90);
     }
-
 
     #[test]
     fn test_token_similarity() {

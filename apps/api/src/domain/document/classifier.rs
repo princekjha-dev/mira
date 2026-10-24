@@ -13,7 +13,11 @@ impl DocumentClassifier {
             || combined.contains("child name")
             || combined.contains("place of birth")
         {
-            return (DocumentType::BirthCertificate, 0.95, "Matched Birth Certificate keywords (English/Hindi)");
+            return (
+                DocumentType::BirthCertificate,
+                0.95,
+                "Matched Birth Certificate keywords (English/Hindi)",
+            );
         }
 
         // 2. Income Certificate markers
@@ -23,7 +27,11 @@ impl DocumentClassifier {
             || combined.contains("वार्षिक आय")
             || combined.contains("financial year")
         {
-            return (DocumentType::IncomeCertificate, 0.95, "Matched Income Certificate keywords (English/Hindi)");
+            return (
+                DocumentType::IncomeCertificate,
+                0.95,
+                "Matched Income Certificate keywords (English/Hindi)",
+            );
         }
 
         // 3. Residence / Domicile Certificate markers
@@ -32,7 +40,11 @@ impl DocumentClassifier {
             || combined.contains("domicile")
             || combined.contains("स्थानीय निवासी")
         {
-            return (DocumentType::ResidenceCertificate, 0.94, "Matched Residence/Domicile keywords");
+            return (
+                DocumentType::ResidenceCertificate,
+                0.94,
+                "Matched Residence/Domicile keywords",
+            );
         }
 
         // 4. Property / Infrastructure markers
@@ -45,7 +57,11 @@ impl DocumentClassifier {
             || combined.contains("toilet")
             || combined.contains("survey number")
         {
-            return (DocumentType::PropertyDocument, 0.92, "Matched Property/Land/Housing keywords");
+            return (
+                DocumentType::PropertyDocument,
+                0.92,
+                "Matched Property/Land/Housing keywords",
+            );
         }
 
         // 5. Benefit / Scheme approval markers
@@ -54,7 +70,11 @@ impl DocumentClassifier {
             || combined.contains("स्वीकृति पत्र")
             || combined.contains("disbursement")
         {
-            return (DocumentType::BenefitDocument, 0.90, "Matched Scheme Benefit Approval keywords");
+            return (
+                DocumentType::BenefitDocument,
+                0.90,
+                "Matched Scheme Benefit Approval keywords",
+            );
         }
 
         // 6. Household Document markers
@@ -64,7 +84,11 @@ impl DocumentClassifier {
             || combined.contains("parivar register")
             || combined.contains("परिवार रजिस्टर")
         {
-            return (DocumentType::HouseholdDocument, 0.91, "Matched Household / Family Register keywords");
+            return (
+                DocumentType::HouseholdDocument,
+                0.91,
+                "Matched Household / Family Register keywords",
+            );
         }
 
         // 7. Identity Supporting Document
@@ -73,7 +97,11 @@ impl DocumentClassifier {
             || combined.contains("पहचान पत्र")
             || combined.contains("driving licence")
         {
-            return (DocumentType::IdentitySupportingDocument, 0.88, "Matched Identity Document markers");
+            return (
+                DocumentType::IdentitySupportingDocument,
+                0.88,
+                "Matched Identity Document markers",
+            );
         }
 
         (DocumentType::Other, 0.60, "Generic official document")

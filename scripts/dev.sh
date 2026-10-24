@@ -5,6 +5,12 @@ echo "=========================================================="
 echo " Starting Mira V1 Local Development Environment"
 echo "=========================================================="
 
+PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
+
+# Start the project-local database before the API. The web app never receives
+# the API's environment variables or credentials.
+bash "$PROJECT_ROOT/scripts/ensure_postgres.sh"
+
 # Stop both services when the script exits.
 cleanup() {
   kill "$API_PID" "$WEB_PID" 2>/dev/null || true
@@ -14,8 +20,15 @@ trap cleanup EXIT INT TERM
 
 # Start API
 echo "--> Starting Rust Axum Core API on port 4000..."
-API_DATABASE_URL="${DATABASE_URL:-postgres://postgres:postgrespassword@127.0.0.1:5433/mira_dev}"
-(cd apps/api && DATABASE_URL="$API_DATABASE_URL" cargo run) &
+(
+  cd "$PROJECT_ROOT/apps/api"
+  if [ -f "$PROJECT_ROOT/.env" ]; then
+    set -a
+    . "$PROJECT_ROOT/.env"
+    set +a
+  fi
+  DATABASE_URL="${DATABASE_URL:-postgres://postgres@127.0.0.1:5433/mira_dev}" cargo run
+) &
 API_PID=$!
 
 # Wait for the API to become healthy before starting Vite. This also gives

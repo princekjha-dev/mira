@@ -92,25 +92,23 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
     session.role === "officer" ||
     session.role === "admin" ||
     session.role === "supervisor" ||
-    session.role === "scheme_officer" ||
-    session.role === "VERIFICATION_OFFICER" ||
-    session.role === "SCHEME_OFFICER" ||
-    session.role === "SUPERVISOR" ||
-    session.role === "DEPARTMENT_ADMIN";
+    session.role === "scheme";
+  const isAuditor = session.role === "auditor";
+  const canCitizenMutate = !isOfficerOrAdmin && !isAuditor;
 
   const accessPurpose = isOfficerOrAdmin
     ? "APPLICATION_VERIFICATION"
     : "CITIZEN_SELF_SERVICE";
 
   useEffect(() => {
-    if (!document || !session.apiToken) return;
+    if (!document || (!session.apiToken && !session.isDemo)) return;
     let active = true;
     setObjectUrl("");
     setLoadError("");
     setPage(1);
     setPages(null);
 
-    if (canPreview) {
+    if (canPreview && session.authSource !== "local-demo") {
       fetch(apiUrl(`/api/v1/documents/${document.id}/preview?purpose=${accessPurpose}`), {
         headers: { Authorization: `Bearer ${session.apiToken}` },
       })
@@ -137,6 +135,8 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
               error instanceof Error ? error.message : "Preview unavailable."
             )
         );
+    } else if (canPreview && session.authSource === "local-demo") {
+      setLoadError("Local demo records include document details only; secure file content is not stored.");
     }
 
     apiRequest<{ data: ApiDocument[] }>(session, `/api/v1/documents/${document.id}/versions`)
@@ -169,6 +169,10 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
   if (!document) return null;
 
   const download = async () => {
+    if (session.authSource === "local-demo") {
+      toast.info("Secure file content is not stored in the local demo.");
+      return;
+    }
     try {
       const response = await fetch(
         apiUrl(`/api/v1/documents/${document.id}/download?purpose=${accessPurpose}`),
@@ -320,10 +324,12 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                 {loadError ? (
                   <div className="max-w-sm rounded-xl border bg-white p-6 text-center text-sm text-slate-600">
                     {loadError}
-                    <Button className="mt-4" onClick={download}>
-                      <Download className="mr-2 h-4 w-4" />
-                      Download file
-                    </Button>
+                    {session.authSource !== "local-demo" && (
+                      <Button className="mt-4" onClick={download}>
+                        <Download className="mr-2 h-4 w-4" />
+                        Download file
+                      </Button>
+                    )}
                   </div>
                 ) : !canPreview ? (
                   <div className="max-w-sm rounded-xl border bg-white p-8 text-center">
@@ -529,7 +535,7 @@ export function DocumentViewer({ document, session, onClose, onChanged }: Props)
                   <Download className="mr-2 h-4 w-4" />
                   Download File
                 </Button>
-                {!isOfficerOrAdmin && (
+                {canCitizenMutate && (
                   <>
                     <Button
                       variant="outline"

@@ -1,7 +1,7 @@
-use chrono::NaiveDate;
-use serde::{Deserialize, Serialize};
 use crate::domain::document::models::{BoundingBox, DocumentType, ExtractionStatus};
 use crate::domain::entity_resolution::normalization::normalize_name;
+use chrono::NaiveDate;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ExtractedField {
@@ -45,9 +45,17 @@ impl DocumentExtractor {
         fields
     }
 
-    fn extract_birth_certificate(text: &str, regions: &[BoundingBox], out: &mut Vec<ExtractedField>) {
+    fn extract_birth_certificate(
+        text: &str,
+        regions: &[BoundingBox],
+        out: &mut Vec<ExtractedField>,
+    ) {
         // Child Name
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Child Name / नाम:", "Child Name:", "नाम:", "Name:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &["Child Name / नाम:", "Child Name:", "नाम:", "Name:"],
+            regions,
+        ) {
             let normalized = normalize_name(&clean_bilingual(&raw));
             out.push(ExtractedField {
                 field_name: "NAME".to_string(),
@@ -61,7 +69,16 @@ impl DocumentExtractor {
         }
 
         // DOB
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Date of Birth / जन्म तिथि:", "Date of Birth:", "जन्म तिथि:", "DOB:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &[
+                "Date of Birth / जन्म तिथि:",
+                "Date of Birth:",
+                "जन्म तिथि:",
+                "DOB:",
+            ],
+            regions,
+        ) {
             let (normalized, valid) = normalize_and_validate_date(&raw);
             out.push(ExtractedField {
                 field_name: "DATE_OF_BIRTH".to_string(),
@@ -70,12 +87,25 @@ impl DocumentExtractor {
                 confidence: if valid { 0.95 } else { 0.60 },
                 source_region: region,
                 extraction_method: "SCHEMA_BIRTH_CERTIFICATE".to_string(),
-                validation_status: if valid { ExtractionStatus::SystemExtracted } else { ExtractionStatus::Unverified },
+                validation_status: if valid {
+                    ExtractionStatus::SystemExtracted
+                } else {
+                    ExtractionStatus::Unverified
+                },
             });
         }
 
         // Father / Parent Name
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Father Name / पिता का नाम:", "Father Name:", "पिता का नाम:", "Parent:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &[
+                "Father Name / पिता का नाम:",
+                "Father Name:",
+                "पिता का नाम:",
+                "Parent:",
+            ],
+            regions,
+        ) {
             let normalized = normalize_name(&clean_bilingual(&raw));
             out.push(ExtractedField {
                 field_name: "PARENT_NAME".to_string(),
@@ -89,7 +119,11 @@ impl DocumentExtractor {
         }
 
         // Mother Name
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Mother Name / माता का नाम:", "Mother Name:", "माता का नाम:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &["Mother Name / माता का नाम:", "Mother Name:", "माता का नाम:"],
+            regions,
+        ) {
             let normalized = normalize_name(&clean_bilingual(&raw));
             out.push(ExtractedField {
                 field_name: "MOTHER_NAME".to_string(),
@@ -103,7 +137,11 @@ impl DocumentExtractor {
         }
 
         // Document / Registration Number
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Registration No:", "Reg No:", "प्रमाण पत्र संख्या:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &["Registration No:", "Reg No:", "प्रमाण पत्र संख्या:"],
+            regions,
+        ) {
             out.push(ExtractedField {
                 field_name: "DOCUMENT_NUMBER".to_string(),
                 raw_value: raw.clone(),
@@ -116,7 +154,9 @@ impl DocumentExtractor {
         }
 
         // Address
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Permanent Address:", "Address:", "पता:"], regions) {
+        if let Some((raw, region)) =
+            find_value_after_prefix(text, &["Permanent Address:", "Address:", "पता:"], regions)
+        {
             out.push(ExtractedField {
                 field_name: "ADDRESS".to_string(),
                 raw_value: raw.clone(),
@@ -129,9 +169,22 @@ impl DocumentExtractor {
         }
     }
 
-    fn extract_income_certificate(text: &str, regions: &[BoundingBox], out: &mut Vec<ExtractedField>) {
+    fn extract_income_certificate(
+        text: &str,
+        regions: &[BoundingBox],
+        out: &mut Vec<ExtractedField>,
+    ) {
         // Applicant Name
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Applicant Name / प्रार्थी का नाम:", "Applicant Name:", "प्रार्थी का नाम:", "Name:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &[
+                "Applicant Name / प्रार्थी का नाम:",
+                "Applicant Name:",
+                "प्रार्थी का नाम:",
+                "Name:",
+            ],
+            regions,
+        ) {
             let normalized = normalize_name(&clean_bilingual(&raw));
             out.push(ExtractedField {
                 field_name: "NAME".to_string(),
@@ -145,7 +198,9 @@ impl DocumentExtractor {
         }
 
         // DOB (where available in income cert)
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Date of Birth:", "DOB:", "जन्म तिथि:"], regions) {
+        if let Some((raw, region)) =
+            find_value_after_prefix(text, &["Date of Birth:", "DOB:", "जन्म तिथि:"], regions)
+        {
             let (normalized, valid) = normalize_and_validate_date(&raw);
             out.push(ExtractedField {
                 field_name: "DATE_OF_BIRTH".to_string(),
@@ -154,12 +209,25 @@ impl DocumentExtractor {
                 confidence: if valid { 0.94 } else { 0.60 },
                 source_region: region,
                 extraction_method: "SCHEMA_INCOME_CERTIFICATE".to_string(),
-                validation_status: if valid { ExtractionStatus::SystemExtracted } else { ExtractionStatus::Unverified },
+                validation_status: if valid {
+                    ExtractionStatus::SystemExtracted
+                } else {
+                    ExtractionStatus::Unverified
+                },
             });
         }
 
         // Annual Income / Amount
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Annual Income / वार्षिक आय:", "Annual Income:", "वार्षिक आय:", "Income:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &[
+                "Annual Income / वार्षिक आय:",
+                "Annual Income:",
+                "वार्षिक आय:",
+                "Income:",
+            ],
+            regions,
+        ) {
             let normalized = normalize_amount(&raw);
             out.push(ExtractedField {
                 field_name: "AMOUNT".to_string(),
@@ -173,7 +241,11 @@ impl DocumentExtractor {
         }
 
         // Certificate Number
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Certificate No:", "प्रमाण पत्र संख्या:", "Cert No:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &["Certificate No:", "प्रमाण पत्र संख्या:", "Cert No:"],
+            regions,
+        ) {
             out.push(ExtractedField {
                 field_name: "DOCUMENT_NUMBER".to_string(),
                 raw_value: raw.clone(),
@@ -186,7 +258,8 @@ impl DocumentExtractor {
         }
 
         // Address
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Address:", "पता:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(text, &["Address:", "पता:"], regions)
+        {
             out.push(ExtractedField {
                 field_name: "ADDRESS".to_string(),
                 raw_value: raw.clone(),
@@ -199,8 +272,16 @@ impl DocumentExtractor {
         }
     }
 
-    fn extract_residence_certificate(text: &str, regions: &[BoundingBox], out: &mut Vec<ExtractedField>) {
-        if let Some((raw, region)) = find_value_after_prefix(text, &["निवासी का नाम:", "Name:", "Resident Name:"], regions) {
+    fn extract_residence_certificate(
+        text: &str,
+        regions: &[BoundingBox],
+        out: &mut Vec<ExtractedField>,
+    ) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &["निवासी का नाम:", "Name:", "Resident Name:"],
+            regions,
+        ) {
             let normalized = normalize_name(&clean_bilingual(&raw));
             out.push(ExtractedField {
                 field_name: "NAME".to_string(),
@@ -213,7 +294,11 @@ impl DocumentExtractor {
             });
         }
 
-        if let Some((raw, region)) = find_value_after_prefix(text, &["पिता/पति का नाम:", "Parent:", "Father/Spouse Name:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &["पिता/पति का नाम:", "Parent:", "Father/Spouse Name:"],
+            regions,
+        ) {
             let normalized = normalize_name(&clean_bilingual(&raw));
             out.push(ExtractedField {
                 field_name: "PARENT_NAME".to_string(),
@@ -226,7 +311,9 @@ impl DocumentExtractor {
             });
         }
 
-        if let Some((raw, region)) = find_value_after_prefix(text, &["वर्तमान पता:", "Address:", "स्थायी पता:"], regions) {
+        if let Some((raw, region)) =
+            find_value_after_prefix(text, &["वर्तमान पता:", "Address:", "स्थायी पता:"], regions)
+        {
             out.push(ExtractedField {
                 field_name: "ADDRESS".to_string(),
                 raw_value: raw.clone(),
@@ -238,7 +325,11 @@ impl DocumentExtractor {
             });
         }
 
-        if let Some((raw, region)) = find_value_after_prefix(text, &["प्रमाण पत्र संख्या:", "Certificate Reference:", "Cert No:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &["प्रमाण पत्र संख्या:", "Certificate Reference:", "Cert No:"],
+            regions,
+        ) {
             out.push(ExtractedField {
                 field_name: "DOCUMENT_NUMBER".to_string(),
                 raw_value: raw.clone(),
@@ -251,9 +342,22 @@ impl DocumentExtractor {
         }
     }
 
-    fn extract_property_document(text: &str, regions: &[BoundingBox], out: &mut Vec<ExtractedField>) {
+    fn extract_property_document(
+        text: &str,
+        regions: &[BoundingBox],
+        out: &mut Vec<ExtractedField>,
+    ) {
         // Property Identifier (e.g. P001)
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Property Identifier:", "Property ID:", "सम्पत्ति पहचान:", "Survey No:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &[
+                "Property Identifier:",
+                "Property ID:",
+                "सम्पत्ति पहचान:",
+                "Survey No:",
+            ],
+            regions,
+        ) {
             out.push(ExtractedField {
                 field_name: "PROPERTY_ID".to_string(),
                 raw_value: raw.clone(),
@@ -266,7 +370,11 @@ impl DocumentExtractor {
         }
 
         // Beneficiary / Owner Name
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Beneficiary:", "Owner / Occupant:", "Owner:", "Name:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(
+            text,
+            &["Beneficiary:", "Owner / Occupant:", "Owner:", "Name:"],
+            regions,
+        ) {
             let normalized = normalize_name(&clean_bilingual(&raw));
             out.push(ExtractedField {
                 field_name: "NAME".to_string(),
@@ -280,7 +388,8 @@ impl DocumentExtractor {
         }
 
         // Address
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Address:", "पता:"], regions) {
+        if let Some((raw, region)) = find_value_after_prefix(text, &["Address:", "पता:"], regions)
+        {
             out.push(ExtractedField {
                 field_name: "ADDRESS".to_string(),
                 raw_value: raw.clone(),
@@ -294,7 +403,9 @@ impl DocumentExtractor {
     }
 
     fn extract_generic(text: &str, regions: &[BoundingBox], out: &mut Vec<ExtractedField>) {
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Name:", "Holder Name:"], regions) {
+        if let Some((raw, region)) =
+            find_value_after_prefix(text, &["Name:", "Holder Name:"], regions)
+        {
             out.push(ExtractedField {
                 field_name: "NAME".to_string(),
                 raw_value: raw.clone(),
@@ -306,7 +417,9 @@ impl DocumentExtractor {
             });
         }
 
-        if let Some((raw, region)) = find_value_after_prefix(text, &["Date of Birth:", "DOB:"], regions) {
+        if let Some((raw, region)) =
+            find_value_after_prefix(text, &["Date of Birth:", "DOB:"], regions)
+        {
             let (normalized, valid) = normalize_and_validate_date(&raw);
             out.push(ExtractedField {
                 field_name: "DATE_OF_BIRTH".to_string(),
@@ -315,7 +428,11 @@ impl DocumentExtractor {
                 confidence: if valid { 0.90 } else { 0.50 },
                 source_region: region,
                 extraction_method: "GENERIC_EXTRACTOR".to_string(),
-                validation_status: if valid { ExtractionStatus::SystemExtracted } else { ExtractionStatus::Unverified },
+                validation_status: if valid {
+                    ExtractionStatus::SystemExtracted
+                } else {
+                    ExtractionStatus::Unverified
+                },
             });
         }
     }
@@ -336,7 +453,11 @@ fn clean_bilingual(val: &str) -> String {
 
 fn normalize_amount(raw: &str) -> String {
     // Extract numbers from "₹ 95,000 (Ninety Five Thousand)" -> "95000"
-    let digits: String = raw.chars().take_while(|&c| c != '(').filter(|c| c.is_ascii_digit()).collect();
+    let digits: String = raw
+        .chars()
+        .take_while(|&c| c != '(')
+        .filter(|c| c.is_ascii_digit())
+        .collect();
     if digits.is_empty() {
         raw.trim().to_string()
     } else {
@@ -369,7 +490,11 @@ fn normalize_and_validate_date(raw: &str) -> (String, bool) {
     (trimmed.to_string(), false)
 }
 
-fn find_value_after_prefix(text: &str, prefixes: &[&str], regions: &[BoundingBox]) -> Option<(String, BoundingBox)> {
+fn find_value_after_prefix(
+    text: &str,
+    prefixes: &[&str],
+    regions: &[BoundingBox],
+) -> Option<(String, BoundingBox)> {
     for line in text.lines() {
         for prefix in prefixes {
             if let Some(pos) = line.find(prefix) {

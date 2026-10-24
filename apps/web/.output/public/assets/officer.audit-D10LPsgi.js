@@ -1,0 +1,1 @@
+import{l as e}from"./button-KmRTh43o.js";import{D as t}from"./index-Dk3TgDjg.js";import{t as n}from"./AuditTable-DpDO06yA.js";var r=e(),i=()=>(0,r.jsxs)(`div`,{children:[(0,r.jsx)(t,{title:`Audit Logs`,desc:`Every action on applications and records, with previous and new states.`}),(0,r.jsx)(n,{})]});export{i as component};

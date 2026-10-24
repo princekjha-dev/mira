@@ -18,7 +18,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 
-import { sendMiraAiChat } from "@/lib/api";
+import { ApiRequestError, sendMiraAiChat } from "@/lib/api";
 
 interface ChatMessage {
   id: string;
@@ -27,6 +27,37 @@ interface ChatMessage {
   timestamp: string;
   contextRef?: string;
   isLiveLLM?: boolean;
+  isError?: boolean;
+  retryText?: string;
+}
+
+function getMiraErrorMessage(error: unknown): string {
+  if (error instanceof ApiRequestError) {
+    if (error.status === 401 || error.status === 403) {
+      return "Your session needs attention. Please sign in again to use Mira.";
+    }
+
+    switch (error.code) {
+      case "GROQ_API_KEY_MISSING":
+      case "GROQ_AUTH_ERROR":
+      case "GROQ_PERMISSION_ERROR":
+        return "Mira AI configuration needs attention.";
+      case "GROQ_RATE_LIMIT":
+        return "Mira is temporarily busy. Please try again shortly.";
+      case "GROQ_CONNECTION_ERROR":
+        return "Mira could not connect to the AI service.";
+      case "GROQ_REQUEST_ERROR":
+      case "GROQ_SERVICE_ERROR":
+        return "Mira could not process that request. Please try again.";
+      default:
+        return "Mira could not process that request. Please try again.";
+    }
+  }
+
+  if (error instanceof TypeError || (error instanceof Error && error.name === "AbortError")) {
+    return "Mira could not connect to the AI service.";
+  }
+  return "Mira could not process that request. Please try again.";
 }
 
 export function MiraAIOrb() {
@@ -132,7 +163,7 @@ export function MiraAIOrb() {
     }
   })();
 
-  const handleSend = async (textToSend?: string) => {
+  const handleSend = async (textToSend?: string, retry = false) => {
     const text = (textToSend || query).trim();
     if (!text || isProcessing) return;
 
@@ -143,14 +174,19 @@ export function MiraAIOrb() {
       timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
 
-    setMessages((prev) => [...prev, userMsg]);
+    if (!retry) {
+      setMessages((prev) => [...prev, userMsg]);
+    }
     setQuery("");
     setIsProcessing(true);
 
     try {
       // Build conversation history for context continuity
-      const history = messages
-        .filter((m) => m.id !== "init")
+      const historyMessages = messages.filter((m) => m.id !== "init" && !m.isError);
+      const retryHistory = retry && historyMessages.at(-1)?.sender === "user"
+        ? historyMessages.slice(0, -1)
+        : historyMessages;
+      const history = retryHistory
         .slice(-4)
         .map((m) => ({
           role: (m.sender === "user" ? "user" : "assistant") as "user" | "assistant",
@@ -175,15 +211,15 @@ export function MiraAIOrb() {
         isLiveLLM: response.is_live_llm,
       };
 
-      setMessages((prev) => [...prev, botMsg]);
+      setMessages((prev) => [...prev.filter((message) => !message.isError), botMsg]);
     } catch (err) {
-      console.error("Mira AI query error:", err);
-      // Section 26: Graceful error message without technical leak
       const errorMsg: ChatMessage = {
         id: (Date.now() + 1).toString(),
         sender: "mira",
-        text: "Mira AI is temporarily unavailable. Please try again.",
+        text: getMiraErrorMessage(err),
         timestamp: new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
+        isError: true,
+        retryText: text,
       };
       setMessages((prev) => [...prev, errorMsg]);
     } finally {
@@ -251,6 +287,15 @@ export function MiraAIOrb() {
                 >
                   {m.text}
                 </div>
+                {m.retryText && !isProcessing && (
+                  <button
+                    type="button"
+                    onClick={() => handleSend(m.retryText, true)}
+                    className="mt-1 px-1 text-[10px] font-medium text-gov underline-offset-2 hover:underline"
+                  >
+                    Retry
+                  </button>
+                )}
                 <span className="text-[10px] text-muted-foreground/75 px-1 mt-0.5 tabular-nums font-mono">{m.timestamp}</span>
               </div>
             ))}

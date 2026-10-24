@@ -143,7 +143,7 @@ function Track() {
   }, [searchParams.id]);
 
   const refresh = useCallback(async () => {
-    if (!session?.apiToken) {
+    if (!session?.apiToken && !session?.isDemo) {
       setApplications([]);
       return;
     }
@@ -161,7 +161,7 @@ function Track() {
     void refresh();
   }, [refresh]);
 
-  const displayedApps = session?.apiToken ? applications : [];
+  const displayedApps = session?.apiToken || session?.isDemo ? applications : [];
   const submittedApps = useMemo(
     () => displayedApps.filter((app) => app.status !== "Draft"),
     [displayedApps],

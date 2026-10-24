@@ -81,7 +81,7 @@ function CitizenDashboard() {
   }, []);
 
   useEffect(() => {
-    if (!state.session?.apiToken) return;
+    if (!state.session?.apiToken && !state.session?.isDemo) return;
     let active = true;
     apiRequest<{ data: ApiDocument[] }>(
       state.session,
@@ -98,7 +98,7 @@ function CitizenDashboard() {
     return () => {
       active = false;
     };
-  }, [state.session?.apiToken, state.session?.apiUserId]);
+  }, [state.session?.apiToken, state.session?.apiUserId, state.session?.isDemo]);
 
   const applications = state.applications;
   const actionRequiredApps = applications.filter(
@@ -121,7 +121,7 @@ function CitizenDashboard() {
   const citizenName = state.session?.name || "Rajesh Sharma";
   const householdName = family?.household_name || "Sharma Family";
   const householdId = family?.household_public_id || "MIRA-FAM-10482";
-  const memberCount = family?.members?.length || 11;
+  const memberCount = family?.members?.length || 7;
 
   return (
     <div className="space-y-7 pb-12 animate-in fade-in duration-200">
@@ -439,7 +439,7 @@ function CitizenDashboard() {
           session={state.session}
           onClose={() => setPreviewDoc(null)}
           onChanged={() => {
-            if (!state.session?.apiToken) return;
+            if (!state.session?.apiToken && !state.session?.isDemo) return;
             void apiRequest<{ data: ApiDocument[] }>(
               state.session,
               "/api/v1/documents?owner_type=CITIZEN",

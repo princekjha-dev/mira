@@ -37,6 +37,8 @@ services:
       JWT_EXPIRATION_HOURS: 24
       CORS_ORIGINS: http://localhost:5173,http://localhost:3000,http://localhost:80
       RUST_LOG: mira_api=info,tower_http=info
+      GROQ_API_KEY: ${GROQ_API_KEY:-}
+      GROQ_MODEL: ${GROQ_MODEL:-openai/gpt-oss-120b}
     ports:
       - "4000:4000"
     volumes:

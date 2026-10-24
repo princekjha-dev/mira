@@ -8,6 +8,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
+import { useQueryClient } from "@tanstack/react-query";
 import {
   APPLICATIONS,
   AUDIT,
@@ -32,6 +33,9 @@ import {
   SEED_FILES,
   SEED_DECISIONS,
   DEMO_PROFILES,
+  CITIZEN,
+  HOUSEHOLD,
+  getScheme,
 } from "./data";
 import { translate, type DictKey, type LangCode } from "./i18n";
 import {
@@ -51,7 +55,9 @@ import {
   markBackendNotificationRead,
   getMe,
   mapRoleToUiRole,
+  ApiRequestError,
 } from "./api";
+import { getRoleConfig } from "./role-config";
 
 export type Role =
   | "citizen"
@@ -70,6 +76,11 @@ export interface Session {
   apiUserId?: string;
   apiEmail?: string;
   isDemo?: boolean;
+  authSource?: "api" | "local-demo" | "real";
+  roles?: string[];
+  permissions?: string[];
+  householdId?: string;
+  applicationContext?: string[];
 }
 export interface Grievance {
   id: string;
@@ -205,8 +216,29 @@ const EMPTY_ACCOUNT_DATA = {
   familyRequests: [] as FamilyRequest[],
 };
 
+const isLocalDemo = (session: Session | null) =>
+  Boolean(session?.isDemo && (session.authSource === "local-demo" || !session.apiToken));
+
 const SESSION_KEY = "mira-session-v2";
 const UI_PREFS_KEY = "mira-ui-prefs-v1";
+const DEMO_DATA_KEY = "mira-demo-data-v1";
+
+const DEMO_DATA_FIELDS = [
+  "applications",
+  "notifications",
+  "audit",
+  "benefits",
+  "alerts",
+  "vault",
+  "grievances",
+  "familyRequests",
+  "ruleVersions",
+  "messages",
+  "comments",
+  "fieldVisits",
+  "files",
+  "decisions",
+] as const satisfies readonly (keyof AppState)[];
 
 type Patch = Partial<AppState> | ((s: AppState) => Partial<AppState>);
 
@@ -274,6 +306,10 @@ interface Ctx {
     body: string;
     applicationId?: string;
     threadId?: string;
+    attachments?: Array<{ id: string; name: string; size: number; type: string }>;
+    updatedCaseStatus?: MessageThread["caseStatus"];
+    clearActionRequired?: boolean;
+    auditAction?: string;
   }) => void;
   markMessageRead: (threadId: string) => void;
   toggleStarMessage: (threadId: string) => void;
@@ -298,6 +334,7 @@ export const nowStamp = () => {
 };
 
 export function AppStateProvider({ children }: { children: ReactNode }) {
+  const queryClient = useQueryClient();
   const [state, setState] = useState<AppState>(initial);
   const [hydrated, setHydrated] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -309,19 +346,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     try {
       const rawSession = localStorage.getItem(SESSION_KEY);
       if (rawSession) savedSession = JSON.parse(rawSession);
+      const rawDemoData = localStorage.getItem(DEMO_DATA_KEY);
+      const demoData = rawDemoData ? JSON.parse(rawDemoData) as Partial<AppState> : {};
+      const restoredDemoData = Object.fromEntries(
+        DEMO_DATA_FIELDS.flatMap((field) =>
+          Array.isArray(demoData[field]) ? [[field, demoData[field]]] : [],
+        ),
+      ) as Partial<AppState>;
       const rawPrefs = localStorage.getItem(UI_PREFS_KEY);
       if (rawPrefs) {
         const prefs = JSON.parse(rawPrefs);
         setState((s) => ({
           ...s,
           ...prefs,
-          ...(savedSession ? EMPTY_ACCOUNT_DATA : {}),
+          ...restoredDemoData,
           session: savedSession,
         }));
-      } else if (savedSession) {
+      } else if (savedSession || Object.keys(restoredDemoData).length > 0) {
         setState((s) => ({
           ...s,
-          ...EMPTY_ACCOUNT_DATA,
+          ...restoredDemoData,
           session: savedSession,
         }));
       }
@@ -332,27 +376,38 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     sessionRef.current = savedSession;
     setHydrated(true);
 
-    // Verify session token with backend if present
-    if (savedSession?.apiToken) {
+    // Validate real/backend sessions. Local demo sessions intentionally work offline.
+    if (savedSession?.apiToken && savedSession.authSource !== "local-demo") {
       getMe(savedSession.apiToken)
         .then((me) => {
           const validatedRole = mapRoleToUiRole(me.roles);
+          const config = getRoleConfig(validatedRole);
           const validatedSession: Session = {
             ...savedSession!,
             role: validatedRole,
             name: me.display_name,
             apiEmail: me.email,
             isDemo: me.is_demo,
+            authSource: savedSession!.authSource || (me.is_demo ? "api" : "real"),
+            roles: me.roles,
+            permissions: config.permissions,
+            householdId: savedSession!.householdId || (validatedRole === "citizen" ? HOUSEHOLD.id : undefined),
           };
           sessionRef.current = validatedSession;
           setState((s) => ({ ...s, session: validatedSession }));
           localStorage.setItem(SESSION_KEY, JSON.stringify(validatedSession));
         })
-        .catch(() => {
-          // Token expired or invalid
-          sessionRef.current = null;
-          setState((s) => ({ ...s, ...EMPTY_ACCOUNT_DATA, session: null }));
-          localStorage.removeItem(SESSION_KEY);
+        .catch((error: unknown) => {
+          if (error instanceof ApiRequestError && (error.status === 401 || error.status === 403)) {
+            sessionRef.current = null;
+            setState((s) => ({ ...s, ...EMPTY_ACCOUNT_DATA, session: null }));
+            localStorage.removeItem(SESSION_KEY);
+            return;
+          }
+          console.warn("Mira session validation is temporarily unavailable; keeping the saved session.", {
+            status: error instanceof ApiRequestError ? error.status : undefined,
+            name: error instanceof Error ? error.name : "UnknownError",
+          });
         });
     }
   }, []);
@@ -374,16 +429,16 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
       setState((s) => {
         const nextApplications =
-          backendApps.status === "fulfilled" ? backendApps.value : [];
+          backendApps.status === "fulfilled" ? backendApps.value : s.applications;
 
         const nextNotifications =
-          backendNotifs.status === "fulfilled" ? backendNotifs.value : [];
+          backendNotifs.status === "fulfilled" ? backendNotifs.value : s.notifications;
 
         const nextAudit =
-          backendAudit.status === "fulfilled" ? backendAudit.value : [];
+          backendAudit.status === "fulfilled" ? backendAudit.value : s.audit;
 
         const nextBenefits =
-          backendBenefits.status === "fulfilled" ? backendBenefits.value : [];
+          backendBenefits.status === "fulfilled" ? backendBenefits.value : s.benefits;
 
         return {
           ...s,
@@ -444,6 +499,21 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     hydrated,
   ]);
 
+  // Demo workflow changes survive refreshes and switching between demo roles.
+  useEffect(() => {
+    if (!hydrated || !state.session?.isDemo) return;
+    const snapshot = Object.fromEntries(
+      DEMO_DATA_FIELDS.map((field) => [field, state[field]]),
+    );
+    try {
+      localStorage.setItem(DEMO_DATA_KEY, JSON.stringify(snapshot));
+    } catch (error) {
+      console.warn("Unable to persist the local demo workspace state.", {
+        name: error instanceof Error ? error.name : "UnknownError",
+      });
+    }
+  }, [state, hydrated]);
+
   // A11y DOM side-effects
   useEffect(() => {
     const el = document.documentElement;
@@ -466,23 +536,115 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
     [],
   );
 
-  const login = useCallback((session: Session) => {
-    sessionRef.current = session;
-    localStorage.setItem(SESSION_KEY, JSON.stringify(session));
-    setState((s) => ({ ...s, ...EMPTY_ACCOUNT_DATA, session }));
-  }, []);
+  const login = useCallback(
+    (session: Session) => {
+      try {
+        queryClient.clear();
+      } catch {
+        /* ignore */
+      }
+      const config = getRoleConfig(session.role);
+      const normalizedSession: Session = {
+        ...session,
+        authSource: session.authSource || (session.isDemo ? (session.apiToken ? "api" : "local-demo") : "real"),
+        permissions: session.permissions || config.permissions,
+        householdId: session.householdId || (session.role === "citizen" ? HOUSEHOLD.id : undefined),
+      };
+      sessionRef.current = normalizedSession;
+      localStorage.setItem(SESSION_KEY, JSON.stringify(normalizedSession));
+      setState((s) => ({
+        ...s,
+        ...(normalizedSession.isDemo ? {} : EMPTY_ACCOUNT_DATA),
+        session: normalizedSession,
+      }));
+    },
+    [queryClient],
+  );
 
   const logout = useCallback(() => {
+    try {
+      queryClient.clear();
+    } catch {
+      /* ignore */
+    }
     sessionRef.current = null;
     localStorage.removeItem(SESSION_KEY);
-    setState((s) => ({ ...s, ...EMPTY_ACCOUNT_DATA, session: null }));
-  }, []);
+    setState((s) => ({
+      ...s,
+      ...(s.session?.isDemo ? {} : EMPTY_ACCOUNT_DATA),
+      session: null,
+    }));
+  }, [queryClient]);
+
+  const updateLocalApplication = useCallback(
+    (
+      id: string,
+      patch: Partial<Application>,
+      eventText: string,
+      by = sessionRef.current?.name || "Demo workflow",
+    ) => {
+      let updated: Application | undefined;
+      setState((s) => {
+        const current = s.applications.find((app) => app.id === id || (app as any).rawId === id);
+        if (!current) return s;
+        const timestamp = nowStamp();
+        updated = {
+          ...current,
+          ...patch,
+          updatedOn: timestamp.slice(0, 10),
+          events: [...current.events, { date: timestamp.slice(0, 16), text: eventText, by }],
+        };
+        return {
+          ...s,
+          applications: s.applications.map((app) => app.id === id || (app as any).rawId === id ? updated! : app),
+          audit: [
+            {
+              id: `AU-${Date.now()}`,
+              ts: timestamp,
+              actor: `${by} (${sessionRef.current?.role || "demo"})`,
+              action: eventText,
+              application: id,
+              prev: current.status,
+              next: updated.status,
+              reason: eventText,
+            },
+            ...s.audit,
+          ],
+        };
+      });
+      if (!updated) throw new Error("The application could not be found in the demo workspace.");
+      return updated;
+    },
+    [],
+  );
 
   // Real backend workflow action helpers
   const createApp = useCallback(
     async (schemeId: string, metadata: Record<string, any> = {}) => {
+      const session = sessionRef.current;
+      if (session?.role === "auditor") throw new Error("Auditor access is read-only.");
+      if (isLocalDemo(session)) {
+        const now = nowStamp();
+        const demoSchemeId = String(metadata.frontend_scheme_id || schemeId);
+        const scheme = getScheme(demoSchemeId);
+        const created: Application = {
+          id: `DEMO-APP-${Date.now()}`,
+          schemeId: demoSchemeId,
+          applicant: String(metadata.applicant_name || session?.name || CITIZEN.name),
+          citizenId: session?.role === "citizen" ? CITIZEN.id : "P-10482-01",
+          householdId: session?.householdId || HOUSEHOLD.id,
+          appliedOn: "",
+          updatedOn: now.slice(0, 10),
+          status: "Draft",
+          stage: -1,
+          declaredIncome: Number(metadata.income || HOUSEHOLD.annualIncome),
+          events: scheme ? [{ date: now.slice(0, 16), text: `${scheme.name} application started`, by: session?.name || CITIZEN.name }] : [],
+        };
+        setState((s) => ({ ...s, applications: [created, ...s.applications] }));
+        return created;
+      }
       const created = await createBackendApplication(
-        sessionRef.current,
+        session,
         schemeId,
         metadata,
       );
@@ -506,6 +668,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       eventText?: string,
       by?: string,
     ) => {
+      if (sessionRef.current?.role === "auditor") return;
       // 1. Optimistic local update
       setState((s) => ({
         ...s,
@@ -547,6 +710,15 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
 
   const submitApp = useCallback(
     async (id: string) => {
+      const session = sessionRef.current;
+      if (session?.role === "auditor") throw new Error("Auditor access is read-only.");
+      if (isLocalDemo(session)) {
+        return updateLocalApplication(id, {
+          status: "Submitted",
+          stage: 1,
+          appliedOn: nowStamp().slice(0, 10),
+        }, "Application submitted", session?.name);
+      }
       const target = state.applications.find((a) => a.id === id);
       const backendId = (target as any)?.rawId || id;
       const submitted = await submitBackendApplication(
@@ -562,11 +734,20 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void refreshData();
       return submitted;
     },
-    [state.applications, refreshData],
+    [state.applications, refreshData, updateLocalApplication],
   );
 
   const assignApp = useCallback(
     async (id: string, assignedTo: string, notes?: string) => {
+      const session = sessionRef.current;
+      if (session?.role === "auditor") throw new Error("Auditor access is read-only.");
+      if (isLocalDemo(session)) {
+        return updateLocalApplication(id, {
+          status: "Officer Review",
+          stage: 4,
+          assignedTo,
+        }, notes ? `Assigned to ${assignedTo}: ${notes}` : `Assigned to ${assignedTo}`, session?.name);
+      }
       const target = state.applications.find((a) => a.id === id);
       const backendId = (target as any)?.rawId || id;
       const assigned = await assignBackendApplication(
@@ -584,7 +765,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void refreshData();
       return assigned;
     },
-    [state.applications, refreshData],
+    [state.applications, refreshData, updateLocalApplication],
   );
 
   const requestAppEvidence = useCallback(
@@ -597,6 +778,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         deadline?: string;
       },
     ) => {
+      const session = sessionRef.current;
+      if (session?.role === "auditor") throw new Error("Auditor access is read-only.");
+      if (isLocalDemo(session)) {
+        return updateLocalApplication(id, {
+          status: "Additional Evidence Required",
+          stage: 6,
+        }, `Clarification requested: ${req.description || req.reason}`, session?.name);
+      }
       const target = state.applications.find((a) => a.id === id);
       const backendId = (target as any)?.rawId || id;
       const updated = await requestBackendEvidence(
@@ -613,7 +802,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void refreshData();
       return updated;
     },
-    [state.applications, refreshData],
+    [state.applications, refreshData, updateLocalApplication],
   );
 
   const submitAppEvidence = useCallback(
@@ -621,6 +810,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       id: string,
       req: { request_id: string; document_id?: string; explanation?: string },
     ) => {
+      const session = sessionRef.current;
+      if (session?.role === "auditor") throw new Error("Auditor access is read-only.");
+      if (isLocalDemo(session)) {
+        return updateLocalApplication(id, {
+          status: "Documents Under Review",
+          stage: 2,
+        }, "Additional document evidence submitted", session?.name);
+      }
       const target = state.applications.find((a) => a.id === id);
       const backendId = (target as any)?.rawId || id;
       const updated = await submitBackendEvidence(
@@ -637,7 +834,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void refreshData();
       return updated;
     },
-    [state.applications, refreshData],
+    [state.applications, refreshData, updateLocalApplication],
   );
 
   const verifyApp = useCallback(
@@ -650,6 +847,14 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
         verified_address?: boolean;
       },
     ) => {
+      const session = sessionRef.current;
+      if (session?.role === "auditor") throw new Error("Auditor access is read-only.");
+      if (isLocalDemo(session)) {
+        return updateLocalApplication(id, {
+          status: "Officer Review",
+          stage: 4,
+        }, `Field verification submitted: ${req.findings}`, session?.name);
+      }
       const target = state.applications.find((a) => a.id === id);
       const backendId = (target as any)?.rawId || id;
       const updated = await verifyBackendApplication(
@@ -666,11 +871,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void refreshData();
       return updated;
     },
-    [state.applications, refreshData],
+    [state.applications, refreshData, updateLocalApplication],
   );
 
   const approveApp = useCallback(
     async (id: string) => {
+      const session = sessionRef.current;
+      if (session?.role === "auditor") throw new Error("Auditor access is read-only.");
+      if (isLocalDemo(session)) {
+        return updateLocalApplication(id, {
+          status: "Approved",
+          stage: 7,
+          decision: {
+            outcome: "Approved",
+            reason: "Eligibility and verification requirements are complete.",
+            note: "Demo decision recorded for workflow review.",
+            by: session?.name || "Scheme Officer",
+            date: nowStamp().slice(0, 10),
+          },
+        }, "Application approved and moved to benefit processing", session?.name);
+      }
       const target = state.applications.find((a) => a.id === id);
       const backendId = (target as any)?.rawId || id;
       const result = await approveBackendApplication(
@@ -680,11 +900,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void refreshData();
       return result;
     },
-    [state.applications, refreshData],
+    [state.applications, refreshData, updateLocalApplication],
   );
 
   const rejectApp = useCallback(
     async (id: string, reason: string, notes: string) => {
+      const session = sessionRef.current;
+      if (session?.role === "auditor") throw new Error("Auditor access is read-only.");
+      if (isLocalDemo(session)) {
+        return updateLocalApplication(id, {
+          status: "Rejected",
+          stage: 7,
+          decision: {
+            outcome: "Rejected",
+            reason,
+            note: notes,
+            by: session?.name || "Scheme Officer",
+            date: nowStamp().slice(0, 10),
+          },
+        }, `Application rejected: ${reason}`, session?.name);
+      }
       const target = state.applications.find((a) => a.id === id);
       const backendId = (target as any)?.rawId || id;
       const updated = await rejectBackendApplication(
@@ -702,7 +937,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
       void refreshData();
       return updated;
     },
-    [state.applications, refreshData],
+    [state.applications, refreshData, updateLocalApplication],
   );
 
   const markNotificationRead = useCallback(async (id: string) => {
@@ -770,13 +1005,41 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
           const now = nowStamp().slice(0, 16);
 
           if (msg.threadId) {
+            const updatedAudit: AuditEvent[] = msg.auditAction
+              ? [
+                  {
+                    id: "AU-" + (90100 + s.audit.length),
+                    ts: nowStamp(),
+                    actor: `${senderName} (${senderRole})`,
+                    action: msg.auditAction,
+                    application: msg.applicationId || msg.threadId,
+                    prev: "Active Review",
+                    next: msg.updatedCaseStatus || "Updated",
+                    reason: msg.auditAction,
+                  },
+                  ...s.audit,
+                ]
+              : s.audit;
+
             return {
+              audit: updatedAudit,
               messages: s.messages.map((t) =>
                 t.id === msg.threadId
                   ? {
                       ...t,
                       timestamp: now,
                       preview: msg.body.slice(0, 100),
+                      caseStatus:
+                        msg.updatedCaseStatus ||
+                        (msg.clearActionRequired
+                          ? "awaiting_verification"
+                          : t.caseStatus),
+                      actionRequired: msg.clearActionRequired
+                        ? undefined
+                        : t.actionRequired,
+                      actionType: msg.clearActionRequired
+                        ? "none"
+                        : t.actionType,
                       messages: [
                         ...t.messages,
                         {
@@ -786,6 +1049,7 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                           senderRole,
                           timestamp: now,
                           body: msg.body,
+                          attachments: msg.attachments,
                         },
                       ],
                     }
@@ -813,6 +1077,8 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
             status: "read",
             folder: "sent",
             applicationId: msg.applicationId,
+            caseStatus: msg.updatedCaseStatus || "informational",
+            auditRef: "AUD-TX-" + Math.floor(10000 + Math.random() * 90000),
             messages: [
               {
                 id: "m-" + Date.now(),
@@ -821,10 +1087,26 @@ export function AppStateProvider({ children }: { children: ReactNode }) {
                 senderRole,
                 timestamp: now,
                 body: msg.body,
+                attachments: msg.attachments,
               },
             ],
           };
-          return { messages: [newThread, ...s.messages] };
+          const updatedAudit: AuditEvent[] = msg.auditAction
+            ? [
+                {
+                  id: "AU-" + (90100 + s.audit.length),
+                  ts: nowStamp(),
+                  actor: `${senderName} (${senderRole})`,
+                  action: msg.auditAction,
+                  application: msg.applicationId || newThread.id,
+                  prev: "Initiated",
+                  next: msg.updatedCaseStatus || "Dispatched",
+                  reason: msg.auditAction,
+                },
+                ...s.audit,
+              ]
+            : s.audit;
+          return { messages: [newThread, ...s.messages], audit: updatedAudit };
         });
       },
       markMessageRead: (threadId) =>

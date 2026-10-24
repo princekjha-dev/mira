@@ -1,4 +1,4 @@
-import { Link } from "@tanstack/react-router";
+import { Link, useLocation } from "@tanstack/react-router";
 import { Check, Circle, Loader2, Lock, X, AlertTriangle } from "lucide-react";
 import type { ReactNode } from "react";
 import {
@@ -365,6 +365,7 @@ export function RequireRole({
   role: Role | Role[];
   children: ReactNode;
 }) {
+  const pathname = useLocation({ select: (location) => location.pathname });
   const { state, hydrated } = useApp();
   if (!hydrated)
     return (
@@ -374,7 +375,8 @@ export function RequireRole({
       </div>
     );
 
-  const allowed = Array.isArray(role) ? role : [role];
+  const baseAllowed = Array.isArray(role) ? role : [role];
+  const allowed = rolePolicyForPath(pathname) || baseAllowed;
   const userRole = state.session?.role;
 
   if (!userRole || !allowed.includes(userRole)) {
@@ -397,6 +399,21 @@ export function RequireRole({
     );
   }
   return <>{children}</>;
+}
+
+function rolePolicyForPath(pathname: string): Role[] | null {
+  if (/^\/officer\/dashboard\/?$/.test(pathname)) return ["officer", "scheme", "admin"];
+  if (/^\/officer\//.test(pathname)) return ["officer", "admin"];
+  if (/^\/verifier\/escalations\/?$/.test(pathname)) return ["supervisor", "admin"];
+  if (/^\/verifier\/field-visits\/?$/.test(pathname)) return ["verifier", "admin"];
+  if (/^\/verifier\//.test(pathname)) return ["verifier", "supervisor", "admin", "officer"];
+  if (/^\/department\/departments\/?$/.test(pathname)) return ["admin", "supervisor"];
+  if (/^\/department\/(settings|integrations)\/?$/.test(pathname)) return ["admin"];
+  if (/^\/department\/(schemes|rules)(\/|$)/.test(pathname)) return ["admin", "scheme"];
+  if (/^\/department\/(applications|workflow|reports|notifications|inbox|operations|audit)(\/|$)/.test(pathname)) return ["admin", "scheme", "supervisor"];
+  if (/^\/auditor\//.test(pathname)) return ["auditor", "admin"];
+  if (/^\/citizen\//.test(pathname)) return ["citizen"];
+  return null;
 }
 
 export function Emblem({ className }: { className?: string }) {

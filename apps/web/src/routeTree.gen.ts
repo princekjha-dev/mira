@@ -72,6 +72,7 @@ import { Route as VerifierDocumentsRouteImport } from './routes/verifier.documen
 import { Route as VerifierEscalationsRouteImport } from './routes/verifier.escalations'
 import { Route as VerifierEvidenceRouteImport } from './routes/verifier.evidence'
 import { Route as VerifierFamily360RouteImport } from './routes/verifier.family360'
+import { Route as VerifierFieldVisitsRouteImport } from './routes/verifier.field-visits'
 import { Route as VerifierInboxRouteImport } from './routes/verifier.inbox'
 import { Route as VerifierMismatchesRouteImport } from './routes/verifier.mismatches'
 import { Route as VerifierQueueRouteImport } from './routes/verifier.queue'
@@ -402,6 +403,11 @@ const VerifierFamily360Route = VerifierFamily360RouteImport.update({
   path: '/family360',
   getParentRoute: () => VerifierRoute,
 } as any)
+const VerifierFieldVisitsRoute = VerifierFieldVisitsRouteImport.update({
+  id: '/field-visits',
+  path: '/field-visits',
+  getParentRoute: () => VerifierRoute,
+} as any)
 const VerifierInboxRoute = VerifierInboxRouteImport.update({
   id: '/inbox',
   path: '/inbox',
@@ -538,6 +544,7 @@ export interface FileRoutesByFullPath {
   '/verifier/escalations': typeof VerifierEscalationsRoute
   '/verifier/evidence': typeof VerifierEvidenceRoute
   '/verifier/family360': typeof VerifierFamily360Route
+  '/verifier/field-visits': typeof VerifierFieldVisitsRoute
   '/verifier/inbox': typeof VerifierInboxRoute
   '/verifier/mismatches': typeof VerifierMismatchesRoute
   '/verifier/queue': typeof VerifierQueueRoute
@@ -617,6 +624,7 @@ export interface FileRoutesByTo {
   '/verifier/escalations': typeof VerifierEscalationsRoute
   '/verifier/evidence': typeof VerifierEvidenceRoute
   '/verifier/family360': typeof VerifierFamily360Route
+  '/verifier/field-visits': typeof VerifierFieldVisitsRoute
   '/verifier/inbox': typeof VerifierInboxRoute
   '/verifier/mismatches': typeof VerifierMismatchesRoute
   '/verifier/queue': typeof VerifierQueueRoute
@@ -697,6 +705,7 @@ export interface FileRoutesById {
   '/verifier/escalations': typeof VerifierEscalationsRoute
   '/verifier/evidence': typeof VerifierEvidenceRoute
   '/verifier/family360': typeof VerifierFamily360Route
+  '/verifier/field-visits': typeof VerifierFieldVisitsRoute
   '/verifier/inbox': typeof VerifierInboxRoute
   '/verifier/mismatches': typeof VerifierMismatchesRoute
   '/verifier/queue': typeof VerifierQueueRoute
@@ -778,6 +787,7 @@ export interface FileRouteTypes {
     | '/verifier/escalations'
     | '/verifier/evidence'
     | '/verifier/family360'
+    | '/verifier/field-visits'
     | '/verifier/inbox'
     | '/verifier/mismatches'
     | '/verifier/queue'
@@ -857,6 +867,7 @@ export interface FileRouteTypes {
     | '/verifier/escalations'
     | '/verifier/evidence'
     | '/verifier/family360'
+    | '/verifier/field-visits'
     | '/verifier/inbox'
     | '/verifier/mismatches'
     | '/verifier/queue'
@@ -936,6 +947,7 @@ export interface FileRouteTypes {
     | '/verifier/escalations'
     | '/verifier/evidence'
     | '/verifier/family360'
+    | '/verifier/field-visits'
     | '/verifier/inbox'
     | '/verifier/mismatches'
     | '/verifier/queue'
@@ -1412,6 +1424,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof VerifierFamily360RouteImport
       parentRoute: typeof VerifierRoute
     }
+    '/verifier/field-visits': {
+      id: '/verifier/field-visits'
+      path: '/field-visits'
+      fullPath: '/verifier/field-visits'
+      preLoaderRoute: typeof VerifierFieldVisitsRouteImport
+      parentRoute: typeof VerifierRoute
+    }
     '/verifier/inbox': {
       id: '/verifier/inbox'
       path: '/inbox'
@@ -1663,6 +1682,7 @@ interface VerifierRouteChildren {
   VerifierEscalationsRoute: typeof VerifierEscalationsRoute
   VerifierEvidenceRoute: typeof VerifierEvidenceRoute
   VerifierFamily360Route: typeof VerifierFamily360Route
+  VerifierFieldVisitsRoute: typeof VerifierFieldVisitsRoute
   VerifierInboxRoute: typeof VerifierInboxRoute
   VerifierMismatchesRoute: typeof VerifierMismatchesRoute
   VerifierQueueRoute: typeof VerifierQueueRoute
@@ -1677,6 +1697,7 @@ const VerifierRouteChildren: VerifierRouteChildren = {
   VerifierEscalationsRoute: VerifierEscalationsRoute,
   VerifierEvidenceRoute: VerifierEvidenceRoute,
   VerifierFamily360Route: VerifierFamily360Route,
+  VerifierFieldVisitsRoute: VerifierFieldVisitsRoute,
   VerifierInboxRoute: VerifierInboxRoute,
   VerifierMismatchesRoute: VerifierMismatchesRoute,
   VerifierQueueRoute: VerifierQueueRoute,

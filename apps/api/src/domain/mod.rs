@@ -59,7 +59,10 @@ impl RoleType {
     pub fn can_view_audit_logs(&self) -> bool {
         matches!(
             self,
-            RoleType::Auditor | RoleType::DepartmentAdmin | RoleType::SuperAdmin | RoleType::Supervisor
+            RoleType::Auditor
+                | RoleType::DepartmentAdmin
+                | RoleType::SuperAdmin
+                | RoleType::Supervisor
         )
     }
 
@@ -407,6 +410,18 @@ pub struct MyFamilyResponse {
     pub relationships: Vec<FamilyRelationshipDto>,
     pub timeline: Vec<FamilyTimelineItemDto>,
     pub requests: Vec<FamilyRequestDto>,
+    #[serde(default)]
+    pub applications: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub benefits: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub documents: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub issues: Vec<serde_json::Value>,
+    #[serde(default)]
+    pub verification: Option<serde_json::Value>,
+    #[serde(default)]
+    pub audit_summary: Option<serde_json::Value>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -847,6 +862,6 @@ pub struct Notification {
     pub created_at: DateTime<Utc>,
 }
 
-pub mod entity_resolution;
 pub mod benefit_duplicate;
 pub mod document;
+pub mod entity_resolution;

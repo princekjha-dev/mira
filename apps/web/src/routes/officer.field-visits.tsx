@@ -34,7 +34,7 @@ export const Route = createFileRoute("/officer/field-visits")({
   component: OfficerFieldVisitsPage,
 });
 
-function OfficerFieldVisitsPage() {
+export function OfficerFieldVisitsPage() {
   const { state, updateFieldVisit, addAudit } = useApp();
   const [filter, setFilter] = useState<"all" | "today" | "pending" | "completed">("all");
   const [activeVisit, setActiveVisit] = useState<FieldVisit | null>(null);

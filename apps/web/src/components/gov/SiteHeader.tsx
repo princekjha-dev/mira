@@ -90,27 +90,43 @@ export function SiteHeader() {
   const path = useRouterState({ select: (s) => s.location.pathname });
   const loginPage = path === "/login" || path === "/officer/login";
 
-  // Desktop primary navigation specified in requirements:
-  // Schemes, Benefits, Eligibility, Track Application, Help & Support
+  // Canonical public services navigation:
+  // Schemes, Eligibility, Benefits & Entitlements, Track Application, Help & Support
   const primaryNav = [
     { to: "/schemes", label: "Schemes" },
-    { to: "/citizen/benefits", label: "Benefits" },
     { to: "/eligibility", label: "Eligibility" },
+    { to: "/citizen/benefits", label: "Benefits & Entitlements" },
     { to: "/track", label: "Track Application" },
     { to: "/help", label: "Help & Support" },
   ] as const;
 
-  const mobileNav = [
-    { to: "/", label: "Home" },
-    { to: "/schemes", label: "Schemes" },
-    { to: "/citizen/benefits", label: "Benefits" },
-    { to: "/eligibility", label: "Eligibility" },
-    { to: "/track", label: "Track Application" },
-    { to: "/citizen/family", label: "My Family Record" },
-    { to: "/citizen/documents", label: "My Documents" },
-    { to: "/citizen/applications", label: "My Applications" },
-    { to: "/help", label: "Help & Support" },
-  ] as const;
+  const dashboard =
+    s?.role === "officer"
+      ? "/officer/dashboard"
+      : s?.role === "admin"
+        ? "/department/dashboard"
+        : "/citizen/dashboard";
+
+  const mobileNav = s
+    ? [
+        { to: dashboard, label: "My Dashboard" },
+        { to: "/schemes", label: "Schemes & Benefits" },
+        { to: "/eligibility", label: "Eligibility Criteria" },
+        { to: "/citizen/benefits", label: "Benefits & Entitlements" },
+        { to: "/citizen/applications", label: "My Applications" },
+        { to: "/citizen/family", label: "My Family Record" },
+        { to: "/citizen/documents", label: "My Documents" },
+        { to: "/track", label: "Track Application" },
+        { to: "/help", label: "Help & Support" },
+      ]
+    : [
+        { to: "/", label: "Home" },
+        { to: "/schemes", label: "Schemes" },
+        { to: "/eligibility", label: "Eligibility" },
+        { to: "/citizen/benefits", label: "Benefits & Entitlements" },
+        { to: "/track", label: "Track Application" },
+        { to: "/help", label: "Help & Support" },
+      ];
 
   const doLogout = () => {
     if (s?.apiToken)
@@ -121,13 +137,6 @@ export function SiteHeader() {
     toast.success("You have been signed out securely.");
     nav({ to: "/" });
   };
-
-  const dashboard =
-    s?.role === "officer"
-      ? "/officer/dashboard"
-      : s?.role === "admin"
-        ? "/department/dashboard"
-        : "/citizen/dashboard";
 
   const handleSearchClick = () => {
     if (path === "/") {
@@ -168,30 +177,30 @@ export function SiteHeader() {
             </div>
           </Link>
           <nav
-            className="flex items-center gap-2 text-xs text-navy"
+            className="flex items-center gap-1.5 text-xs text-muted-foreground"
             aria-label={t("accessLabel")}
           >
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="text-xs text-slate-700"
+              className="h-8 text-xs font-medium text-slate-600 hover:text-navy hover:bg-slate-100/70"
             >
-              <Link to="/">Home</Link>
+              <Link to="/">{t("home")}</Link>
             </Button>
             <Button
               asChild
               variant="ghost"
               size="sm"
-              className="text-xs text-slate-700"
+              className="h-8 text-xs font-medium text-slate-600 hover:text-navy hover:bg-slate-100/70"
             >
-              <Link to="/help">Help</Link>
+              <Link to="/help">{t("help")}</Link>
             </Button>
             <LanguageMenu />
             <Button
               variant="ghost"
               size="icon"
-              className="h-8 w-8 text-slate-700"
+              className="h-8 w-8 text-slate-600 hover:text-navy hover:bg-slate-100/70"
               onClick={() => setA11y(true)}
               aria-label={t("accessibility")}
               title={t("accessibility")}
@@ -336,16 +345,28 @@ export function SiteHeader() {
                 </DropdownMenuContent>
               </DropdownMenu>
             ) : (
-              <Button
-                size="sm"
-                asChild
-                className="rounded-lg bg-navy hover:bg-navy/90 text-white font-medium px-3.5 shadow-xs transition-all duration-150"
-              >
-                <Link to="/login">
-                  <LogIn className="mr-1.5 h-3.5 w-3.5" />
-                  <span>Sign In</span>
-                </Link>
-              </Button>
+              <div className="flex items-center gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  asChild
+                  className="hidden sm:inline-flex rounded-lg border-slate-300 dark:border-slate-700 text-slate-800 dark:text-slate-200 hover:bg-slate-100 dark:hover:bg-slate-800 text-xs font-semibold px-3 h-8 shadow-2xs"
+                >
+                  <Link to="/schemes">
+                    <span>Explore Schemes</span>
+                  </Link>
+                </Button>
+                <Button
+                  size="sm"
+                  asChild
+                  className="rounded-lg bg-navy hover:bg-navy/90 text-white font-medium px-3.5 h-8 shadow-xs transition-all duration-150"
+                >
+                  <Link to="/login">
+                    <LogIn className="mr-1.5 h-3.5 w-3.5" />
+                    <span>Sign In</span>
+                  </Link>
+                </Button>
+              </div>
             )}
 
             {/* Mobile menu sheet */}

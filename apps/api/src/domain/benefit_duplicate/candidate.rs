@@ -3,10 +3,7 @@ use sqlx::{postgres::PgRow, PgPool, Row};
 use uuid::Uuid;
 
 use crate::{
-    domain::{
-        benefit_duplicate::scope::BenefitScope,
-        Benefit,
-    },
+    domain::{benefit_duplicate::scope::BenefitScope, Benefit},
     errors::AppError,
 };
 
@@ -119,7 +116,10 @@ impl DuplicateCandidateFinder {
             }
             BenefitScope::Composite => {
                 if let Some(pid) = person_id {
-                    let q = format!("{} AND (b.person_id = $2 OR b.household_id = $3)", base_query);
+                    let q = format!(
+                        "{} AND (b.person_id = $2 OR b.household_id = $3)",
+                        base_query
+                    );
                     let rows = sqlx::query(&q)
                         .bind(scheme_id)
                         .bind(pid)

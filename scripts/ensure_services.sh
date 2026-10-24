@@ -3,13 +3,10 @@ set -e
 
 PROJECT_ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
-# 1. Check PostgreSQL on Port 5433
-if ! pg_isready -h 127.0.0.1 -p 5433 >/dev/null 2>&1; then
-  echo "--> Starting Mira PostgreSQL on port 5433..."
-  if [ -d "$PROJECT_ROOT/.pgdata" ]; then
-    /usr/lib/postgresql/18/bin/pg_ctl -D "$PROJECT_ROOT/.pgdata" -o "-p 5433 -k $PROJECT_ROOT/.pgdata" -l "$PROJECT_ROOT/.pgdata/logfile" start || true
-  fi
-  sleep 1
+bash "$PROJECT_ROOT/scripts/ensure_postgres.sh"
+
+if [ "${1:-}" = "--database-only" ]; then
+  exit 0
 fi
 
 # 2. Check Mira API on Port 4000
@@ -18,12 +15,24 @@ if ! curl --fail --silent http://127.0.0.1:4000/api/v1/health >/dev/null 2>&1; t
   if [ -f "$PROJECT_ROOT/apps/api/target/debug/mira-api" ]; then
     (
       cd "$PROJECT_ROOT/apps/api"
-      env $(cat "$PROJECT_ROOT/.env" | xargs) "$PROJECT_ROOT/apps/api/target/debug/mira-api" >/tmp/mira-api.log 2>&1 &
+      if [ -f "$PROJECT_ROOT/.env" ]; then
+        set -a
+        . "$PROJECT_ROOT/.env"
+        set +a
+      fi
+      export DATABASE_URL="${DATABASE_URL:-postgres://postgres@127.0.0.1:5433/mira_dev}"
+      exec "$PROJECT_ROOT/apps/api/target/debug/mira-api" >/tmp/mira-api.log 2>&1 &
     )
   else
     (
       cd "$PROJECT_ROOT/apps/api"
-      env $(cat "$PROJECT_ROOT/.env" | xargs) cargo run >/tmp/mira-api.log 2>&1 &
+      if [ -f "$PROJECT_ROOT/.env" ]; then
+        set -a
+        . "$PROJECT_ROOT/.env"
+        set +a
+      fi
+      export DATABASE_URL="${DATABASE_URL:-postgres://postgres@127.0.0.1:5433/mira_dev}"
+      exec cargo run >/tmp/mira-api.log 2>&1 &
     )
   fi
 
@@ -34,4 +43,9 @@ if ! curl --fail --silent http://127.0.0.1:4000/api/v1/health >/dev/null 2>&1; t
     fi
     sleep 0.5
   done
+
+  if ! curl --fail --silent http://127.0.0.1:4000/api/v1/health >/dev/null 2>&1; then
+    echo "ERROR: Mira API did not become healthy. Check /tmp/mira-api.log." >&2
+    exit 1
+  fi
 fi

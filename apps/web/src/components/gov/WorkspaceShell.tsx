@@ -14,22 +14,24 @@ export function WorkspaceShell({
   title,
   items,
   children,
-  isAuditor = false,
+  isAuditor,
 }: {
-  title: string;
-  items: NavItem[];
+  title?: string;
+  items?: NavItem[];
   children: ReactNode;
   notifTo?: string;
   inboxTo?: string;
   isAuditor?: boolean;
 }) {
-  const convertedItems: RoleNavItem[] = items.map((it, idx) => ({
-    id: `nav-${idx}`,
-    label: it.label,
-    to: it.to,
-    icon: it.icon,
-    exact: it.exact,
-  }));
+  const convertedItems: RoleNavItem[] | undefined = items
+    ? items.map((it, idx) => ({
+        id: `nav-${idx}`,
+        label: it.label,
+        to: it.to,
+        icon: it.icon,
+        exact: it.exact,
+      }))
+    : undefined;
 
   return (
     <MiraShell title={title} items={convertedItems} isReadOnly={isAuditor}>

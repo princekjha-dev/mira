@@ -7,8 +7,7 @@ use crate::{
     auth::AuthenticatedUser,
     domain::{
         benefit_duplicate::{
-            candidate::DuplicateCandidateFinder,
-            comparison::DuplicateComparator,
+            candidate::DuplicateCandidateFinder, comparison::DuplicateComparator,
             scope::BenefitScope,
         },
         entity_resolution::models::{
@@ -28,7 +27,7 @@ pub struct CheckBenefitDuplicateRequest {
 #[derive(Deserialize)]
 pub struct BenefitDuplicateDecisionRequest {
     pub decision: String, // CONFIRMED_DUPLICATE, NOT_DUPLICATE, REQUIRES_MORE_EVIDENCE
-    pub reason: String,   // HOUSEHOLD_SEPARATION, DIFFERENT_PERSON, INCORRECT_SOURCE_DATA, DUPLICATE_CONFIRMED, PROPERTY_ALREADY_BENEFITED, INSUFFICIENT_EVIDENCE, OTHER
+    pub reason: String, // HOUSEHOLD_SEPARATION, DIFFERENT_PERSON, INCORRECT_SOURCE_DATA, DUPLICATE_CONFIRMED, PROPERTY_ALREADY_BENEFITED, INSUFFICIENT_EVIDENCE, OTHER
     pub explanation: Option<String>,
 }
 
@@ -61,9 +60,14 @@ impl BenefitDuplicateService {
         )
         .fetch_optional(pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Application {} not found", payload.application_id)))?;
+        .ok_or_else(|| {
+            AppError::NotFound(format!("Application {} not found", payload.application_id))
+        })?;
 
-        let scope_str = app.scheme_scope.clone().unwrap_or_else(|| "INDIVIDUAL".to_string());
+        let scope_str = app
+            .scheme_scope
+            .clone()
+            .unwrap_or_else(|| "INDIVIDUAL".to_string());
         let scope = BenefitScope::from_str(&scope_str);
 
         // Scope unit resolution:
@@ -108,22 +112,23 @@ impl BenefitDuplicateService {
         let mut rank = 1;
 
         for eb in existing_benefits {
-            let cand = DuplicateComparator::compare_application_with_benefit(
-                pool,
-                &app,
-                scope,
-                &eb,
-                rank,
-            )
-            .await?;
+            let cand =
+                DuplicateComparator::compare_application_with_benefit(pool, &app, scope, &eb, rank)
+                    .await?;
 
             let cat = DuplicateCategory::from_str(&cand.duplicate_category);
             match cat {
-                DuplicateCategory::ExactDuplicate => overall_assessment = DuplicateCategory::ExactDuplicate,
-                DuplicateCategory::LikelyDuplicate if overall_assessment != DuplicateCategory::ExactDuplicate => {
+                DuplicateCategory::ExactDuplicate => {
+                    overall_assessment = DuplicateCategory::ExactDuplicate
+                }
+                DuplicateCategory::LikelyDuplicate
+                    if overall_assessment != DuplicateCategory::ExactDuplicate =>
+                {
                     overall_assessment = DuplicateCategory::LikelyDuplicate;
                 }
-                DuplicateCategory::PotentialDuplicate if overall_assessment == DuplicateCategory::NotDuplicate => {
+                DuplicateCategory::PotentialDuplicate
+                    if overall_assessment == DuplicateCategory::NotDuplicate =>
+                {
                     overall_assessment = DuplicateCategory::PotentialDuplicate;
                 }
                 _ => {}
@@ -306,7 +311,10 @@ impl BenefitDuplicateService {
         }
 
         qb.push(" ORDER BY CASE c.priority WHEN 'HIGH' THEN 1 WHEN 'MEDIUM' THEN 2 ELSE 3 END, c.created_at DESC ");
-        qb.push(" LIMIT ").push_bind(limit).push(" OFFSET ").push_bind(offset);
+        qb.push(" LIMIT ")
+            .push_bind(limit)
+            .push(" OFFSET ")
+            .push_bind(offset);
 
         let rows = qb.build().fetch_all(pool).await?;
         let mut cases = Vec::new();
@@ -371,7 +379,9 @@ impl BenefitDuplicateService {
         .bind(case_id)
         .fetch_optional(pool)
         .await?
-        .ok_or_else(|| AppError::NotFound(format!("Benefit duplicate case {} not found", case_id)))?;
+        .ok_or_else(|| {
+            AppError::NotFound(format!("Benefit duplicate case {} not found", case_id))
+        })?;
 
         // Query candidates
         let cand_rows = sqlx::query(
@@ -473,7 +483,10 @@ impl BenefitDuplicateService {
         payload: BenefitDuplicateDecisionRequest,
     ) -> Result<BenefitDuplicateCase, AppError> {
         let is_authorized = caller.roles.iter().any(|r| {
-            matches!(r.as_str(), "VERIFICATION_OFFICER" | "DEPARTMENT_ADMIN" | "SUPER_ADMIN")
+            matches!(
+                r.as_str(),
+                "VERIFICATION_OFFICER" | "DEPARTMENT_ADMIN" | "SUPER_ADMIN"
+            )
         });
 
         if !is_authorized {

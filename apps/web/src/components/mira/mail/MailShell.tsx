@@ -12,6 +12,7 @@ import {
   type WorkflowFilter,
   type MailFilterState,
   type SortOrder,
+  type CaseActivityFilter,
 } from "./types";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,7 @@ export function MailShell({
   } = useApp();
 
   const [activeFolder, setActiveFolder] = useState<MailFolder>("inbox");
-  const [activeWorkflow, setActiveWorkflow] = useState<WorkflowFilter | null>(null);
+  const [activeActivity, setActiveActivity] = useState<CaseActivityFilter>(null);
   const [selectedThreadId, setSelectedThreadId] = useState<string | null>(
     () => state.messages[0]?.id || null
   );
@@ -75,7 +76,7 @@ export function MailShell({
         if (selectedThreadId) {
           e.preventDefault();
           archiveMessage(selectedThreadId);
-          toast.success("Thread archived (Press ⌘Z to undo)");
+          toast.success("Thread archived");
         }
       } else if (e.key === "/") {
         e.preventDefault();
@@ -96,33 +97,43 @@ export function MailShell({
     return Array.from(set);
   }, [state.messages]);
 
-  // Folder and workflow counts
+  // Folder and case activity counts
   const folderCounts = useMemo(() => {
     return {
       inbox: state.messages.filter(
-        (m) => (!m.folder || m.folder === "inbox") && !m.isArchived && m.status === "unread"
+        (m) => (!m.folder || m.folder === "inbox") && !m.isArchived
       ).length,
-      starred: state.messages.filter((m) => !!m.isStarred).length,
+      needs_action: state.messages.filter(
+        (m) =>
+          !m.isArchived &&
+          (!!m.actionRequired ||
+            m.caseStatus === "awaiting_citizen" ||
+            m.caseStatus === "evidence_requested")
+      ).length,
       sent: state.messages.filter((m) => m.folder === "sent").length,
       archived: state.messages.filter((m) => !!m.isArchived).length,
     };
   }, [state.messages]);
 
-  const workflowCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    const tags = [
-      "Action Required",
-      "Evidence",
-      "Field Visit",
-      "Schedule",
-      "Operations",
-    ];
-    tags.forEach((tag) => {
-      counts[tag] = state.messages.filter(
-        (m) => !m.isArchived && m.tags?.includes(tag)
-      ).length;
-    });
-    return counts;
+  const activityCounts = useMemo(() => {
+    return {
+      evidence: state.messages.filter(
+        (m) =>
+          !m.isArchived &&
+          (m.caseType === "evidence_request" || m.tags?.includes("Evidence"))
+      ).length,
+      field_visit: state.messages.filter(
+        (m) =>
+          !m.isArchived &&
+          (m.caseType === "field_visit" || m.tags?.includes("Field Visit"))
+      ).length,
+      clarification: state.messages.filter(
+        (m) => !m.isArchived && m.caseType === "clarification"
+      ).length,
+      decision: state.messages.filter(
+        (m) => !m.isArchived && m.caseType === "decision"
+      ).length,
+    };
   }, [state.messages]);
 
   // Filtered and Sorted Threads
@@ -132,14 +143,48 @@ export function MailShell({
       if (activeFolder === "starred" && !thread.isStarred) return false;
       if (activeFolder === "archived" && !thread.isArchived) return false;
       if (activeFolder === "sent" && thread.folder !== "sent") return false;
+      if (activeFolder === "needs_action") {
+        if (thread.isArchived) return false;
+        if (
+          !thread.actionRequired &&
+          thread.caseStatus !== "awaiting_citizen" &&
+          thread.caseStatus !== "evidence_requested"
+        ) {
+          return false;
+        }
+      }
       if (
         activeFolder === "inbox" &&
         (thread.isArchived || thread.folder === "sent")
-      )
+      ) {
         return false;
+      }
 
-      // 2. Sidebar Workflow check
-      if (activeWorkflow && !thread.tags?.includes(activeWorkflow)) return false;
+      // 2. Case Activity check
+      if (activeActivity) {
+        if (
+          activeActivity === "evidence" &&
+          thread.caseType !== "evidence_request" &&
+          !thread.tags?.includes("Evidence")
+        )
+          return false;
+        if (
+          activeActivity === "field_visit" &&
+          thread.caseType !== "field_visit" &&
+          !thread.tags?.includes("Field Visit")
+        )
+          return false;
+        if (
+          activeActivity === "clarification" &&
+          thread.caseType !== "clarification"
+        )
+          return false;
+        if (
+          activeActivity === "decision" &&
+          thread.caseType !== "decision"
+        )
+          return false;
+      }
 
       // 3. Filter Popover checks
       if (filter.unreadOnly && thread.status !== "unread") return false;
@@ -155,16 +200,19 @@ export function MailShell({
       )
         return false;
 
-      // 4. Search query
+      // 4. Case-aware Multi-field Search (applicant, case ID, scheme, sender, dept, action)
       if (searchQuery.trim()) {
         const q = searchQuery.toLowerCase();
         const matchesSubject = thread.subject.toLowerCase().includes(q);
         const matchesSender = thread.sender.name.toLowerCase().includes(q);
         const matchesSenderEmail = thread.sender.email.toLowerCase().includes(q);
-        const matchesAppId =
-          thread.applicationId?.toLowerCase().includes(q) ?? false;
-        const matchesTags =
-          thread.tags?.some((t) => t.toLowerCase().includes(q)) ?? false;
+        const matchesSenderDept = thread.sender.department?.toLowerCase().includes(q) ?? false;
+        const matchesRecipient = thread.recipient.name.toLowerCase().includes(q);
+        const matchesAppId = thread.applicationId?.toLowerCase().includes(q) ?? false;
+        const matchesScheme = thread.schemeName?.toLowerCase().includes(q) ?? false;
+        const matchesHousehold = thread.householdId?.toLowerCase().includes(q) ?? false;
+        const matchesAction = thread.actionRequired?.toLowerCase().includes(q) ?? false;
+        const matchesTags = thread.tags?.some((t) => t.toLowerCase().includes(q)) ?? false;
         const matchesBody = thread.messages.some((m) =>
           m.body.toLowerCase().includes(q)
         );
@@ -173,7 +221,12 @@ export function MailShell({
           !matchesSubject &&
           !matchesSender &&
           !matchesSenderEmail &&
+          !matchesSenderDept &&
+          !matchesRecipient &&
           !matchesAppId &&
+          !matchesScheme &&
+          !matchesHousehold &&
+          !matchesAction &&
           !matchesTags &&
           !matchesBody
         ) {
@@ -196,14 +249,12 @@ export function MailShell({
       const timeB = new Date(
         b.timestamp.includes(" ") ? b.timestamp.replace(" ", "T") : b.timestamp
       ).getTime();
-
-      if (sortOrder === "oldest") return timeA - timeB;
-      return timeB - timeA;
+      return sortOrder === "oldest" ? timeA - timeB : timeB - timeA;
     });
   }, [
     state.messages,
     activeFolder,
-    activeWorkflow,
+    activeActivity,
     filter,
     searchQuery,
     sortOrder,
@@ -312,6 +363,7 @@ export function MailShell({
           onArchive={() => activeThread && handleArchive(activeThread.id)}
           availableApplications={availableApplications}
           searchRef={searchInputRef}
+          isReadOnly={state.session?.role === "auditor"}
         />
 
         {/* Section 6 & 19: Responsive Three-Pane Layout */}
@@ -329,13 +381,13 @@ export function MailShell({
                 setActiveFolder(folder);
                 setMobileView("list");
               }}
-              activeWorkflow={activeWorkflow}
-              onSelectWorkflow={(wf) => {
-                setActiveWorkflow(wf);
+              activeActivity={activeActivity}
+              onSelectActivity={(act) => {
+                setActiveActivity(act);
                 setMobileView("list");
               }}
               folderCounts={folderCounts}
-              workflowCounts={workflowCounts}
+              activityCounts={activityCounts}
             />
           </div>
 
@@ -348,13 +400,105 @@ export function MailShell({
             )}
           >
             {/* Folder / Filter status pill indicator */}
-            <div className="flex items-center justify-between px-3.5 py-2 border-b border-slate-100 dark:border-slate-800/80 bg-slate-50/30 dark:bg-slate-900/30 text-[11px] text-muted-foreground">
-              <span className="font-medium text-slate-700 dark:text-slate-300 capitalize">
-                {activeWorkflow || activeFolder}
-              </span>
-              <span className="font-mono tabular-nums">
-                {filteredThreads.length} message{filteredThreads.length === 1 ? "" : "s"}
-              </span>
+            <div className="flex flex-col gap-1.5 px-3.5 py-2 border-b border-slate-200/70 dark:border-slate-800/80 bg-slate-50/50 dark:bg-slate-900/40 text-[11px]">
+              <div className="flex items-center justify-between text-muted-foreground">
+                <span className="font-semibold text-slate-800 dark:text-slate-200">
+                  {activeActivity
+                    ? activeActivity === "evidence"
+                      ? "Evidence Requests"
+                      : activeActivity === "field_visit"
+                        ? "Field Visits"
+                        : activeActivity === "clarification"
+                          ? "Clarifications"
+                          : "Decisions"
+                    : activeFolder === "needs_action"
+                      ? "Needs My Action"
+                      : activeFolder === "sent"
+                        ? "Sent Dispatches"
+                        : activeFolder === "archived"
+                          ? "Archived Records"
+                          : "Official Correspondence"}
+                </span>
+                <span className="font-mono tabular-nums text-slate-500">
+                  {filteredThreads.length} record{filteredThreads.length === 1 ? "" : "s"}
+                </span>
+              </div>
+
+              {/* Quick Filter Chips */}
+              <div className="flex items-center gap-1 overflow-x-auto pb-0.5 scrollbar-none">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveFolder("inbox");
+                    setActiveActivity(null);
+                  }}
+                  className={cn(
+                    "rounded px-2 py-0.5 text-[10px] font-medium border transition-colors shrink-0",
+                    activeFolder === "inbox" && activeActivity === null
+                      ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-950"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                  )}
+                >
+                  All
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveFolder("needs_action");
+                    setActiveActivity(null);
+                  }}
+                  className={cn(
+                    "rounded px-2 py-0.5 text-[10px] font-medium border transition-colors shrink-0",
+                    activeFolder === "needs_action"
+                      ? "bg-amber-600 text-white border-amber-600"
+                      : "bg-amber-50 text-amber-800 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-800/60"
+                  )}
+                >
+                  Needs Action
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveActivity("evidence");
+                  }}
+                  className={cn(
+                    "rounded px-2 py-0.5 text-[10px] font-medium border transition-colors shrink-0",
+                    activeActivity === "evidence"
+                      ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-950"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                  )}
+                >
+                  Evidence
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveActivity("field_visit");
+                  }}
+                  className={cn(
+                    "rounded px-2 py-0.5 text-[10px] font-medium border transition-colors shrink-0",
+                    activeActivity === "field_visit"
+                      ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-950"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                  )}
+                >
+                  Visits
+                </button>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setActiveActivity("decision");
+                  }}
+                  className={cn(
+                    "rounded px-2 py-0.5 text-[10px] font-medium border transition-colors shrink-0",
+                    activeActivity === "decision"
+                      ? "bg-slate-900 text-white border-slate-900 dark:bg-slate-100 dark:text-slate-950"
+                      : "bg-white text-slate-600 border-slate-200 hover:bg-slate-100 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700"
+                  )}
+                >
+                  Decisions
+                </button>
+              </div>
             </div>
 
             <MessageList

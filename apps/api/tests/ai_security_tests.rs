@@ -1,5 +1,5 @@
-use mira_api::{
-    ai::{build_system_prompt, check_security_violation, sanitize_model_output, OUT_OF_SCOPE_REFUSAL},
+use mira_api::ai::{
+    build_system_prompt, check_security_violation, sanitize_model_output, OUT_OF_SCOPE_REFUSAL,
 };
 
 #[test]

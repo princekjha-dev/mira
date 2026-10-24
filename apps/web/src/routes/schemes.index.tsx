@@ -1,6 +1,6 @@
-import { createFileRoute, useNavigate } from "@tanstack/react-router";
+import { createFileRoute, useNavigate, Link } from "@tanstack/react-router";
 import { useMemo, useState } from "react";
-import { RotateCcw, Search } from "lucide-react";
+import { RotateCcw, Search, Sparkles, ListTree, Gift, Bookmark } from "lucide-react";
 import { CATEGORIES, SCHEMES, STATES } from "@/lib/data";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -15,6 +15,7 @@ import {
 import { SchemeCard } from "@/components/gov/SchemeCard";
 import { Empty, PageContainer, PageHeader } from "@/components/gov/ui";
 import { MiraCard } from "@/components/mira/MiraPrimitives";
+import { cn } from "@/lib/utils";
 
 type S = { q?: string; category?: string };
 export const Route = createFileRoute("/schemes/")({
@@ -45,6 +46,7 @@ const ANY = "any";
 function Schemes() {
   const search = Route.useSearch();
   const nav = useNavigate({ from: "/schemes/" });
+  const [viewMode, setViewMode] = useState<"browse" | "recommended" | "saved">("browse");
   const [q, setQ] = useState(search.q ?? "");
   const [f, setF] = useState({
     level: ANY,
@@ -54,22 +56,32 @@ function Schemes() {
     age: "",
     gender: ANY,
     property: ANY,
+    benefitType: ANY,
+    status: ANY,
   });
   const category = search.category ?? ANY;
 
   const list = useMemo(
     () =>
       SCHEMES.filter((s) => {
+        if (viewMode === "recommended") {
+          return ["post-matric", "sanitation", "health-cover", "rural-housing", "farmer-support"].includes(s.id);
+        }
+        if (viewMode === "saved") {
+          return ["post-matric", "health-cover", "rural-housing"].includes(s.id);
+        }
         const k = (search.q ?? "").toLowerCase();
         if (
           k &&
-          !(s.name + s.description + s.department + s.category)
+          !(s.name + s.description + s.department + s.category + s.keyBenefit + s.targetAudience)
             .toLowerCase()
             .includes(k)
         )
           return false;
         if (category !== ANY && s.category !== category) return false;
         if (f.level !== ANY && s.level !== f.level) return false;
+        if (f.benefitType !== ANY && s.benefitType !== f.benefitType) return false;
+        if (f.status !== ANY && s.status !== f.status) return false;
         if (
           f.income !== ANY &&
           s.incomeMax !== undefined &&
@@ -96,7 +108,7 @@ function Schemes() {
           return false;
         return true;
       }),
-    [search.q, category, f],
+    [search.q, category, f, viewMode],
   );
 
   const sel = (
@@ -125,11 +137,68 @@ function Schemes() {
   return (
     <PageContainer>
       <PageHeader
-        eyebrow="SCHEMES & SERVICES"
-        title="Find a scheme"
-        desc="Filter by your situation. See clear eligibility criteria and apply when you're ready."
-        crumbs={[{ label: "Home", to: "/" }, { label: "Schemes" }]}
+        eyebrow="PUBLIC WELFARE CATALOGUE"
+        title="Government Schemes & Benefits"
+        desc="Explore public welfare schemes, eligibility requirements and available benefits."
+        crumbs={[{ label: "Home", to: "/" }, { label: "Schemes & Benefits" }]}
       />
+
+      {/* Schemes Destination Sub-navigation */}
+      <div className="flex items-center gap-1.5 overflow-x-auto border-b border-border/80 pb-2.5 mb-6 scrollbar-none">
+        <button
+          type="button"
+          onClick={() => setViewMode("browse")}
+          className={cn(
+            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5",
+            viewMode === "browse"
+              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950 shadow-2xs"
+              : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+          )}
+        >
+          <Search className="h-3.5 w-3.5" />
+          <span>Browse Schemes</span>
+        </button>
+        <button
+          type="button"
+          onClick={() => setViewMode("recommended")}
+          className={cn(
+            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5",
+            viewMode === "recommended"
+              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950 shadow-2xs"
+              : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+          )}
+        >
+          <Sparkles className="h-3.5 w-3.5 text-amber-500" />
+          <span>Recommended for You</span>
+        </button>
+        <Link
+          to="/eligibility"
+          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors flex items-center gap-1.5"
+        >
+          <ListTree className="h-3.5 w-3.5" />
+          <span>Eligibility Criteria</span>
+        </Link>
+        <Link
+          to="/citizen/benefits"
+          className="rounded-lg px-3 py-1.5 text-xs font-semibold text-muted-foreground hover:bg-muted/70 hover:text-foreground transition-colors flex items-center gap-1.5"
+        >
+          <Gift className="h-3.5 w-3.5" />
+          <span>Benefits & Entitlements</span>
+        </Link>
+        <button
+          type="button"
+          onClick={() => setViewMode("saved")}
+          className={cn(
+            "rounded-lg px-3 py-1.5 text-xs font-semibold transition-colors flex items-center gap-1.5",
+            viewMode === "saved"
+              ? "bg-slate-900 text-white dark:bg-slate-100 dark:text-slate-950 shadow-2xs"
+              : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
+          )}
+        >
+          <Bookmark className="h-3.5 w-3.5" />
+          <span>Saved Schemes</span>
+        </button>
+      </div>
       <div className="grid gap-6 lg:grid-cols-[280px_1fr]">
         <MiraCard
           variant="elevated"
@@ -186,6 +255,19 @@ function Schemes() {
             ["Individual", "Individual"],
             ["Household", "Household"],
           ])}
+          {sel("benefitType", "Benefits Type", [
+            ["Direct Benefit Transfer (DBT)", "Direct Benefit Transfer (DBT)"],
+            ["Subsidy / Grant", "Subsidy / Grant"],
+            ["Healthcare Coverage", "Healthcare Coverage"],
+            ["Monthly Pension", "Monthly Pension"],
+            ["In-kind Assistance", "In-kind Assistance"],
+          ])}
+          {sel("status", "Scheme Status", [
+            ["Active", "Active Scheme"],
+            ["Accepting Applications", "Accepting Applications"],
+            ["Rolling", "Rolling Enrollment"],
+            ["Verification Underway", "Verification Underway"],
+          ])}
           {sel("income", "Annual household income", [
             ["100000", "Up to ₹1,00,000"],
             ["200000", "₹1,00,001 – ₹2,00,000"],
@@ -237,6 +319,8 @@ function Schemes() {
                 age: "",
                 gender: ANY,
                 property: ANY,
+                benefitType: ANY,
+                status: ANY,
               });
               setQ("");
               nav({ search: {} });

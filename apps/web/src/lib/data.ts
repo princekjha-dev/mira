@@ -42,6 +42,14 @@ export const STATES = [
 ];
 
 export type Level = "Individual" | "Household";
+export type BenefitType =
+  | "Direct Benefit Transfer (DBT)"
+  | "Subsidy / Grant"
+  | "In-kind Assistance"
+  | "Financial Assistance"
+  | "Healthcare Coverage"
+  | "Monthly Pension";
+
 export interface Scheme {
   id: string;
   name: string;
@@ -61,6 +69,13 @@ export interface Scheme {
   householdExclusive?: boolean;
   questions: string[];
   basis: ("Individual" | "Household" | "Property")[];
+  keyBenefit: string;
+  benefitType: BenefitType;
+  targetAudience: string;
+  benefitsSummary: string[];
+  howToApply: string[];
+  deadlines?: string;
+  status: "Active" | "Accepting Applications" | "Rolling" | "Verification Underway";
 }
 
 export const SCHEMES: Scheme[] = [
@@ -71,19 +86,19 @@ export const SCHEMES: Scheme[] = [
     level: "Household",
     category: "Housing",
     description:
-      "Assistance for construction of a pucca house for eligible rural households without adequate housing.",
+      "Assistance for construction of a permanent pucca house for eligible rural households without adequate shelter.",
     eligibility: [
       "Household annual income up to ₹3,00,000",
-      "BPL household",
-      "No pucca house owned by any household member",
-      "No housing benefit previously received by the household",
+      "BPL household status or Priority Living list",
+      "No pucca house owned by any household member anywhere in India",
+      "No housing benefit previously received by the household under state or central scheme",
     ],
     documents: [
-      "Aadhaar",
+      "Aadhaar Card",
       "Income Certificate",
-      "BPL Certificate",
+      "BPL / Priority Ration Card",
       "Residence Certificate",
-      "Property / Land Document",
+      "Land / Homestead Possession Document",
     ],
     incomeMax: 300000,
     bplRequired: true,
@@ -91,11 +106,27 @@ export const SCHEMES: Scheme[] = [
     states: ["All States"],
     householdExclusive: true,
     questions: [
-      "Current type of dwelling",
-      "Plot ownership status",
-      "Have you received land under any government allotment?",
+      "Current type of dwelling (Kutcha / Semi-pucca / Homeless)",
+      "Homestead plot ownership status",
+      "Have you received housing subsidy under any prior government programme?",
     ],
     basis: ["Household", "Property"],
+    keyBenefit: "Financial grant of ₹1,20,000 for construction of a permanent pucca dwelling",
+    benefitType: "Subsidy / Grant",
+    targetAudience: "Rural homeless households or families residing in kutcha and dilapidated structures",
+    benefitsSummary: [
+      "Financial assistance of ₹1,20,000 disbursed in three milestone-linked installments via DBT",
+      "Additional 90 to 95 person-days of unskilled wage employment support under MGNREGS",
+      "Dedicated grant of ₹12,000 for construction of sanitary latrine via Swachh Bharat Mission",
+    ],
+    howToApply: [
+      "Submit application online or through Common Service Centre (CSC) with household ID",
+      "Field official conducts geo-tagged inspection of existing living site and landholding",
+      "Gram Sabha ratifies beneficiary list; verification officer reviews registry records",
+      "Sanction order issued and first installment released to verified Aadhaar-seeded bank account",
+    ],
+    deadlines: "Rolling annual sanction cycle. Current batch applications close 31 March 2027",
+    status: "Accepting Applications",
   },
   {
     id: "post-matric",
@@ -104,28 +135,45 @@ export const SCHEMES: Scheme[] = [
     level: "Individual",
     category: "Education",
     description:
-      "Support for students studying at post-matriculation level towards tuition and maintenance.",
+      "Statutory educational scholarship covering tuition fee reimbursement and monthly maintenance for post-matriculation study.",
     eligibility: [
-      "Student aged 15–30",
+      "Student aged 15–30 enrolled in higher secondary, graduation, or professional courses",
       "Household annual income up to ₹2,50,000",
-      "Enrolled in a recognised institution",
+      "Enrolled in a recognised government or UGC/AICTE approved educational institution",
     ],
     documents: [
-      "Aadhaar",
-      "Income Certificate",
-      "Residence Certificate",
-      "Bonafide / Enrollment Certificate",
+      "Aadhaar Card",
+      "Income Certificate (Current Year)",
+      "Residence / Domicile Certificate",
+      "Bonafide / Enrollment Certificate from Institution",
+      "Previous Year Mark Sheet",
     ],
     incomeMax: 250000,
     ageMin: 15,
     ageMax: 30,
     states: ["All States"],
     questions: [
-      "Institution name",
-      "Course and year of study",
-      "Previous year marks (%)",
+      "Institution name and AISHE code",
+      "Course and current year of study",
+      "Previous year academic score / grade",
     ],
     basis: ["Individual"],
+    keyBenefit: "100% tuition reimbursement plus annual maintenance allowance up to ₹13,500",
+    benefitType: "Direct Benefit Transfer (DBT)",
+    targetAudience: "Post-secondary students from economically weaker sections pursuing higher education",
+    benefitsSummary: [
+      "Full reimbursement of non-refundable tuition and institutional fees directly to student account",
+      "Annual maintenance allowance of up to ₹13,500 based on hosteller or day-scholar status",
+      "Supplementary allowance for study tour expenses and disability-specific assist devices",
+    ],
+    howToApply: [
+      "Register with Aadhaar and educational institution bonafide certificate",
+      "Verification of enrollment by college nodal officer through National Scholarship Portal",
+      "District Social Welfare Officer determination and state treasury clearance",
+      "Annual disbursement directly into student's Aadhaar-linked bank account",
+    ],
+    deadlines: "Academic Year 2026-27: Application window open until 30 November 2026",
+    status: "Accepting Applications",
   },
   {
     id: "health-cover",
@@ -134,20 +182,39 @@ export const SCHEMES: Scheme[] = [
     level: "Household",
     category: "Healthcare",
     description:
-      "Cashless hospital treatment cover for eligible households at empanelled hospitals.",
+      "Comprehensive cashless secondary and tertiary inpatient medical cover for eligible families at empanelled hospitals.",
     eligibility: [
-      "BPL household",
-      "Household listed in state beneficiary registry",
+      "BPL or low-income household verified in socioeconomic registry",
+      "Household listed in state beneficiary database (NFSA / SECC)",
     ],
-    documents: ["Aadhaar", "BPL Certificate", "Residence Certificate"],
+    documents: [
+      "Aadhaar Card (all family members)",
+      "Ration Card / BPL Certificate",
+      "Residence Certificate",
+    ],
     bplRequired: true,
     states: ["All States"],
     householdExclusive: true,
     questions: [
-      "Any member with chronic illness?",
-      "Preferred empanelled hospital district",
+      "Any member with existing chronic or critical illness?",
+      "Preferred district for empanelled secondary hospital access",
     ],
     basis: ["Household"],
+    keyBenefit: "Cashless health insurance coverage of up to ₹5,00,000 per family per year",
+    benefitType: "Healthcare Coverage",
+    targetAudience: "Economically vulnerable households requiring secondary and tertiary medical protection",
+    benefitsSummary: [
+      "Cashless inpatient hospital care up to ₹5,00,000 annually per family with zero copay",
+      "Coverage extends to pre-existing conditions from day one across 1,949 medical packages",
+      "Portable nationwide across all 28,000+ empanelled public and private healthcare facilities",
+    ],
+    howToApply: [
+      "Check household inclusion in beneficiary registry using Ration Card or Aadhaar",
+      "Generate Ayushman digital health card at any empanelled hospital or CSC kiosk",
+      "Present digital card at hospital Helpdesk (Aayushman Mitra) for paperless admission",
+    ],
+    deadlines: "Ongoing entitlement; renewal is automated annually by state health agency",
+    status: "Active",
   },
   {
     id: "farmer-support",
@@ -156,21 +223,41 @@ export const SCHEMES: Scheme[] = [
     level: "Household",
     category: "Agriculture",
     description:
-      "Periodic income support for small and marginal farmer households holding cultivable land.",
+      "Direct income support of ₹6,000 per annum for small and marginal landholding farmer households to meet farm inputs and domestic needs.",
     eligibility: [
-      "Cultivable land up to 2 hectares in household name",
-      "Not an income-tax payer",
+      "Operational cultivable landholding up to 2 hectares recorded in land revenue records",
+      "Not an income-tax payer and not holding constitutional post",
     ],
-    documents: ["Aadhaar", "Property / Land Document", "Bank Passbook"],
+    documents: [
+      "Aadhaar Card",
+      "Land Ownership Document (Khatauni / Khasra)",
+      "Bank Account Passbook / Mandate",
+    ],
     property: "land-under-2ha",
     states: ["All States"],
     householdExclusive: true,
     questions: [
-      "Khasra / survey number",
-      "Crops cultivated last season",
-      "Irrigation source",
+      "Khasra / land survey number and sub-division",
+      "Crops cultivated in current agricultural season",
+      "Irrigation source (canal, tubewell, rainfed)",
     ],
     basis: ["Household", "Property"],
+    keyBenefit: "Direct income support of ₹6,000 per year delivered in three four-monthly installments",
+    benefitType: "Direct Benefit Transfer (DBT)",
+    targetAudience: "Small and marginal operational landholding farmer families across rural jurisdictions",
+    benefitsSummary: [
+      "Annual financial support of ₹6,000 paid as ₹2,000 every 4 months (April, August, December)",
+      "Direct electronic transfer via PFMS directly to verified agricultural bank accounts",
+      "Concessional credit access via linked Kisan Credit Card (KCC) scheme",
+    ],
+    howToApply: [
+      "Self-registration through PM-Kisan portal or Block Agriculture Office with land Khasra record",
+      "State revenue department authenticates land ownership via Bhulekh registry integration",
+      "Aadhaar-based e-KYC validation via OTP or biometric authentication",
+      "Installments automatically credited to beneficiary account",
+    ],
+    deadlines: "Open enrollment; e-KYC mandatory before each disbursement cycle",
+    status: "Rolling",
   },
   {
     id: "old-age-pension",
@@ -179,25 +266,42 @@ export const SCHEMES: Scheme[] = [
     level: "Individual",
     category: "Pension",
     description:
-      "Monthly pension for senior citizens from low-income households.",
+      "Statutory monthly social security pension for indigent senior citizens living below poverty threshold.",
     eligibility: [
-      "Age 60 years or above",
-      "Household annual income up to ₹1,80,000",
+      "Citizen aged 60 years or above",
+      "Household annual income up to ₹1,80,000 (urban) or ₹1,20,000 (rural)",
+      "Not recipient of any other regular social pension",
     ],
     documents: [
-      "Aadhaar",
-      "Birth Certificate",
+      "Aadhaar Card",
+      "Birth / Age Proof Certificate",
       "Income Certificate",
-      "Bank Passbook",
+      "Bank Account Details",
     ],
     incomeMax: 180000,
     ageMin: 60,
     states: ["All States"],
     questions: [
-      "Are you receiving any other pension?",
-      "Bank account for disbursement",
+      "Are you currently receiving any other pension from government or EPFO?",
+      "Aadhaar-seeded bank account for disbursement",
     ],
     basis: ["Individual"],
+    keyBenefit: "Guaranteed monthly social security pension of ₹1,000 to ₹1,500 for senior citizens",
+    benefitType: "Monthly Pension",
+    targetAudience: "BPL and low-income senior citizens aged 60 and above without adequate familial support",
+    benefitsSummary: [
+      "Monthly pension of ₹1,000 (aged 60-79) and ₹1,500 (aged 80+) transferred on the 1st of every month",
+      "Free annual health screenings at primary health centers for enrolled pension holders",
+      "Exemption from local municipal service fees and priority bus transit pass",
+    ],
+    howToApply: [
+      "Submit application with age proof, residence record, and household income declaration",
+      "Field inquiry by Gram Panchayat Secretary / Ward Officer to confirm living status",
+      "Approval by District Social Welfare Committee and generation of Pension PPO ID",
+      "Monthly credit via DBT with annual digital life certificate (Jeevan Pramaan) submission",
+    ],
+    deadlines: "Continuous application cycle; determinations made monthly by district committee",
+    status: "Active",
   },
   {
     id: "maternity",
@@ -206,17 +310,40 @@ export const SCHEMES: Scheme[] = [
     level: "Individual",
     category: "Women & Child",
     description:
-      "Support for pregnant and lactating women for the first living child, linked to health check-ups.",
+      "Conditional cash incentive for pregnant and lactating mothers towards wage compensation and maternal nutrition.",
     eligibility: [
-      "Woman aged 19 or above",
-      "Registered pregnancy at a government health facility",
+      "Pregnant woman aged 19 or above for first living child",
+      "Registration of pregnancy at an Anganwadi Centre or government health facility",
     ],
-    documents: ["Aadhaar", "Mother & Child Protection Card", "Bank Passbook"],
+    documents: [
+      "Aadhaar Card (Mother and Spouse)",
+      "Mother & Child Protection (MCP) Card",
+      "Individual Bank Passbook of Mother",
+    ],
     ageMin: 19,
     gender: "Female",
     states: ["All States"],
-    questions: ["Expected date of delivery", "Registered health facility"],
+    questions: [
+      "Expected date of delivery (EDD) per medical record",
+      "Registered Anganwadi Centre / primary health facility",
+    ],
     basis: ["Individual"],
+    keyBenefit: "Cash incentive of ₹5,000 in three tranches for institutional delivery and immunization",
+    benefitType: "Direct Benefit Transfer (DBT)",
+    targetAudience: "Pregnant women and lactating mothers for the first living child of the family",
+    benefitsSummary: [
+      "First installment of ₹1,000 upon early registration of pregnancy at Anganwadi / Health Center",
+      "Second installment of ₹2,000 after 6 months of pregnancy with at least one antenatal check-up",
+      "Third installment of ₹2,000 after child birth registration and completion of first cycle of vaccination",
+    ],
+    howToApply: [
+      "Register at nearest Anganwadi Centre (AWC) or approved health facility within 150 days of LMP",
+      "Submit Mother and Child Protection (MCP) card and Aadhaar details of self and spouse",
+      "Field validation by ASHA / Anganwadi worker for each milestone trigger",
+      "Direct treasury transfer to woman's individual bank account",
+    ],
+    deadlines: "Application must be filed within 730 days from date of LMP",
+    status: "Active",
   },
   {
     id: "job-card",
@@ -225,19 +352,39 @@ export const SCHEMES: Scheme[] = [
     level: "Household",
     category: "Employment",
     description:
-      "Job card for rural households seeking wage employment under public works.",
+      "Statutory entitlement guaranteeing 100 days of unskilled wage work per financial year to every rural household.",
     eligibility: [
-      "Rural household",
-      "Adult members willing to do unskilled manual work",
+      "Rural household resident within the Gram Panchayat jurisdiction",
+      "Adult members willing to undertake unskilled manual labor",
     ],
-    documents: ["Aadhaar", "Residence Certificate", "Photograph"],
+    documents: [
+      "Aadhaar Card (all adult applicants)",
+      "Proof of Local Residence",
+      "Joint / Family Passport-size Photograph",
+    ],
     states: ["All States"],
     householdExclusive: true,
     questions: [
-      "Number of adult members seeking work",
-      "Preferred work location (Gram Panchayat)",
+      "Number of adult household members willing to undertake manual work",
+      "Preferred work location / Gram Panchayat ward",
     ],
     basis: ["Household"],
+    keyBenefit: "Statutory guarantee of 100 days of wage employment per financial year for rural households",
+    benefitType: "In-kind Assistance",
+    targetAudience: "Every rural household whose adult members volunteer to do unskilled manual work",
+    benefitsSummary: [
+      "100 days of guaranteed wage employment at statutory state daily minimum wage (₹240 - ₹357/day)",
+      "Unemployment allowance payable if employment is not provided within 15 days of application",
+      "Creation of durable community assets (water conservation, rural roads, plantation, land development)",
+    ],
+    howToApply: [
+      "Submit written or oral application to local Gram Panchayat with family photograph and Aadhaar",
+      "Gram Panchayat issues laminated Job Card with photo within 15 days of verification",
+      "Demand for work submitted on Form 4; dated receipt issued with work allocation date",
+      "Bi-weekly wage transfer directly into post office or bank account",
+    ],
+    deadlines: "Statutory right available year-round upon demand",
+    status: "Active",
   },
   {
     id: "sanitation",
@@ -246,16 +393,39 @@ export const SCHEMES: Scheme[] = [
     level: "Household",
     category: "Rural Development",
     description:
-      "Assistance for construction of an individual household toilet in rural areas.",
+      "Incentive grant for construction of an individual household sanitary latrine (IHHL) to eliminate open defecation.",
     eligibility: [
-      "Rural household without a toilet",
-      "No sanitation benefit previously received",
+      "Rural household without an existing functional sanitary toilet",
+      "No prior sanitation subsidy received under Central or State rural missions",
     ],
-    documents: ["Aadhaar", "Residence Certificate", "Bank Passbook"],
+    documents: [
+      "Aadhaar Card",
+      "Residence Certificate",
+      "Bank Account Passbook",
+    ],
     states: ["Uttar Pradesh", "Bihar", "Maharashtra", "West Bengal"],
     householdExclusive: true,
-    questions: ["Is there space available for construction?"],
+    questions: [
+      "Is adequate homestead space available for twin-pit construction?",
+      "Availability of water connection within 50 metres",
+    ],
     basis: ["Household", "Property"],
+    keyBenefit: "Incentive grant of ₹12,000 for construction of Individual Household Latrine (IHHL)",
+    benefitType: "Subsidy / Grant",
+    targetAudience: "Rural households having no sanitary latrine within premises",
+    benefitsSummary: [
+      "Direct financial incentive of ₹12,000 paid upon completion of twin-pit pour-flush toilet",
+      "Free technical design drawings and mason training facilitated by Gram Panchayat",
+      "Water and sanitation safety certification issued by Block Development Office",
+    ],
+    howToApply: [
+      "Apply online via SBM portal or through village Swachhagrahi coordinator",
+      "Initial baseline survey confirms absence of sanitary toilet at dwelling",
+      "Geo-tagged photo upload of constructed sub-structure and completed superstructure",
+      "Direct DBT transfer of ₹12,000 released upon verification",
+    ],
+    deadlines: "Open until Gram Panchayat achieves certified ODF-Plus status",
+    status: "Accepting Applications",
   },
   {
     id: "widow-pension",
@@ -264,24 +434,44 @@ export const SCHEMES: Scheme[] = [
     level: "Individual",
     category: "Social Welfare",
     description:
-      "Monthly pension for widowed women from low-income households.",
+      "Statutory monthly subsistence pension and social support for destitute and low-income widowed women.",
     eligibility: [
-      "Widowed woman aged 18 or above",
+      "Widowed woman aged 18 years or above",
       "Household annual income up to ₹2,00,000",
-      "Death record of spouse available",
+      "Death certificate of deceased spouse available on civil registration record",
+      "Not remarried and not receiving family pension from formal employer",
     ],
     documents: [
-      "Aadhaar",
+      "Aadhaar Card",
       "Death Certificate of Spouse",
       "Income Certificate",
-      "Bank Passbook",
+      "Bank Account Passbook",
     ],
     incomeMax: 200000,
     ageMin: 18,
     gender: "Female",
     states: ["All States"],
-    questions: ["Date of spouse's death", "Are you remarried?"],
+    questions: [
+      "Date of spouse's demise per civil registration record",
+      "Are you remarried or receiving any dependent family pension?",
+    ],
     basis: ["Individual"],
+    keyBenefit: "Monthly subsistence pension of ₹1,000 for destitute and low-income widows",
+    benefitType: "Monthly Pension",
+    targetAudience: "Widows aged 18 and above whose household income is below statutory threshold",
+    benefitsSummary: [
+      "Monthly pension of ₹1,000 credited directly into beneficiary savings bank account",
+      "Priority allotment under public housing and food distribution (Antyodaya ration card)",
+      "Educational fee waiver for dependent children studying in government institutions",
+    ],
+    howToApply: [
+      "Apply with husband's death certificate, age verification, and household income proof",
+      "Verification by Lekhpal / Revenue Inspector within 15 working days",
+      "Sanction by Sub-Divisional Magistrate (SDM) / District Social Welfare Officer",
+      "Pension credited monthly with automated DBT notification",
+    ],
+    deadlines: "Continuous enrollment cycle",
+    status: "Active",
   },
 ];
 
@@ -327,95 +517,88 @@ export interface Member {
 }
 export const MEMBERS: Member[] = [
   {
-    id: "C-1001",
-    name: "Sunita Devi",
+    id: "P-10482-01",
+    name: "Rajesh Sharma",
     relationship: "Head of Household",
-    dob: "1984-03-12",
-    gender: "Female",
-    identity: "Verified",
-    membership: "Active",
-    income: "Daily wage ₹60,000 / yr",
-    benefits: ["Rural Employment Job Card"],
-    history: [
-      { date: "2003-05-10", event: "Marriage recorded with Ramesh Kumar" },
-      { date: "2019-11-02", event: "Became head of household" },
-    ],
-  },
-  {
-    id: "C-1002",
-    name: "Ramesh Kumar",
-    relationship: "Spouse",
-    dob: "1980-08-21",
+    dob: "1985-03-12",
     gender: "Male",
     identity: "Verified",
     membership: "Active",
-    income: "Agriculture ₹60,000 / yr",
-    benefits: [],
+    income: "Declared household income ₹1,72,000 / yr",
+    benefits: ["Rural Employment Job Card", "Family Health Insurance Cover"],
     history: [
-      { date: "2003-05-10", event: "Marriage recorded with Sunita Devi" },
+      { date: "1988-07-24", event: "Marriage recorded with Sunita Sharma" },
+      { date: "2010-02-14", event: "Sharma Family household registered" },
     ],
   },
   {
-    id: "C-1003",
-    name: "Pooja Kumari",
+    id: "P-10482-02",
+    name: "Sunita Sharma",
+    relationship: "Spouse",
+    dob: "1988-07-24",
+    gender: "Female",
+    identity: "Verified",
+    membership: "Active",
+    income: "Homemaker",
+    benefits: [],
+    history: [
+      { date: "1988-07-24", event: "Marriage recorded with Rajesh Sharma" },
+    ],
+  },
+  {
+    id: "P-10482-19",
+    name: "Ananya Sharma",
     relationship: "Daughter",
-    dob: "2006-01-15",
+    dob: "2012-05-18",
     gender: "Female",
     identity: "Verified",
     membership: "Active",
     benefits: ["Post-Matric Scholarship"],
-    history: [{ date: "2006-01-15", event: "Birth registered" }],
+    history: [{ date: "2012-05-18", event: "Birth registered" }],
   },
   {
-    id: "C-1004",
-    name: "Aman Kumar",
+    id: "P-10482-20",
+    name: "Aarav Sharma",
     relationship: "Son",
-    dob: "2012-09-03",
+    dob: "2016-09-10",
     gender: "Male",
     identity: "Pending",
     membership: "Active",
     benefits: [],
-    history: [{ date: "2012-09-03", event: "Birth registered" }],
+    history: [{ date: "2016-09-10", event: "Birth registered" }],
   },
   {
-    id: "C-1005",
-    name: "Kamla Devi",
-    relationship: "Mother-in-law",
-    dob: "1954-04-30",
-    gender: "Female",
+    id: "P-10482-03",
+    name: "Devraj Sharma",
+    relationship: "Father",
+    dob: "1938-04-10",
+    gender: "Male",
     identity: "Verified",
     membership: "Active",
-    benefits: ["Old Age Pension", "Widow Pension Scheme"],
-    history: [
-      { date: "2019-10-18", event: "Spouse death recorded (Shiv Prasad)" },
-    ],
+    benefits: ["Old Age Pension"],
+    history: [{ date: "2010-02-14", event: "Added to Sharma Family household" }],
   },
   {
-    id: "C-0988",
-    name: "Shiv Prasad",
-    relationship: "Father-in-law",
-    dob: "1950-02-11",
-    gender: "Male",
+    id: "P-10482-04",
+    name: "Kamala Sharma",
+    relationship: "Mother",
+    dob: "1941-08-15",
+    gender: "Female",
     identity: "Verified",
     membership: "Deceased",
     benefits: [],
-    history: [{ date: "2019-10-18", event: "Death record registered" }],
+    history: [{ date: "2010-02-14", event: "Added to Sharma Family household" }],
   },
   {
-    id: "C-1010",
-    name: "Rajesh Kumar",
-    relationship: "Brother-in-law",
-    dob: "1985-12-01",
-    gender: "Male",
+    id: "P-10482-05",
+    name: "Meena Sharma",
+    relationship: "Aunt",
+    dob: "1960-11-04",
+    gender: "Female",
     identity: "Verified",
     membership: "Former",
-    benefits: ["Rural Housing Assistance Scheme (in former household)"],
-    history: [
-      {
-        date: "2021-03-14",
-        event: "Household split — moved to HH-UP-0417-3380",
-      },
-    ],
+    benefits: [],
+    history: [{ date: "2010-02-14", event: "Added to Sharma Family household" }],
   },
 ];
 
@@ -461,6 +644,7 @@ export interface Application {
   stage: number;
   declaredIncome: number;
   duplicate?: boolean;
+  assignedTo?: string;
   mismatch?: {
     field: string;
     declared: string;
@@ -481,13 +665,13 @@ export const APPLICATIONS: Application[] = [
   {
     id: "APP-2026-000318",
     schemeId: "rural-housing",
-    applicant: "Sunita Devi",
-    citizenId: "C-1001",
-    householdId: "HH-UP-0417-2291",
+    applicant: "Rajesh Sharma",
+    citizenId: "P-10482-01",
+    householdId: "MIRA-FAM-10482",
     appliedOn: "2026-09-04",
-    updatedOn: "2026-10-15",
-    status: "Verification Required",
-    stage: 3,
+    updatedOn: "2026-10-22",
+    status: "Additional Evidence Required",
+    stage: 6,
     declaredIncome: 120000,
     duplicate: true,
     mismatch: {
@@ -500,7 +684,7 @@ export const APPLICATIONS: Application[] = [
       {
         date: "2026-09-04 11:20",
         text: "Application submitted",
-        by: "Sunita Devi",
+        by: "Rajesh Sharma",
       },
       {
         date: "2026-09-06 15:02",
@@ -517,14 +701,19 @@ export const APPLICATIONS: Application[] = [
         text: "Possible household-level duplicate benefit found",
         by: "Duplicate check",
       },
+      {
+        date: "2026-10-22 14:35",
+        text: "Updated income certificate requested after field review",
+        by: "Vikram Malhotra (Verification Officer)",
+      },
     ],
   },
   {
     id: "APP-2026-000207",
     schemeId: "post-matric",
-    applicant: "Pooja Kumari",
-    citizenId: "C-1003",
-    householdId: "HH-UP-0417-2291",
+    applicant: "Ananya Sharma",
+    citizenId: "P-10482-19",
+    householdId: "MIRA-FAM-10482",
     appliedOn: "2026-07-18",
     updatedOn: "2026-08-22",
     status: "Approved",
@@ -534,7 +723,7 @@ export const APPLICATIONS: Application[] = [
       {
         date: "2026-07-18 09:00",
         text: "Application submitted",
-        by: "Sunita Devi (guardian)",
+        by: "Rajesh Sharma (guardian)",
       },
       {
         date: "2026-07-20 12:30",
@@ -565,7 +754,7 @@ export const APPLICATIONS: Application[] = [
     decision: {
       outcome: "Approved",
       reason: "All criteria met",
-      note: "Enrollment confirmed with institution.",
+        note: "Enrollment confirmed with school.",
       by: "A. Mishra",
       date: "2026-08-21",
     },
@@ -573,9 +762,9 @@ export const APPLICATIONS: Application[] = [
   {
     id: "APP-2026-000412",
     schemeId: "health-cover",
-    applicant: "Sunita Devi",
-    citizenId: "C-1001",
-    householdId: "HH-UP-0417-2291",
+    applicant: "Rajesh Sharma",
+    citizenId: "P-10482-01",
+    householdId: "MIRA-FAM-10482",
     appliedOn: "2026-10-01",
     updatedOn: "2026-10-12",
     status: "Additional Evidence Required",
@@ -585,7 +774,7 @@ export const APPLICATIONS: Application[] = [
       {
         date: "2026-10-01 13:10",
         text: "Application submitted",
-        by: "Sunita Devi",
+        by: "Rajesh Sharma",
       },
       {
         date: "2026-10-12 11:00",
@@ -597,9 +786,9 @@ export const APPLICATIONS: Application[] = [
   {
     id: "APP-2026-000455",
     schemeId: "farmer-support",
-    applicant: "Ramesh Kumar",
-    citizenId: "C-1002",
-    householdId: "HH-UP-0417-2291",
+    applicant: "Rajesh Sharma",
+    citizenId: "P-10482-01",
+    householdId: "MIRA-FAM-10482",
     appliedOn: "2026-10-10",
     updatedOn: "2026-10-18",
     status: "Officer Review",
@@ -609,7 +798,7 @@ export const APPLICATIONS: Application[] = [
       {
         date: "2026-10-10 10:00",
         text: "Application submitted",
-        by: "Ramesh Kumar",
+        by: "Rajesh Sharma",
       },
       {
         date: "2026-10-11 10:00",
@@ -636,9 +825,9 @@ export const APPLICATIONS: Application[] = [
   {
     id: "APP-2026-000470",
     schemeId: "sanitation",
-    applicant: "Sunita Devi",
-    citizenId: "C-1001",
-    householdId: "HH-UP-0417-2291",
+    applicant: "Rajesh Sharma",
+    citizenId: "P-10482-01",
+    householdId: "MIRA-FAM-10482",
     appliedOn: "",
     updatedOn: "2026-10-19",
     status: "Draft",
@@ -689,6 +878,7 @@ export const APPLICATIONS: Application[] = [
 
 export interface Benefit {
   ref: string;
+  schemeId: string;
   scheme: string;
   beneficiary: string;
   type: Level;
@@ -708,52 +898,89 @@ export interface Benefit {
   currency?: string | null;
   applicationId?: string | null;
   validTo?: string | null;
+  entitlementDescription?: string;
+  decisionRef?: string;
 }
 export const BENEFITS: Benefit[] = [
   {
     ref: "BEN-UP-2019-55120",
+    schemeId: "job-card",
     scheme: "Rural Employment Job Card",
-    beneficiary: "Household HH-UP-0417-2291",
+    beneficiary: "Household MIRA-FAM-10482",
     type: "Household",
     approvedOn: "2019-12-05",
     status: "Active",
     department: "Department of Rural Development",
+    amount: 34500,
+    currency: "INR",
+    applicationId: "APP-2019-001042",
+    validTo: "2027-03-31",
+    entitlementDescription: "100 days statutory wage employment per financial year at state notified rate",
+    decisionRef: "DEC-RD-2019-5512",
   },
   {
     ref: "BEN-UP-2020-11823",
+    schemeId: "old-age-pension",
     scheme: "Old Age Pension",
-    beneficiary: "Kamla Devi",
+    beneficiary: "Kamala Sharma",
     type: "Individual",
     approvedOn: "2020-02-14",
     status: "Active",
     department: "Department of Social Welfare",
+    amount: 1000,
+    currency: "INR",
+    applicationId: "APP-2020-003819",
+    validTo: "Ongoing (Annual Life Certificate Verified)",
+    entitlementDescription: "Monthly direct pension deposit of ₹1,000 on 1st of every calendar month",
+    decisionRef: "DEC-SW-2020-1182",
   },
   {
     ref: "BEN-UP-2020-11907",
+    schemeId: "widow-pension",
     scheme: "Widow Pension Scheme",
-    beneficiary: "Kamla Devi",
+    beneficiary: "Kamala Sharma",
     type: "Individual",
     approvedOn: "2020-03-02",
     status: "Active",
     department: "Department of Social Welfare",
+    amount: 1000,
+    currency: "INR",
+    applicationId: "APP-2020-004102",
+    validTo: "Ongoing (Annual Life Certificate Verified)",
+    entitlementDescription: "Monthly subsistence pension of ₹1,000 with priority public food ration allocation",
+    decisionRef: "DEC-SW-2020-1190",
   },
   {
     ref: "BEN-UP-2022-40018",
+    schemeId: "health-cover",
     scheme: "Family Health Insurance Cover",
-    beneficiary: "Household HH-UP-0417-2291",
+    beneficiary: "Household MIRA-FAM-10482",
     type: "Household",
     approvedOn: "2022-06-10",
-    status: "Completed",
+    status: "Active",
     department: "Department of Health & Family Welfare",
+    amount: 500000,
+    currency: "INR",
+    applicationId: "APP-2022-008129",
+    validTo: "2027-03-31",
+    entitlementDescription: "Cashless secondary and tertiary hospitalisation cover up to ₹5,00,000 per family per year",
+    decisionRef: "DEC-HF-2022-4001",
   },
   {
     ref: "BEN-UP-2026-70231",
+    schemeId: "post-matric",
     scheme: "Post-Matric Scholarship",
-    beneficiary: "Pooja Kumari",
+    beneficiary: "Ananya Sharma",
     type: "Individual",
     approvedOn: "2026-08-21",
     status: "Disbursed",
     department: "Department of Social Justice & Empowerment",
+    amount: 18500,
+    currency: "INR",
+    applicationId: "APP-2026-000207",
+    validTo: "2027-06-30",
+    entitlementDescription: "Full tuition reimbursement ₹12,000 plus maintenance allowance ₹6,500 credited via PFMS DBT",
+    decisionRef: "DEC-SJ-2026-7023",
   },
 ];
 
@@ -808,7 +1035,7 @@ export const NOTIFICATIONS: Notification[] = [
   {
     id: "n6",
     title: "Benefit processed",
-    body: "Scholarship disbursement initiated for Pooja Kumari.",
+    body: "Scholarship disbursement initiated for Ananya Sharma.",
     date: "2026-08-22",
     read: true,
     link: "/citizen/benefits",
@@ -816,7 +1043,7 @@ export const NOTIFICATIONS: Notification[] = [
   {
     id: "n7",
     title: "Family record update verified",
-    body: "Aadhaar seeding for Kamla Devi verified.",
+    body: "Household identity verification for Kamala Sharma is complete.",
     date: "2026-06-03",
     read: true,
     link: "/citizen/family",
@@ -851,8 +1078,8 @@ export const AUDIT: AuditEvent[] = [
     action: "Duplicate alert created",
     application: "APP-2026-000318",
     prev: "Eligibility Verified",
-    next: "Verification Required",
-    reason: "Household lineage match with HH-UP-0417-3380",
+    next: "Additional Evidence Required",
+    reason: "Current income evidence needs verification for MIRA-FAM-10482",
   },
   {
     id: "AU-90002",
@@ -867,7 +1094,7 @@ export const AUDIT: AuditEvent[] = [
   {
     id: "AU-89870",
     ts: "2026-09-06 15:02:10",
-    actor: "Sunita Devi (C-1001)",
+    actor: "Rajesh Sharma (P-10482-01)",
     action: "Document uploaded",
     application: "APP-2026-000318",
     prev: "—",
@@ -935,7 +1162,7 @@ export const DUPLICATE_ALERTS: DuplicateAlert[] = [
   {
     id: "DA-2026-10483",
     severity: "Medium",
-    appId: "APP-2026-10482",
+    appId: "APP-2026-000318",
     scheme: "National Food Security Mission (NFSA Priority Ration)",
     applicant: "Rajesh Sharma",
     household: "MIRA-FAM-10482",
@@ -993,10 +1220,10 @@ export const DUPLICATE_ALERTS: DuplicateAlert[] = [
     severity: "High",
     appId: "APP-2026-000318",
     scheme: "Rural Housing Assistance Scheme",
-    applicant: "Sunita Devi",
-    household: "HH-UP-0417-2291",
+    applicant: "Rajesh Sharma",
+    household: "MIRA-FAM-10482",
     match:
-      "BEN-UP-2019-30412 — Rural Housing Assistance to HH-UP-0417-2291 (pre-split), beneficiary Rajesh Kumar",
+      "Prior Rural Housing Assistance benefit found in a linked legacy household record",
     reason:
       "Household HH-UP-0417-3380 was split from the applicant's household in 2021. A housing benefit was approved in 2019 when both families were one household.",
     sources: [
@@ -1008,7 +1235,7 @@ export const DUPLICATE_ALERTS: DuplicateAlert[] = [
     compare: [
       {
         field: "Household ID",
-        current: "HH-UP-0417-2291",
+        current: "MIRA-FAM-10482",
         existing: "HH-UP-0417-2291 (at time of benefit)",
         same: true,
       },
@@ -1123,7 +1350,7 @@ export interface VaultDoc {
 export const VAULT: VaultDoc[] = [
   {
     id: "d1",
-    name: "Aadhaar_Sunita.pdf",
+    name: "Aadhaar_Rajesh_Sharma.pdf",
     type: "Aadhaar",
     size: "412 KB",
     uploaded: "2026-03-02",
@@ -1233,14 +1460,87 @@ export interface MessageThread {
   isArchived?: boolean;
   folder: "inbox" | "sent" | "starred" | "archived" | "important";
   applicationId?: string;
+  schemeId?: string;
+  schemeName?: string;
+  caseType?: "clarification" | "evidence_request" | "field_visit" | "decision" | "escalation" | "general";
+  caseStatus?:
+    | "awaiting_citizen"
+    | "awaiting_verification"
+    | "evidence_requested"
+    | "field_visit_scheduled"
+    | "under_review"
+    | "escalated"
+    | "verified"
+    | "resolved"
+    | "approved"
+    | "rejected"
+    | "informational";
+  actionRequired?: string;
+  actionType?: "upload_document" | "confirm_visit" | "review_evidence" | "clarification" | "none";
+  requestedDocType?: string;
+  currentStage?: string;
+  deadline?: string;
+  householdId?: string;
+  auditRef?: string;
   tags?: string[];
   messages: MailMessage[];
 }
 
 export const SEED_MESSAGES: MessageThread[] = [
   {
+    id: "MSG-2026-900",
+    subject: "Income Certificate Clarification: Illegible Issuing Stamp",
+    sender: {
+      name: "Neha Verma",
+      email: "verifier@mira.local",
+      role: "verifier",
+      department: "Social Welfare Verification Cell",
+    },
+    recipient: {
+      name: "Rajesh Sharma",
+      email: "demo.citizen@mira.demo",
+      role: "citizen",
+    },
+    preview: "Please upload a clearer copy of your income certificate. The seal of the Revenue Inspector is partially blurred.",
+    timestamp: "2026-10-22 14:30",
+    status: "unread",
+    isStarred: true,
+    folder: "inbox",
+    applicationId: "APP-2026-000318",
+    schemeId: "rural-housing",
+    schemeName: "Rural Housing Assistance Scheme",
+    caseType: "evidence_request",
+    caseStatus: "awaiting_citizen",
+    actionRequired: "Upload clearer income certificate",
+    actionType: "upload_document",
+    requestedDocType: "Income Certificate",
+    currentStage: "Document Verification",
+    deadline: "Nov 02, 2026",
+    householdId: "MIRA-FAM-10482",
+    auditRef: "AUD-UP-2026-0920",
+    tags: ["Action Required", "Evidence"],
+    messages: [
+      {
+        id: "M-0",
+        senderName: "Neha Verma",
+        senderEmail: "verifier@mira.local",
+        senderRole: "verifier",
+        timestamp: "2026-10-22 14:30",
+        body: "Namaste Rajesh Sharma ji, during verification of application APP-2026-000318 for Rural Housing Assistance, the current income certificate needs confirmation. Please upload a current copy so the application can move to the next review stage.",
+        attachments: [
+          {
+            id: "att-0",
+            name: "income_certificate_deficiency_memo.pdf",
+            size: 154000,
+            type: "application/pdf",
+          },
+        ],
+      },
+    ],
+  },
+  {
     id: "MSG-2026-901",
-    subject: "Clarification Required: Address Proof Variation for APP-2026-10482",
+    subject: "Address Proof Verification for APP-2026-000318",
     sender: {
       name: "Vikram Malhotra",
       email: "demo.verifier@mira.demo",
@@ -1252,13 +1552,20 @@ export const SEED_MESSAGES: MessageThread[] = [
       email: "demo.citizen@mira.demo",
       role: "citizen",
     },
-    preview: "Preliminary document extraction found address text variation with municipal database. Please upload current electricity bill or residence certificate.",
-    timestamp: "2026-01-14 11:00",
-    status: "unread",
+    preview: "Utility bill confirmed. Consumer address matches municipal feeder line and resolves the address variation note.",
+    timestamp: "2026-01-15 16:30",
+    status: "read",
     isStarred: true,
     folder: "inbox",
-    applicationId: "APP-2026-10482",
-    tags: ["Action Required", "Evidence"],
+    applicationId: "APP-2026-000318",
+    schemeId: "rural-housing",
+    schemeName: "Rural Housing Assistance Scheme",
+    caseType: "clarification",
+    caseStatus: "resolved",
+    currentStage: "Document Verification",
+    householdId: "MIRA-FAM-10482",
+    auditRef: "AUD-UP-2026-0921",
+    tags: ["Evidence"],
     messages: [
       {
         id: "M-1",
@@ -1266,7 +1573,7 @@ export const SEED_MESSAGES: MessageThread[] = [
         senderEmail: "demo.verifier@mira.demo",
         senderRole: "verifier",
         timestamp: "2026-01-14 11:00",
-        body: "Namaste Rajesh ji, during preliminary verification for your daughter Ananya's Student Scholarship application (APP-2026-10482), our extraction engine noted an address syntax variation between your residence certificate and the municipal ward registry. Kindly upload your latest electricity bill or updated residence proof to confirm ward jurisdiction.",
+        body: "Namaste Rajesh ji, the address check for your household record is complete. The submitted residence proof matches the municipal ward record.",
         attachments: [
           {
             id: "att-1",
@@ -1317,20 +1624,30 @@ export const SEED_MESSAGES: MessageThread[] = [
       role: "citizen",
     },
     preview: "Physical dwelling inspection scheduled for verification of rural sanitation dwelling status.",
-    timestamp: "2026-01-16 10:15",
-    status: "read",
+    timestamp: "2026-10-23 10:15",
+    status: "unread",
     isStarred: false,
     folder: "inbox",
-    applicationId: "APP-2026-10483",
-    tags: ["Field Visit", "Schedule"],
+    applicationId: "APP-2026-000470",
+    schemeId: "sanitation",
+    schemeName: "Rural Sanitation Dwelling Assistance",
+    caseType: "field_visit",
+    caseStatus: "field_visit_scheduled",
+    actionRequired: "Confirm dwelling inspection presence",
+    actionType: "confirm_visit",
+    currentStage: "Field Inspection",
+    deadline: "Oct 28, 2026",
+    householdId: "MIRA-FAM-10482",
+    auditRef: "AUD-UP-2026-0922",
+    tags: ["Action Required", "Field Visit", "Schedule"],
     messages: [
       {
         id: "M-2",
         senderName: "Priya Sharma",
         senderEmail: "officer@mira.local",
         senderRole: "officer",
-        timestamp: "2026-01-16 10:15",
-        body: "Hello Rajesh ji, this is Field Official Priya Sharma from the District Field Verification Unit. We will conduct an on-site inspection for your sanitation assistance application (APP-2026-10483) on Monday between 10:00 AM and 1:00 PM. Please have identity proofs ready.",
+        timestamp: "2026-10-23 10:15",
+        body: "Hello Rajesh ji, this is Field Official Priya Sharma from the District Field Verification Unit. We will conduct an on-site inspection for your sanitation assistance draft (APP-2026-000470) on October 24 between 10:00 AM and 1:00 PM. Please have identity proofs and property boundary papers ready.",
       },
     ],
   },
@@ -1348,13 +1665,20 @@ export const SEED_MESSAGES: MessageThread[] = [
       email: "verifier@mira.local",
       role: "verifier",
     },
-    preview: "State family register synchronised for Lucknow district. Household SH-HH-10482 attested.",
+    preview: "Sharma Family register synchronized for MIRA-FAM-10482.",
     timestamp: "2026-10-20 16:45",
     status: "read",
     isStarred: false,
     folder: "inbox",
     applicationId: "APP-2026-000318",
-    tags: ["Operations", "System"],
+    schemeId: "rural-housing",
+    schemeName: "Rural Housing Assistance Scheme",
+    caseType: "clarification",
+    caseStatus: "under_review",
+    currentStage: "Statutory Rule Adjudication",
+    householdId: "MIRA-FAM-10482",
+    auditRef: "AUD-UP-2026-0923",
+    tags: ["Operations"],
     messages: [
       {
         id: "M-3",
@@ -1362,12 +1686,54 @@ export const SEED_MESSAGES: MessageThread[] = [
         senderEmail: "admin@mira.local",
         senderRole: "admin",
         timestamp: "2026-10-20 16:45",
-        body: "Neha, the automated batch reconciliation with Tehsil Sadar Land Registry completed successfully. Any pending cross-scheme checks on household SH-HH-10482 can now proceed under Rule Version 3.2.",
+        body: "Neha, the registry reconciliation for Sharma Family (MIRA-FAM-10482) completed. The current income evidence request is open for application APP-2026-000318.",
       },
     ],
   },
   {
     id: "MSG-2026-904",
+    subject: "Updated BPL Certificate Requested: Family Health Insurance Cover",
+    sender: {
+      name: "Sunita Verma",
+      email: "demo.scheme@mira.demo",
+      role: "scheme",
+      department: "State Health Assurance Mission",
+    },
+    recipient: {
+      name: "Rajesh Sharma",
+      email: "demo.citizen@mira.demo",
+      role: "citizen",
+    },
+    preview: "Please provide a current BPL certificate before the scheme decision can proceed.",
+    timestamp: "2026-10-18 11:20",
+    status: "unread",
+    isStarred: false,
+    folder: "inbox",
+    applicationId: "APP-2026-000412",
+    schemeId: "health-cover",
+    schemeName: "Family Health Insurance Cover",
+    caseType: "evidence_request",
+    caseStatus: "awaiting_citizen",
+    actionRequired: "Upload a current BPL certificate",
+    actionType: "upload_document",
+    requestedDocType: "BPL Certificate",
+    currentStage: "Document Verification",
+    householdId: "MIRA-FAM-10482",
+    auditRef: "AUD-UP-2026-0924",
+    tags: ["Operations"],
+    messages: [
+      {
+        id: "M-4",
+        senderName: "Sunita Verma",
+        senderEmail: "demo.scheme@mira.demo",
+        senderRole: "scheme",
+        timestamp: "2026-10-18 11:20",
+        body: "Rajesh ji, please upload a current BPL certificate for APP-2026-000412. The previous certificate has expired, so the health cover review is paused until the updated document is verified.",
+      },
+    ],
+  },
+  {
+    id: "MSG-2026-905",
     subject: "Audit Query: High-impact Sanction Sampling for Q3 2026",
     sender: {
       name: "Priya Nair",
@@ -1385,15 +1751,23 @@ export const SEED_MESSAGES: MessageThread[] = [
     status: "read",
     isStarred: true,
     folder: "inbox",
-    tags: ["Compliance", "Audit"],
+    applicationId: "APP-2026-000318",
+    schemeId: "rural-housing",
+    schemeName: "Rural Housing Assistance Scheme",
+    caseType: "clarification",
+    caseStatus: "informational",
+    currentStage: "Forensic Audit Sampling",
+    householdId: "MIRA-FAM-10482",
+    auditRef: "AUD-UP-2026-0925",
+    tags: ["Audit"],
     messages: [
       {
-        id: "M-4",
+        id: "M-5",
         senderName: "Priya Nair",
         senderEmail: "auditor@mira.local",
         senderRole: "auditor",
         timestamp: "2026-10-19 09:30",
-        body: "Director Mehta, as part of the statutory quarterly audit under the Public Welfare Transparency Act, please ensure all second-tier supervisor reviews for rural housing grants sanctioned between July and September are accessible in the read-only audit partition.",
+        body: "Director Mehta, as part of the statutory quarterly audit under the Public Welfare Transparency Act, please ensure all second-tier supervisor reviews for rural grants sanctioned between July and September are accessible in the read-only audit partition.",
       },
     ],
   },
@@ -1538,28 +1912,28 @@ export const SEED_FIELD_VISITS: FieldVisit[] = [
   {
     id: "FV-2026-0041",
     applicationId: "APP-2026-000318",
-    citizenName: "Ananya Sharma",
+    citizenName: "Rajesh Sharma",
     citizenPhone: "+91 98765 43210",
     address: "House No. 42, Ward 7, Rampur, Sadar Tehsil",
     ward: "Ward 7",
-    scheduledDate: "2026-10-23",
+    scheduledDate: "2026-10-24",
     scheduledTime: "10:30 AM",
     status: "Today",
     purpose: "Dwelling condition and household co-residence inspection",
     schemeName: "Rural Housing Assistance Scheme",
     dwellingType: "Kutcha",
     checklist: [
-      { id: "c1", label: "Verify physical co-residence of all 5 household members", checked: true },
+      { id: "c1", label: "Verify the applicant's household co-residence", checked: true },
       { id: "c2", label: "Confirm absence of pucca RCC roof dwelling on plot", checked: true },
       { id: "c3", label: "Inspect electricity meter and domestic load (< 1 kW)", checked: false },
       { id: "c4", label: "Verify Khasra land title boundary with neighbouring plots", checked: true },
     ],
-    officerNotes: "Household resides in ancestral thatched/mud dwelling. Family members present. High priority for pucca housing sanction under state guidelines.",
+    officerNotes: "Household resides in an ancestral thatched/mud dwelling. Applicant and family members were present. High priority for housing review under state guidelines.",
     evidencePhotos: ["/hero/civic-1.jpg", "/hero/civic-2.jpg"],
     citizenConfirmation: {
       confirmed: true,
-      signedBy: "Ananya Sharma",
-      timestamp: "2026-10-23 11:15",
+      signedBy: "Rajesh Sharma",
+      timestamp: "2026-10-24 11:15",
     },
   },
   {
@@ -1785,12 +2159,12 @@ export const SEED_DECISIONS: DecisionRecord[] = [
     id: "DEC-2026-0089",
     applicationId: "APP-2026-000318",
     schemeName: "Rural Housing Assistance Scheme",
-    applicantName: "Ananya Sharma",
+    applicantName: "Rajesh Sharma",
     decision: "EVIDENCE_REQUESTED",
     decidedBy: "Neha Verma (Verification Officer)",
     officerRole: "VERIFICATION_OFFICER",
     decidedAt: "2026-10-22 14:35",
-    justification: "Income certificate stamp partially obscured. Clarification required before second-stage approval per Verification Cell protocol.",
+    justification: "The current income certificate needs confirmation. Updated evidence is required before the next review stage.",
     statutoryRuleRef: "Verification Manual Circular 42/2025",
     auditHash: "SHA256:4a5b6c7d8e9f0a1b2c3d4e5f6a7b8c9d0e1f2a3b4c5d6e7f8a9b0c1d2e3f4a5b",
   },
@@ -1870,7 +2244,7 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     accessScope: "State Intake Queue, OCR Extractor & Document Intelligence Workstation",
   },
   supervisor: {
-    name: "Arun Deshmukh",
+    name: "Dr. Alok Nath",
     email: "demo.supervisor@mira.demo",
     role: "supervisor",
     title: "Senior Supervising Officer",
@@ -1878,12 +2252,12 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     location: "State Directorate, Uttar Pradesh",
     phone: "+91 94151 55667",
     badge: "Supervisor Tier-2",
-    avatarSeed: "Arun",
+    avatarSeed: "Alok",
     description: "Reviews second-signoff escalations, complex household splits, and exceptional policy appeals.",
     accessScope: "Supervisory Escalation Queue & Exceptional Policy Determination",
   },
   admin: {
-    name: "System Administrator",
+    name: "Arjun Mehta",
     email: "demo.admin@mira.demo",
     role: "admin",
     title: "Department Administrator",
@@ -1891,12 +2265,12 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     location: "Lucknow, Uttar Pradesh",
     phone: "+91 94151 99881",
     badge: "System Authority",
-    avatarSeed: "System",
+    avatarSeed: "Arjun",
     description: "Configures welfare schemes, manages eligibility rules, resets demo state, and monitors queues.",
     accessScope: "Department-Wide Scheme Master, Rule Engine & Operational Configuration",
   },
   auditor: {
-    name: "Kavita Rao",
+    name: "Priya Nair",
     email: "demo.auditor@mira.demo",
     role: "auditor",
     title: "Senior Compliance & Audit Officer",
@@ -1904,7 +2278,7 @@ export const DEMO_PROFILES: Record<string, DemoProfile> = {
     location: "Audit Bhavan, Lucknow",
     phone: "+91 94152 77889",
     badge: "Read-Only Compliance",
-    avatarSeed: "Kavita",
+    avatarSeed: "Priya",
     description: "Inspects immutable audit trails, historical decisions, rule versions, and officer actions.",
     accessScope: "STRICTLY READ-ONLY: All Historical Decisional Timelines & Audit Ledgers",
   },

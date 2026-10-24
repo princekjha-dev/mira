@@ -1,5 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   ArrowRight,
   Building2,
@@ -11,10 +11,24 @@ import {
   Users,
   Eye,
   AlertCircle,
+  AlertTriangle,
+  Loader2,
+  RefreshCw,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useApp } from "@/lib/app-state";
-import { authenticateDemo, loginUser, registerUser, mapRoleToUiRole } from "@/lib/api";
+import {
+  authenticateDemo,
+  ApiRequestError,
+  checkDemoHealth,
+  loginUser,
+  registerUser,
+  mapRoleToUiRole,
+  type DemoHealthState,
+} from "@/lib/api";
+import { getRoleConfig } from "@/lib/role-config";
+import type { DictKey } from "@/lib/i18n";
+import type { Session } from "@/lib/app-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -45,88 +59,65 @@ export const Route = createFileRoute("/login")({
   component: LoginPage,
 });
 
-const ROLE_ROUTES = {
-  citizen: "/citizen/dashboard",
-  officer: "/officer/dashboard",
-  verifier: "/verifier/dashboard",
-  scheme: "/officer/dashboard",
-  supervisor: "/verifier/dashboard",
-  admin: "/department/dashboard",
-  auditor: "/auditor/dashboard",
-} as const;
-
 interface DemoAccountItem {
   role: DemoRoleKey;
   email: string;
-  title: string;
   name: string;
-  badge: string;
-  description: string;
-  icon: any;
+  titleKey: DictKey;
+  badgeKey: DictKey;
+  descKey: DictKey;
+  icon: typeof Users;
 }
 
-const DEMO_ACCOUNTS: DemoAccountItem[] = [
+const DEMO_ACCOUNT_CONFIGS = [
   {
     role: "citizen",
-    email: "demo.citizen@mira.demo",
-    title: "Citizen / Applicant",
-    name: "Rajesh Sharma",
-    badge: "Citizen Account",
-    description:
-      "Sharma Family (MIRA-FAM-10482). Household tree, life events, document upload & scheme applications.",
+    titleKey: "demoAccountCitizenTitle",
+    badgeKey: "demoAccountCitizenBadge",
+    descKey: "demoAccountCitizenDesc",
     icon: Users,
   },
   {
     role: "verifier",
-    email: "demo.verifier@mira.demo",
-    title: "Verification Officer",
-    name: "Vikram Malhotra",
-    badge: "Field Official",
-    description:
-      "Inspect incoming cases, verify family relationships, examine OCR evidence, request clarifications & resolve mismatches.",
+    titleKey: "demoAccountVerifierTitle",
+    badgeKey: "demoAccountVerifierBadge",
+    descKey: "demoAccountVerifierDesc",
     icon: ShieldCheck,
   },
   {
     role: "scheme",
-    email: "demo.scheme@mira.demo",
-    title: "Scheme Officer",
-    name: "Sunita Verma",
-    badge: "Program Officer",
-    description:
-      "Review scheme eligibility evaluations, cross-scheme overlaps, and make final approval or documented rejection decisions.",
+    titleKey: "demoAccountSchemeTitle",
+    badgeKey: "demoAccountSchemeBadge",
+    descKey: "demoAccountSchemeDesc",
     icon: FileCheck,
   },
   {
     role: "supervisor",
-    email: "demo.supervisor@mira.demo",
-    title: "Supervisor",
-    name: "Dr. Alok Nath",
-    badge: "Senior Review",
-    description:
-      "Second-tier reviews, escalated cases, complex duplicate adjudications, and appeal/dispute resolution.",
+    titleKey: "demoAccountSupervisorTitle",
+    badgeKey: "demoAccountSupervisorBadge",
+    descKey: "demoAccountSupervisorDesc",
     icon: UserCheck,
   },
   {
     role: "auditor",
-    email: "demo.auditor@mira.demo",
-    title: "Auditor",
-    name: "Priya Nair",
-    badge: "Strict Read-Only",
-    description:
-      "Immutable audit records, decision inspection, document access history, and compliance verification.",
+    titleKey: "demoAccountAuditorTitle",
+    badgeKey: "demoAccountAuditorBadge",
+    descKey: "demoAccountAuditorDesc",
     icon: Eye,
   },
   {
     role: "admin",
-    email: "demo.admin@mira.demo",
-    title: "Administrator",
-    name: "Arjun Mehta",
-    badge: "System Authority",
-    description:
-      "Configure departments, welfare schemes, eligibility rules, staff permissions, and system settings.",
+    titleKey: "demoAccountAdminTitle",
+    badgeKey: "demoAccountAdminBadge",
+    descKey: "demoAccountAdminDesc",
     icon: Building2,
   },
-];
+ ] satisfies Array<Omit<DemoAccountItem, "email" | "name">>;
+
+const DEMO_ACCOUNTS: DemoAccountItem[] = DEMO_ACCOUNT_CONFIGS.map((account) => {
+  const config = getRoleConfig(account.role);
+  return { ...account, email: config.demoEmail, name: config.defaultIdentity.name };
+});
 
 export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
   const { t, login } = useApp();
@@ -134,6 +125,12 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
   const [mode, setMode] = useState<"demo" | "real">("demo");
   const [realTab, setRealTab] = useState<"login" | "register">("login");
   const [loadingRole, setLoadingRole] = useState<string | null>(null);
+  const [activeSigningAccount, setActiveSigningAccount] = useState<DemoAccountItem | null>(null);
+  const [failedAccount, setFailedAccount] = useState<DemoAccountItem | null>(null);
+
+  // Truthful demo sandbox health state
+  const [demoHealth, setDemoHealth] = useState<DemoHealthState>("initializing");
+  const [demoError, setDemoError] = useState<string | null>(null);
 
   // Real Account state
   const [email, setEmail] = useState("");
@@ -142,33 +139,99 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
   const [realError, setRealError] = useState("");
   const [realBusy, setRealBusy] = useState(false);
 
+  const fetchHealth = async () => {
+    setDemoHealth("initializing");
+    setDemoError(null);
+    const res = await checkDemoHealth();
+    setDemoHealth(res.state);
+  };
+
+  useEffect(() => {
+    let active = true;
+    checkDemoHealth().then((res) => {
+      if (!active) return;
+      setDemoHealth(res.state);
+    });
+    return () => {
+      active = false;
+    };
+  }, []);
+
   const handleDemoSignIn = async (account: DemoAccountItem) => {
+    if (loadingRole) return;
     setLoadingRole(account.role);
+    setActiveSigningAccount(account);
+    setFailedAccount(null);
+    setDemoError(null);
+
     try {
-      const auth = await authenticateDemo(account.role);
-      const verifiedRole = mapRoleToUiRole(auth.user.roles);
-      login({
-        role: verifiedRole,
-        name: auth.user.display_name,
-        id: auth.user.id,
-        apiToken: auth.token,
-        apiUserId: auth.user.id,
-        apiEmail: auth.user.email,
-        isDemo: auth.user.is_demo,
-        department: auth.user.organization?.name,
-      });
-      toast.success(`Signed in as ${auth.user.display_name}`);
-      const targetRoute =
-        ROLE_ROUTES[verifiedRole as keyof typeof ROLE_ROUTES] ||
-        "/citizen/dashboard";
+      let verifiedRole: typeof account.role = account.role;
+      let name: string;
+      let targetRoute: string;
+      let session: Session;
+      try {
+        const auth = await authenticateDemo(account.role);
+        const mappedRole = mapRoleToUiRole(auth.user.roles);
+        if (mappedRole !== account.role) {
+          throw new ApiRequestError("The selected demo role did not match the authenticated account.", 403, "DEMO_ROLE_MISMATCH");
+        }
+        verifiedRole = account.role;
+        const config = getRoleConfig(verifiedRole);
+        name = auth.user.display_name;
+        targetRoute = config.primaryDashboardUrl;
+        session = {
+          role: verifiedRole,
+          name,
+          id: auth.user.id,
+          apiToken: auth.token,
+          apiUserId: auth.user.id,
+          apiEmail: auth.user.email,
+          isDemo: true,
+          roles: auth.user.roles,
+          authSource: "api" as const,
+          department: auth.user.organization?.name || config.defaultIdentity.organization,
+          permissions: config.permissions,
+          householdId: verifiedRole === "citizen" ? "MIRA-FAM-10482" : undefined,
+        };
+      } catch (error) {
+        const canUseLocalDemo =
+          !import.meta.env.PROD &&
+          (error instanceof ApiRequestError && (error.status === 0 || error.status >= 500));
+        if (!canUseLocalDemo) throw error;
+
+        const config = getRoleConfig(account.role);
+        name = config.defaultIdentity.name;
+        targetRoute = config.primaryDashboardUrl;
+        session = {
+          role: account.role,
+          name,
+          id: `local-demo:${account.role}`,
+          apiEmail: config.demoEmail,
+          isDemo: true,
+          authSource: "local-demo" as const,
+          department: config.defaultIdentity.organization,
+          permissions: config.permissions,
+          householdId: account.role === "citizen" ? "MIRA-FAM-10482" : undefined,
+        };
+        setDemoHealth("unavailable");
+      }
+
+      login(session);
+      toast.success(`Signed in as ${name}`);
       await nav({ to: targetRoute as never });
     } catch (cause) {
-      console.error("Demo login error", cause);
-      toast.error(
-        cause instanceof Error ? cause.message : "Unable to launch demo workspace.",
-      );
+      console.error("Demo login error:", cause);
+      setFailedAccount(account);
+      if (cause instanceof ApiRequestError && cause.status === 401) {
+        setDemoError("Demo sign-in needs an authentication configuration check.");
+      } else if (cause instanceof ApiRequestError && cause.status === 403) {
+        setDemoError("The selected demo account is not configured for this role.");
+      } else {
+        setDemoError("We couldn't initialize this demo session. Please try again.");
+      }
     } finally {
       setLoadingRole(null);
+      setActiveSigningAccount(null);
     }
   };
 
@@ -176,11 +239,12 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
     e.preventDefault();
     setRealError("");
     setRealBusy(true);
+
     try {
       let auth;
       if (realTab === "register") {
         if (!displayName.trim()) {
-          throw new Error("Please enter your full name.");
+          throw new Error("Please enter your legal full name.");
         }
         auth = await registerUser(email, password, displayName);
         toast.success("Account created successfully!");
@@ -189,6 +253,7 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
       }
 
       const role = mapRoleToUiRole(auth.user.roles);
+      const config = getRoleConfig(role);
       login({
         role,
         name: auth.user.display_name,
@@ -197,18 +262,21 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
         apiUserId: auth.user.id,
         apiEmail: auth.user.email,
         isDemo: auth.user.is_demo,
+        roles: auth.user.roles,
+        authSource: "real",
+        permissions: config.permissions,
+        householdId: role === "citizen" ? "MIRA-FAM-10482" : undefined,
         department: auth.user.organization?.name,
       });
       toast.success(`Welcome back, ${auth.user.display_name}`);
-      const targetRoute =
-        ROLE_ROUTES[role as keyof typeof ROLE_ROUTES] || "/citizen/dashboard";
+      const targetRoute = config.primaryDashboardUrl;
       await nav({ to: targetRoute as never });
     } catch (cause) {
-      console.error("Real authentication failed", cause);
+      console.error("Real authentication failed:", cause);
       setRealError(
         cause instanceof Error
           ? cause.message
-          : "Authentication failed. Please verify credentials.",
+          : t("authErrorFallback"),
       );
     } finally {
       setRealBusy(false);
@@ -251,50 +319,61 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
 
       <div className="login-layout mx-auto max-w-4xl px-4 sm:px-6">
         <div className="login-access w-full max-w-2xl mx-auto">
-          <div className="login-panel w-full rounded-2xl sm:rounded-3xl border border-border/80 bg-card/95 p-6 sm:p-8 shadow-xl backdrop-blur-md material-elevated">
-            {/* Header */}
+          <div className="login-panel w-full rounded-2xl border border-border/80 bg-card p-6 sm:p-8 shadow-lg">
+            {/* 1. Platform Access Header */}
             <div className="border-b border-border/60 pb-5">
               <div className="flex items-center justify-between">
                 <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold tracking-wider uppercase text-primary">
                   <ShieldCheck className="h-3.5 w-3.5" />
-                  MIRA PLATFORM ACCESS
+                  {t("platformAccess")}
                 </span>
                 <span className="text-xs text-muted-foreground font-mono">
                   v2.4
                 </span>
               </div>
               <h1 className="mt-3 text-2xl font-bold tracking-tight text-foreground sm:text-3xl">
-                Sign In to Mira
+                {t("signInTitle")}
               </h1>
               <p className="mt-1.5 text-sm text-muted-foreground leading-relaxed">
-                Unified public welfare environment for citizens, verification officers, and administrators.
+                {t("signInSubtitle")}
               </p>
 
-              {/* Mode Switcher: Demo Access vs Use Real Account */}
-              <div className="mt-5 grid grid-cols-2 gap-1.5 rounded-xl bg-muted/80 p-1">
+              {/* 2. Mode Switcher: Demo Access vs Use Real Account */}
+              <div className="mt-5 grid grid-cols-2 gap-1.5 rounded-xl bg-muted/80 p-1" role="tablist">
                 <button
                   type="button"
-                  onClick={() => setMode("demo")}
-                  className={`flex items-center justify-center gap-2 rounded-lg py-2 text-xs sm:text-sm font-semibold transition-all active:scale-[0.98] ${
+                  role="tab"
+                  aria-selected={mode === "demo"}
+                  onClick={() => {
+                    setMode("demo");
+                    setDemoError(null);
+                    setFailedAccount(null);
+                  }}
+                  className={`flex items-center justify-center gap-2 rounded-lg py-2 text-xs sm:text-sm font-semibold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-gov ${
                     mode === "demo"
                       ? "bg-card text-foreground shadow-xs ring-1 ring-border/50"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <ShieldCheck className="h-3.5 w-3.5 text-primary" />
-                  Demo Access
+                  {t("demoAccessTab")}
                 </button>
                 <button
                   type="button"
-                  onClick={() => setMode("real")}
-                  className={`flex items-center justify-center gap-2 rounded-lg py-2 text-xs sm:text-sm font-semibold transition-all active:scale-[0.98] ${
+                  role="tab"
+                  aria-selected={mode === "real"}
+                  onClick={() => {
+                    setMode("real");
+                    setRealError("");
+                  }}
+                  className={`flex items-center justify-center gap-2 rounded-lg py-2 text-xs sm:text-sm font-semibold transition-all focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-gov ${
                     mode === "real"
                       ? "bg-card text-foreground shadow-xs ring-1 ring-border/50"
                       : "text-muted-foreground hover:text-foreground"
                   }`}
                 >
                   <LockKeyhole className="h-3.5 w-3.5 text-teal" />
-                  Use Real Account
+                  {t("realAccessTab")}
                 </button>
               </div>
             </div>
@@ -302,53 +381,138 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
             {/* TAB CONTENT: DEMO ACCESS */}
             {mode === "demo" ? (
               <div className="mt-6 space-y-4">
+                {/* Status Bar */}
                 <div className="flex items-center justify-between px-1">
                   <span className="text-xs font-semibold uppercase tracking-wider text-muted-foreground">
-                    Continue as
+                    {t("continueAs")}
                   </span>
-                  <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400">
-                    <Check className="h-3.5 w-3.5" /> Live sandbox active
-                  </span>
+
+                  {/* Live API health is separate from the always available local demo. */}
+                  <div className="flex items-center gap-2">
+                    {demoHealth === "ready" && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+                        <Check className="h-3.5 w-3.5 text-emerald-600" />
+                        Live demo services connected
+                      </span>
+                    )}
+                    {demoHealth === "initializing" && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+                        <Loader2 className="h-3.5 w-3.5 animate-spin text-slate-500" />
+                        Local demo ready · checking live services
+                      </span>
+                    )}
+                    {demoHealth === "degraded" && (
+                      <span className="inline-flex items-center gap-1.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                        <AlertCircle className="h-3.5 w-3.5 text-amber-600" />
+                        Local demo ready · live services limited
+                      </span>
+                    )}
+                    {demoHealth === "unavailable" && (
+                      <div className="inline-flex items-center gap-2">
+                        <span className="inline-flex items-center gap-1.5 text-xs font-medium text-slate-600 dark:text-slate-400">
+                          <AlertTriangle className="h-3.5 w-3.5 text-slate-500" />
+                          Local demo ready · live services unavailable
+                        </span>
+                        <button
+                          type="button"
+                          onClick={fetchHealth}
+                          className="text-xs underline text-slate-600 hover:text-slate-900 inline-flex items-center gap-1 cursor-pointer"
+                        >
+                          <RefreshCw className="h-3 w-3" />
+                          {t("retryConnection")}
+                        </button>
+                      </div>
+                    )}
+                  </div>
                 </div>
 
-                <div className="divide-y divide-border/60 overflow-hidden rounded-2xl border border-border/80 bg-card/60 backdrop-blur-md shadow-xs">
+                {/* Signing in banner */}
+                {loadingRole && activeSigningAccount && (
+                  <div
+                    role="status"
+                    className="flex items-center gap-2.5 rounded-lg border border-gov/20 bg-gov/5 p-3 text-xs font-medium text-gov animate-pulse"
+                  >
+                    <Loader2 className="h-4 w-4 animate-spin shrink-0 text-gov" />
+                    <span>
+                      {t("signingInAs")} {activeSigningAccount.name}…
+                    </span>
+                  </div>
+                )}
+
+                {/* Contextual Demo Launch Error */}
+                {demoError && (
+                  <div
+                    role="alert"
+                    className="flex items-center justify-between gap-3 rounded-lg border border-destructive/30 bg-destructive/5 p-3 text-xs text-destructive"
+                  >
+                    <div className="flex items-center gap-2">
+                      <AlertCircle className="h-4 w-4 shrink-0" />
+                      <span>{demoError}</span>
+                    </div>
+                    {failedAccount && (
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        className="h-7 text-xs border-destructive/30 hover:bg-destructive/10 text-destructive"
+                        onClick={() => handleDemoSignIn(failedAccount)}
+                      >
+                        {t("retryAction")}
+                      </Button>
+                    )}
+                  </div>
+                )}
+
+                {/* Demo Accounts List */}
+                <div
+                  role="list"
+                  className="divide-y divide-border/60 overflow-hidden rounded-xl border border-border/80 bg-card shadow-xs"
+                >
                   {DEMO_ACCOUNTS.map((account) => {
                     const Icon = account.icon;
                     const isBusy = loadingRole === account.role;
+                    const isAnyBusy = loadingRole !== null;
+
                     return (
                       <button
                         key={account.role}
                         type="button"
-                        disabled={isBusy || loadingRole !== null}
+                        role="listitem"
+                        disabled={isAnyBusy}
                         onClick={() => handleDemoSignIn(account)}
-                        className="group flex w-full items-center justify-between p-3.5 sm:px-4 text-left transition-all duration-150 hover:bg-muted/50 active:scale-[0.99] touch-target-44 disabled:opacity-50"
+                        aria-label={`${t("launch")} ${account.name}, ${t(account.titleKey)}`}
+                        className="group flex w-full items-center justify-between p-3 sm:px-4 text-left transition-all duration-150 hover:bg-muted/50 active:scale-[0.99] focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-gov focus-visible:z-10 disabled:opacity-50 disabled:cursor-not-allowed cursor-pointer"
                       >
                         <div className="flex items-center gap-3.5 min-w-0">
-                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl border border-border/60 bg-muted/60 text-foreground transition-transform group-hover:scale-105">
-                            <Icon className="h-4.5 w-4.5" />
+                          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-border/70 bg-muted/60 text-foreground transition-transform group-hover:scale-105">
+                            <Icon className="h-5 w-5 text-slate-700 dark:text-slate-300" />
                           </span>
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <span className="text-sm font-semibold text-foreground tracking-tight">
                                 {account.name}
                               </span>
-                              <span className="rounded-full bg-muted/80 px-2 py-0.5 text-[10px] font-medium text-muted-foreground border border-border/50">
-                                {account.title}
+                              <span className="rounded-full bg-muted px-2 py-0.5 text-[10px] font-medium text-muted-foreground border border-border/50">
+                                {t(account.titleKey)}
                               </span>
                             </div>
-                            <p className="text-xs text-muted-foreground truncate max-w-[280px] sm:max-w-[380px] mt-0.5">
-                              {account.description}
+                            <p className="text-xs text-muted-foreground truncate max-w-[270px] sm:max-w-[390px] mt-0.5">
+                              {t(account.descKey)}
                             </p>
                           </div>
                         </div>
 
                         <div className="flex items-center gap-2 pl-3 shrink-0">
-                          <span className="hidden sm:inline-flex text-xs font-medium text-primary opacity-0 group-hover:opacity-100 transition-opacity">
-                            {isBusy ? "Opening…" : "Launch"}
-                          </span>
-                          <span className="flex h-7 w-7 items-center justify-center rounded-full bg-muted/60 text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground transition-colors">
-                            <ArrowRight className="h-3.5 w-3.5" />
-                          </span>
+                          {isBusy ? (
+                            <span className="inline-flex items-center gap-1.5 text-xs font-semibold text-gov">
+                              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+                              {t("opening")}
+                            </span>
+                          ) : (
+                            <span className="inline-flex items-center gap-1.5 rounded-md border border-border/80 bg-background px-2.5 py-1 text-xs font-medium text-slate-700 dark:text-slate-200 group-hover:border-gov group-hover:text-gov group-hover:bg-gov/5 transition-colors">
+                              {t("launch")}
+                              <ArrowRight className="h-3 w-3 transition-transform group-hover:translate-x-0.5" />
+                            </span>
+                          )}
                         </div>
                       </button>
                     );
@@ -358,33 +522,45 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
             ) : (
               /* TAB CONTENT: REAL ACCOUNT */
               <div className="mt-6">
-                <div className="flex border-b border-slate-200 mb-5">
+                <div className="flex border-b border-border/80 mb-5" role="tablist">
                   <button
                     type="button"
-                    onClick={() => setRealTab("login")}
-                    className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${realTab === "login"
+                    role="tab"
+                    aria-selected={realTab === "login"}
+                    onClick={() => {
+                      setRealTab("login");
+                      setRealError("");
+                    }}
+                    className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-gov ${
+                      realTab === "login"
                         ? "border-gov text-navy"
-                        : "border-transparent text-slate-500 hover:text-slate-800"
-                      }`}
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    Sign In
+                    {t("signInTab")}
                   </button>
                   <button
                     type="button"
-                    onClick={() => setRealTab("register")}
-                    className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors ${realTab === "register"
+                    role="tab"
+                    aria-selected={realTab === "register"}
+                    onClick={() => {
+                      setRealTab("register");
+                      setRealError("");
+                    }}
+                    className={`pb-2.5 px-4 text-sm font-semibold border-b-2 transition-colors focus-visible:outline-hidden focus-visible:ring-2 focus-visible:ring-gov ${
+                      realTab === "register"
                         ? "border-gov text-navy"
-                        : "border-transparent text-slate-500 hover:text-slate-800"
-                      }`}
+                        : "border-transparent text-muted-foreground hover:text-foreground"
+                    }`}
                   >
-                    Create Real Citizen Account
+                    {t("createCitizenAccountTab")}
                   </button>
                 </div>
 
                 <form onSubmit={handleRealSubmit} className="space-y-4 max-w-md mx-auto">
                   {realTab === "register" && (
                     <div className="space-y-1.5">
-                      <Label htmlFor="real-name">Full Legal Name</Label>
+                      <Label htmlFor="real-name">{t("fullLegalName")}</Label>
                       <Input
                         id="real-name"
                         type="text"
@@ -397,7 +573,7 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                   )}
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="real-email">Email Address</Label>
+                    <Label htmlFor="real-email">{t("emailAddress")}</Label>
                     <Input
                       id="real-email"
                       type="email"
@@ -410,7 +586,7 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                   </div>
 
                   <div className="space-y-1.5">
-                    <Label htmlFor="real-password">Password</Label>
+                    <Label htmlFor="real-password">{t("passwordPlaceholder")}</Label>
                     <Input
                       id="real-password"
                       type="password"
@@ -422,25 +598,35 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                     />
                     {realTab === "register" && (
                       <p className="text-[11px] text-muted-foreground">
-                        Minimum 8 characters. Stored securely with Argon2id hash.
+                        {t("passwordRequirement")}
                       </p>
                     )}
                   </div>
 
                   {realError && (
-                    <div className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive">
+                    <div
+                      role="alert"
+                      className="flex items-center gap-2 rounded-md border border-destructive/30 bg-destructive/5 p-3 text-sm text-destructive"
+                    >
                       <AlertCircle className="h-4 w-4 shrink-0" />
                       <span>{realError}</span>
                     </div>
                   )}
 
-                  <Button type="submit" className="w-full h-10 mt-2 bg-gov hover:bg-gov/90 text-white" disabled={realBusy}>
+                  <Button
+                    type="submit"
+                    className="w-full h-10 mt-2 bg-gov hover:bg-gov/90 text-white font-medium"
+                    disabled={realBusy}
+                  >
                     {realBusy ? (
-                      "Authenticating…"
+                      <span className="inline-flex items-center gap-2">
+                        <Loader2 className="h-4 w-4 animate-spin" />
+                        {t("authenticating")}
+                      </span>
                     ) : realTab === "register" ? (
-                      "Create Real Account & Sign In"
+                      t("registerButton")
                     ) : (
-                      "Sign In to Real Account"
+                      t("signInButton")
                     )}
                     <ArrowRight className="ml-1.5 h-4 w-4" />
                   </Button>
@@ -448,24 +634,30 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
                   <p className="text-center text-xs text-muted-foreground pt-2">
                     {realTab === "login" ? (
                       <>
-                        Don't have an account?{" "}
+                        {t("dontHaveAccountPrompt")}{" "}
                         <button
                           type="button"
-                          onClick={() => setRealTab("register")}
-                          className="text-gov font-semibold underline underline-offset-2"
+                          onClick={() => {
+                            setRealTab("register");
+                            setRealError("");
+                          }}
+                          className="text-gov font-semibold underline underline-offset-2 hover:text-gov/80"
                         >
-                          Register here
+                          {t("registerHereLink")}
                         </button>
                       </>
                     ) : (
                       <>
-                        Already have an account?{" "}
+                        {t("alreadyHaveAccountPrompt")}{" "}
                         <button
                           type="button"
-                          onClick={() => setRealTab("login")}
-                          className="text-gov font-semibold underline underline-offset-2"
+                          onClick={() => {
+                            setRealTab("login");
+                            setRealError("");
+                          }}
+                          className="text-gov font-semibold underline underline-offset-2 hover:text-gov/80"
                         >
-                          Sign in here
+                          {t("signInHereLink")}
                         </button>
                       </>
                     )}
@@ -475,9 +667,9 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
             )}
 
             {/* Footer Trust Indicators */}
-            <div className="mt-8 flex flex-wrap items-center justify-between border-t pt-4 text-xs text-muted-foreground">
+            <div className="mt-8 flex flex-wrap items-center justify-between border-t border-border/60 pt-4 text-xs text-muted-foreground">
               <div className="flex items-center gap-3">
-                <span className="flex items-center gap-1 font-medium text-slate-700">
+                <span className="flex items-center gap-1 font-medium text-slate-700 dark:text-slate-300">
                   <LockKeyhole className="h-3.5 w-3.5 text-teal" />
                   {t("secureConnection")}
                 </span>
@@ -487,9 +679,9 @@ export function LoginPage({ initialRole }: { initialRole?: string } = {}) {
               <div>
                 <Link
                   to="/help"
-                  className="text-gov underline-offset-4 hover:underline"
+                  className="text-gov font-medium underline-offset-4 hover:underline"
                 >
-                  {t("needHelp")} {t("support")} ↗
+                  {t("support")} ↗
                 </Link>
               </div>
             </div>

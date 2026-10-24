@@ -49,7 +49,7 @@ export function VerifierFamily360Page() {
           title="Family360 Household Intelligence"
           desc="Multi-generational relationship verification, civil evidence cross-referencing, and conflict detection."
           crumbs={[
-            { label: "Verification Workstation", href: "/verifier/queue" },
+            { label: "Verification Workstation", to: "/verifier/queue" },
             { label: "Family360" },
           ]}
         />

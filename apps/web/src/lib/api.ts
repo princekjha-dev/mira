@@ -1,4 +1,15 @@
 import type { Session, Role } from "./app-state";
+import {
+  APPLICATIONS,
+  AUDIT,
+  BENEFITS,
+  CITIZEN,
+  HOUSEHOLD,
+  MEMBERS,
+  NOTIFICATIONS,
+  SCHEMES,
+  VAULT,
+} from "./data";
 import type {
   Application,
   AppEvent,
@@ -37,6 +48,19 @@ export interface ApiDocument {
 export interface ApiEnvelope<T> {
   data: T;
 }
+
+export class ApiRequestError extends Error {
+  readonly code?: string;
+  readonly status: number;
+
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = "ApiRequestError";
+    this.status = status;
+    this.code = code;
+  }
+}
+
 export interface ApiAuthResponse {
   token: string;
   token_type: string;
@@ -52,11 +76,24 @@ export interface ApiAuthResponse {
 
 export const apiUrl = (path: string) => `${API_BASE}${path}`;
 
+const isLocalDemoSession = (
+  value: Session | string | null,
+): boolean =>
+  Boolean(
+    value &&
+      typeof value === "object" &&
+      value.isDemo &&
+      (value.authSource === "local-demo" || !value.apiToken),
+  );
+
 export async function apiRequest<T>(
   sessionOrToken: Session | string | null,
   path: string,
   init: RequestInit = {},
 ): Promise<T> {
+  if (isLocalDemoSession(sessionOrToken)) {
+    return localDemoApiRequest<T>(sessionOrToken as Session, path, init);
+  }
   const token =
     typeof sessionOrToken === "string"
       ? sessionOrToken
@@ -75,11 +112,16 @@ export async function apiRequest<T>(
   const response = await fetch(apiUrl(path), { ...init, headers });
   if (!response.ok) {
     const body = (await response.json().catch(() => null)) as {
-      error?: { message?: string };
+      error?: { code?: string; message?: string } | boolean;
+      code?: string;
+      message?: string;
     } | null;
-    throw new Error(
-      body?.error?.message ||
-        `Request failed (${response.status}). Please retry.`,
+    const errorObject =
+      body?.error && typeof body.error === "object" ? body.error : body;
+    throw new ApiRequestError(
+      errorObject?.message || `Request failed (${response.status}). Please retry.`,
+      response.status,
+      errorObject?.code,
     );
   }
   if (response.status === 204) return undefined as T;
@@ -98,20 +140,20 @@ export async function loginUser(
       body: JSON.stringify({ email, password }),
     });
   } catch (error) {
-    console.error("Mira authentication request failed", error);
+    console.error("Mira authentication request network error:", error);
     throw new Error(
-      "Connection problem. We couldn't reach Mira. Please try again.",
+      "Unable to reach the authentication service. Please check your network connection.",
     );
   }
   const payload = (await response.json().catch(() => null)) as
-    (ApiAuthResponse & { error?: { message?: string } }) | null;
+    (ApiAuthResponse & { error?: { code?: string; message?: string } }) | null;
   if (!response.ok || !payload?.token) {
     throw new Error(
       response.status === 401
-        ? "Unable to sign in. Check your access details and try again."
+        ? "Invalid email or password. Please check your credentials and try again."
         : response.status >= 500
-          ? "Mira is temporarily unavailable. Please try again."
-          : payload?.error?.message || "Unable to sign in. Please try again.",
+          ? "Authentication service encountered an unexpected error. Please retry."
+          : payload?.error?.message || "Unable to sign in. Please verify your credentials.",
     );
   }
   return payload;
@@ -151,6 +193,54 @@ export async function getMe(token: string): Promise<ApiAuthResponse["user"]> {
   return res.data;
 }
 
+export type DemoHealthState = "ready" | "initializing" | "degraded" | "unavailable";
+
+export async function checkDemoHealth(): Promise<{
+  state: DemoHealthState;
+  details?: string;
+}> {
+  try {
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 4000);
+    const response = await fetch(apiUrl("/api/v1/health"), {
+      signal: controller.signal,
+    });
+    clearTimeout(timeoutId);
+
+    if (!response.ok) {
+      return {
+        state: "unavailable",
+        details: `Service returned HTTP ${response.status}`,
+      };
+    }
+
+    const payload = (await response.json().catch(() => null)) as {
+      data?: {
+        status?: string;
+        database_connected?: boolean;
+      };
+    } | null;
+
+    if (payload?.data?.database_connected === false) {
+      return {
+        state: "degraded",
+        details: "Database connection degraded",
+      };
+    }
+
+    if (payload?.data?.status === "healthy" || response.status === 200) {
+      return { state: "ready" };
+    }
+
+    return { state: "degraded" };
+  } catch (error) {
+    return {
+      state: "unavailable",
+      details: error instanceof Error ? error.message : "Service unreachable",
+    };
+  }
+}
+
 export async function authenticateDemo(
   role: "citizen" | "officer" | "verifier" | "scheme" | "supervisor" | "admin" | "auditor",
 ): Promise<ApiAuthResponse> {
@@ -162,36 +252,33 @@ export async function authenticateDemo(
       body: JSON.stringify({ role }),
     });
   } catch (error) {
-    console.error("Mira demo authentication request failed", error);
-    throw new Error(
-      "Connection problem. We couldn't reach Mira. Please try again.",
-    );
+    console.error("Mira demo authentication request network error:", error);
+    throw new ApiRequestError("Demo authentication service is unreachable.", 0, "CONNECTION_ERROR");
   }
   const payload = (await response.json().catch(() => null)) as
-    (ApiAuthResponse & { error?: { message?: string } }) | null;
+    (ApiAuthResponse & { error?: { code?: string; message?: string } }) | null;
   if (!response.ok || !payload?.token) {
-    throw new Error(
-      response.status === 404 || response.status === 403
-        ? "Demo account unavailable. Please try again later."
-        : response.status >= 500
-          ? "Mira is temporarily unavailable. Please try again."
-          : payload?.error?.message || "Unable to open this demo account.",
+    const errorObject = payload?.error && typeof payload.error === "object" ? payload.error : undefined;
+    throw new ApiRequestError(
+      errorObject?.message || "Unable to open this demo account.",
+      response.status,
+      errorObject?.code,
     );
   }
   if (!payload.user.is_demo) {
-    throw new Error("Demo account unavailable. Please choose another account.");
+    throw new ApiRequestError("This account is not configured as a demo identity.", 403, "DEMO_ACCOUNT_REQUIRED");
   }
   return payload;
 }
 
 export function mapRoleToUiRole(roles: string[]): Role {
   if (roles.includes("AUDITOR")) return "auditor";
-  if (roles.includes("DEPARTMENT_ADMIN")) return "admin";
   if (roles.includes("SUPERVISOR")) return "supervisor";
   if (roles.includes("SCHEME_OFFICER")) return "scheme";
   if (roles.includes("VERIFICATION_OFFICER")) return "verifier";
   if (roles.includes("FIELD_OFFICIAL") || roles.includes("OFFICER"))
     return "officer";
+  if (roles.includes("DEPARTMENT_ADMIN") || roles.includes("SUPER_ADMIN")) return "admin";
   return "citizen";
 }
 
@@ -390,6 +477,12 @@ export function mapBackendBenefit(b: any): Benefit {
                     : "Pending";
   return {
     ref: b.public_id || b.id,
+    schemeId:
+      b.scheme_id ||
+      b.schemeId ||
+      (b.scheme_name
+        ? b.scheme_name.toLowerCase().replace(/[^a-z0-9]+/g, "-")
+        : "general"),
     scheme: b.scheme_name || "Scheme name unavailable",
     beneficiary:
       b.person_name || b.household_name || "Named beneficiary unavailable",
@@ -401,6 +494,8 @@ export function mapBackendBenefit(b: any): Benefit {
     currency: b.currency || null,
     applicationId: b.application_id || null,
     validTo: b.valid_to || null,
+    entitlementDescription: b.entitlement_description || b.description || undefined,
+    decisionRef: b.decision_ref || b.decision_id || undefined,
   };
 }
 
@@ -411,6 +506,7 @@ export function mapBackendBenefit(b: any): Benefit {
 export async function fetchApplications(
   session: Session | null,
 ): Promise<Application[]> {
+  if (isLocalDemoSession(session)) return [...APPLICATIONS];
   if (!session?.apiToken) return [];
   const res = await apiRequest<ApiEnvelope<any[]>>(
     session,
@@ -423,6 +519,11 @@ export async function fetchApplicationById(
   session: Session | null,
   id: string,
 ): Promise<Application> {
+  if (isLocalDemoSession(session)) {
+    const application = APPLICATIONS.find((item) => item.id === id);
+    if (!application) throw new ApiRequestError("Application not found in the demo workspace.", 404, "APPLICATION_NOT_FOUND");
+    return application;
+  }
   const res = await apiRequest<ApiEnvelope<any>>(
     session,
     `/api/v1/applications/${id}`,
@@ -593,6 +694,7 @@ export async function rejectBackendApplication(
 export async function fetchNotifications(
   session: Session | null,
 ): Promise<Notification[]> {
+  if (isLocalDemoSession(session)) return [...NOTIFICATIONS];
   if (!session?.apiToken) return [];
   const res = await apiRequest<ApiEnvelope<any[]>>(
     session,
@@ -614,6 +716,7 @@ export async function fetchAuditEvents(
   session: Session | null,
   limit = 50,
 ): Promise<AuditEvent[]> {
+  if (isLocalDemoSession(session)) return AUDIT.slice(0, limit);
   if (!session?.apiToken) return [];
   const res = await apiRequest<ApiEnvelope<any[]>>(
     session,
@@ -625,16 +728,21 @@ export async function fetchAuditEvents(
 export async function fetchBenefits(
   session: Session | null,
 ): Promise<Benefit[]> {
+  if (isLocalDemoSession(session)) return [...BENEFITS];
   if (!session?.apiToken) return [];
   const res = await apiRequest<ApiEnvelope<any[]>>(session, "/api/v1/benefits");
   return (res.data || []).map(mapBackendBenefit);
 }
 
 export async function fetchSchemes(): Promise<any[]> {
-  const res = await fetch(apiUrl("/api/v1/schemes"));
-  if (!res.ok) return [];
-  const data = (await res.json()) as ApiEnvelope<any[]>;
-  return data.data || [];
+  try {
+    const res = await fetch(apiUrl("/api/v1/schemes"));
+    if (!res.ok) return [...SCHEMES];
+    const data = (await res.json()) as ApiEnvelope<any[]>;
+    return data.data?.length ? data.data : [...SCHEMES];
+  } catch {
+    return [...SCHEMES];
+  }
 }
 
 // ----------------------------------------------------------------------------
@@ -660,6 +768,32 @@ export function uploadDocument(
   replaceId?: string,
   originalFile: File = file,
 ): Promise<ApiDocument> {
+  if (isLocalDemoSession(session)) {
+    const documents = getLocalDemoDocuments();
+    const now = new Date().toISOString();
+    const localDocument: ApiDocument = {
+      id: `local-${Date.now()}`,
+      public_id: `DEMO-DOC-${Date.now()}`,
+      owner_type: "CITIZEN",
+      owner_id: session.apiUserId || CITIZEN.id,
+      document_type: documentType,
+      original_filename: originalFile.name,
+      detected_mime_type: originalFile.type || "application/octet-stream",
+      size_bytes: originalFile.size,
+      original_size_bytes: originalFile.size,
+      sha256: "DEMO-ONLY",
+      storage_reference: "metadata-only-local-demo",
+      status: "READY",
+      verification_status: "PENDING_REVIEW",
+      created_by: session.apiUserId || null,
+      created_at: now,
+      updated_at: now,
+      version_number: 1,
+    };
+    documents.unshift(localDocument);
+    onProgress(originalFile.size, originalFile.size);
+    return Promise.resolve(localDocument);
+  }
   return Promise.all([
     encodeBase64(file),
     originalFile !== file && originalFile.size <= 25 * 1024 * 1024
@@ -826,9 +960,268 @@ export interface ApiFamilyResponse {
   requests: ApiFamilyRequest[];
 }
 
+let cachedLocalDemoFamily: ApiFamilyResponse | null = null;
+let cachedLocalDemoDocuments: ApiDocument[] | null = null;
+
+function getLocalDemoFamily(): ApiFamilyResponse {
+  if (cachedLocalDemoFamily) return cachedLocalDemoFamily;
+  const members: ApiFamilyMember[] = MEMBERS.map((member) => ({
+    id: member.id,
+    person_id: member.id,
+    public_id: member.id,
+    name: member.name,
+    relationship: member.relationship.toUpperCase().replaceAll(" ", "_"),
+    membership_role: member.relationship === "Head of Household" ? "HEAD" : member.relationship.toUpperCase(),
+    dob: member.dob,
+    gender: member.gender,
+    identity: member.identity.toUpperCase().replaceAll(" ", "_"),
+    membership: member.membership.toUpperCase(),
+    income: member.income || null,
+    benefits: member.benefits,
+    is_current: member.membership === "Active",
+  }));
+  const byId = (id: string) => members.find((member) => member.id === id);
+  const relation = (id: string, a: string, b: string, type: string): ApiFamilyRelationship => ({
+    id,
+    person_a_id: a,
+    person_b_id: b,
+    person_a_name: byId(a)?.name || "",
+    person_b_name: byId(b)?.name || "",
+    relationship_type: type,
+    valid_from: "2010-02-14",
+    verification_status: "Verified",
+  });
+  const relationships = [
+    relation("rel-spouse", "P-10482-01", "P-10482-02", "SPOUSE"),
+    relation("rel-daughter", "P-10482-01", "P-10482-19", "DAUGHTER"),
+    relation("rel-son", "P-10482-01", "P-10482-20", "SON"),
+    relation("rel-father", "P-10482-03", "P-10482-01", "FATHER"),
+    relation("rel-mother", "P-10482-04", "P-10482-01", "MOTHER"),
+  ];
+  const timeline: ApiFamilyTimelineItem[] = MEMBERS.flatMap((member) =>
+    member.history.map((event, index) => ({
+      date: event.date,
+      event_type: "HOUSEHOLD_RECORD",
+      title: event.event,
+      description: `${member.name}: ${event.event}`,
+      source: "Mira demo registry",
+      evidence: null,
+      verification_status: member.identity,
+      verified_by: "Demo Registry",
+      timestamp: `${event.date}T00:00:00Z-${member.id}-${index}`,
+    })),
+  );
+  cachedLocalDemoFamily = {
+    household_id: "demo-household-10482",
+    household_public_id: HOUSEHOLD.id,
+    household_name: "Sharma Family",
+    status: "ACTIVE",
+    address: CITIZEN.address,
+    property_summary: HOUSEHOLD.property,
+    bpl_status: HOUSEHOLD.bpl,
+    income_category: HOUSEHOLD.income,
+    verification_status: "VERIFIED",
+    is_demo_data: true,
+    disclaimer: "Synthetic demo household records for product evaluation.",
+    members,
+    relationships,
+    timeline,
+    requests: [],
+  };
+  return cachedLocalDemoFamily;
+}
+
+function getLocalDemoDocuments(): ApiDocument[] {
+  if (cachedLocalDemoDocuments) return cachedLocalDemoDocuments;
+  cachedLocalDemoDocuments = VAULT.map((doc, index) => {
+    const size = Number.parseFloat(doc.size) * (doc.size.includes("MB") ? 1024 * 1024 : 1024);
+    const verificationStatus =
+      doc.status === "Verified" ? "VERIFIED" :
+      doc.status === "Mismatch detected" ? "MISMATCH" :
+      doc.status === "Expired document" ? "EXPIRED" : "MANUAL_REVIEW";
+    return {
+      id: doc.id,
+      public_id: `DEMO-DOC-${doc.id.toUpperCase()}`,
+      owner_type: "CITIZEN",
+      owner_id: CITIZEN.id,
+      document_type: doc.type,
+      original_filename: doc.name,
+      detected_mime_type: doc.name.toLowerCase().endsWith(".jpg") ? "image/jpeg" : "application/pdf",
+      size_bytes: Math.round(size),
+      original_size_bytes: Math.round(size),
+      sha256: `DEMO-ONLY-${index + 1}`,
+      storage_reference: "demo-record-without-file-content",
+      status: "READY",
+      verification_status: verificationStatus,
+      created_by: null,
+      created_at: `${doc.uploaded}T10:00:00Z`,
+      updated_at: `${doc.uploaded}T10:00:00Z`,
+      version_number: 1,
+    };
+  });
+  return cachedLocalDemoDocuments;
+}
+
+async function localDemoApiRequest<T>(
+  session: Session,
+  path: string,
+  init: RequestInit,
+): Promise<T> {
+  const url = new URL(path, "http://mira.local");
+  const method = (init.method || "GET").toUpperCase();
+  const body = typeof init.body === "string" ? JSON.parse(init.body || "{}") : {};
+  const family = getLocalDemoFamily();
+  const docs = getLocalDemoDocuments();
+  const appMatch = url.pathname.match(/^\/api\/v1\/applications\/([^/]+)$/);
+  const docMatch = url.pathname.match(/^\/api\/v1\/documents\/([^/]+)(?:\/(.*))?$/);
+
+  if (method === "GET" && url.pathname === "/api/v1/documents") {
+    return { data: docs } as T;
+  }
+  if (method === "GET" && /^\/api\/v1\/applications\/[^/]+\/documents$/.test(url.pathname)) {
+    return { data: docs } as T;
+  }
+  if (method === "GET" && docMatch) {
+    const document = docs.find((doc) => doc.id === decodeURIComponent(docMatch[1]));
+    const action = docMatch[2];
+    if (action === "versions") return { data: document ? [document] : [] } as T;
+    if (action === "applications") {
+      const linked = APPLICATIONS.filter((app) => app.applicant === CITIZEN.name || app.applicant === "Ananya Sharma").map((app) => ({
+        id: app.id,
+        reference_number: app.id,
+        scheme_name: app.schemeId,
+        status: app.status,
+        linked_at: app.updatedOn,
+      }));
+      return { data: linked } as T;
+    }
+    if (action === "extractions") return { data: [] } as T;
+    if (!action && document) return { data: document } as T;
+  }
+  if (method === "DELETE" && docMatch && !docMatch[2]) {
+    const index = docs.findIndex((doc) => doc.id === decodeURIComponent(docMatch[1]));
+    if (index >= 0) docs.splice(index, 1);
+    return undefined as T;
+  }
+  if (method === "POST" && docMatch && docMatch[2] === "verify") {
+    const document = docs.find((doc) => doc.id === decodeURIComponent(docMatch[1]));
+    if (!document) throw new ApiRequestError("Document not found in the demo workspace.", 404, "DOCUMENT_NOT_FOUND");
+    document.verification_status = String(body.status || "PENDING_REVIEW");
+    return { data: document } as T;
+  }
+  if (method === "GET" && appMatch) {
+    const application = APPLICATIONS.find((app) => app.id === decodeURIComponent(appMatch[1]));
+    if (application) return { data: application } as T;
+  }
+  if (method === "GET" && url.pathname === "/api/v1/profile/family") {
+    return { data: family } as T;
+  }
+  if (method === "POST" && url.pathname === "/api/v1/profile/family/members") {
+    const id = `DEMO-MEMBER-${Date.now()}`;
+    const member: ApiFamilyMember = {
+      id,
+      person_id: id,
+      public_id: id,
+      name: `${body.first_name || "New"} ${body.last_name || "Member"}`.trim(),
+      relationship: String(body.relationship || "OTHER").toUpperCase(),
+      membership_role: String(body.relationship || "OTHER").toUpperCase(),
+      dob: String(body.date_of_birth || ""),
+      gender: String(body.gender || "Unspecified"),
+      identity: "PENDING",
+      membership: "ACTIVE",
+      income: body.income || null,
+      benefits: [],
+      is_current: true,
+    };
+    family.members.push(member);
+    return { data: member } as T;
+  }
+  if (method === "POST" && url.pathname === "/api/v1/profile/family/events") {
+    const item: ApiFamilyTimelineItem = {
+      date: String(body.effective_date || new Date().toISOString().slice(0, 10)),
+      event_type: String(body.event_type || "LIFE_EVENT"),
+      title: String(body.event_type || "Life event").replaceAll("_", " "),
+      description: String(body.details || ""),
+      source: session.name,
+      evidence: body.certificate_no || null,
+      verification_status: "Pending",
+      verified_by: "",
+      timestamp: new Date().toISOString(),
+    };
+    family.timeline.unshift(item);
+    return { data: item } as T;
+  }
+  if (method === "POST" && url.pathname === "/api/v1/profile/family/disputes") {
+    const item = { id: `DEMO-DISPUTE-${Date.now()}`, status: "PENDING_REVIEW", ...body };
+    family.requests.unshift({ id: item.id, type: String(body.category || "Data correction"), requested_at: new Date().toISOString(), status: item.status, details: String(body.description || ""), changes: {} });
+    return { data: item } as T;
+  }
+  const householdPath = url.pathname.match(/^\/api\/v1\/households\/([^/]+)\/family$/);
+  if (method === "GET" && householdPath) return { data: family } as T;
+  const graphPath = url.pathname.match(/^\/api\/v1\/households\/([^/]+)\/graph$/);
+  if (method === "GET" && graphPath) {
+    return {
+      data: {
+        query_date: new Date().toISOString().slice(0, 10),
+        nodes: family.members.map((member) => ({ id: member.id, node_type: "PERSON", label: member.name, sublabel: member.relationship, data: member })),
+        edges: family.relationships.map((rel) => ({ id: rel.id, source: rel.person_a_id, target: rel.person_b_id, edge_type: rel.relationship_type, label: rel.relationship_type, verification_status: rel.verification_status, confidence: 1 })),
+      },
+    } as T;
+  }
+  const personPath = url.pathname.match(/^\/api\/v1\/persons\/([^/]+)\/360$/);
+  if (method === "GET" && personPath) {
+    const member = family.members.find((item) => item.id === decodeURIComponent(personPath[1]) || item.person_id === decodeURIComponent(personPath[1]));
+    if (member) {
+      const [firstName = "", ...lastParts] = member.name.split(" ");
+      const related = family.relationships.filter((rel) => rel.person_a_id === member.id || rel.person_b_id === member.id).map((rel) => ({
+        id: rel.id,
+        related_person_id: rel.person_a_id === member.id ? rel.person_b_id : rel.person_a_id,
+        related_person_public_id: rel.person_a_id === member.id ? rel.person_b_id : rel.person_a_id,
+        related_person_name: rel.person_a_id === member.id ? rel.person_b_name : rel.person_a_name,
+        relationship_type: rel.relationship_type,
+        verification_status: rel.verification_status,
+        confidence: 1,
+      }));
+      const personApplications = APPLICATIONS.filter((app) => app.applicant === member.name || (member.name === "Ananya Sharma" && app.applicant === "Ananya Sharma"));
+      return {
+        data: {
+          person: {
+            id: member.id,
+            public_id: member.public_id,
+            first_name: firstName,
+            last_name: lastParts.join(" "),
+            name: member.name,
+            dob: member.dob,
+            gender: member.gender,
+            age: Number.isNaN(Date.parse(member.dob)) ? 0 : new Date().getFullYear() - new Date(member.dob).getFullYear(),
+            masked_id: "XXXX-XXXX-4821",
+            status: member.membership,
+            verification_status: member.identity,
+            membership_role: member.membership_role,
+            household_id: family.household_id,
+            household_public_id: family.household_public_id,
+            household_name: family.household_name,
+          },
+          relationships: related,
+          documents: docs.slice(0, 3).map((doc) => ({ id: doc.id, public_id: doc.public_id, document_type: doc.document_type, title: doc.original_filename, status: doc.status, verification_status: doc.verification_status, created_at: doc.created_at })),
+          applications: personApplications.map((app) => ({ id: app.id, reference_number: app.id, scheme_name: app.schemeId, status: app.status, submitted_at: app.appliedOn })),
+          benefits: BENEFITS.filter((benefit) => benefit.beneficiary.includes(member.name) || (benefit.type === "Household" && member.id === "P-10482-01")).map((benefit) => ({ id: benefit.ref, scheme_name: benefit.scheme, disbursement_amount: String(benefit.amount || ""), status: benefit.status, disbursed_at: benefit.approvedOn })),
+          timeline: family.timeline.filter((item) => item.description.includes(member.name)).map((item) => ({ id: item.timestamp, event_type: item.event_type, effective_date: item.date, description: item.description, verification_status: item.verification_status })),
+          schemes: SCHEMES.slice(0, 3).map((scheme) => ({ scheme_id: scheme.id, name: scheme.name, code: scheme.id.toUpperCase(), eligibility_status: "REVIEW_REQUIRED", explanation: "Review household and scheme criteria before applying.", satisfied_conditions: [], unmet_conditions: [] })),
+        },
+      } as T;
+    }
+  }
+  if (method === "GET" && url.pathname === "/api/v1/audit/my-activity") return { data: [] } as T;
+  if (method === "POST" && /^\/api\/v1\/notifications\/[^/]+\/read$/.test(url.pathname)) return undefined as T;
+
+  throw new ApiRequestError("This operation requires the live Mira service.", 503, "LOCAL_DEMO_OPERATION_UNAVAILABLE");
+}
+
 export async function fetchMyFamily(
   sessionOrToken: Session | string | null,
 ): Promise<ApiFamilyResponse> {
+  if (isLocalDemoSession(sessionOrToken)) return getLocalDemoFamily();
   const res = await apiRequest<ApiEnvelope<ApiFamilyResponse>>(
     sessionOrToken,
     "/api/v1/profile/family",
@@ -1062,6 +1455,12 @@ export async function fetchHouseholdFamily(
   sessionOrToken: Session | string | null,
   householdId: string,
 ): Promise<ApiFamilyResponse> {
+  if (isLocalDemoSession(sessionOrToken)) {
+    if (householdId !== HOUSEHOLD.id) {
+      throw new ApiRequestError("Household not found in the local demo registry.", 404, "HOUSEHOLD_NOT_FOUND");
+    }
+    return getLocalDemoFamily();
+  }
   const res = await apiRequest<ApiEnvelope<ApiFamilyResponse>>(
     sessionOrToken,
     `/api/v1/households/${encodeURIComponent(householdId)}/family`,
@@ -1074,6 +1473,14 @@ export async function fetchHouseholdGraph(
   householdId: string,
   temporalDate?: string,
 ): Promise<ApiGraphData> {
+  if (isLocalDemoSession(sessionOrToken)) {
+    const family = getLocalDemoFamily();
+    return {
+      query_date: temporalDate || new Date().toISOString().slice(0, 10),
+      nodes: family.members.map((member) => ({ id: member.id, node_type: "PERSON", label: member.name, sublabel: member.relationship, data: member })),
+      edges: family.relationships.map((rel) => ({ id: rel.id, source: rel.person_a_id, target: rel.person_b_id, edge_type: rel.relationship_type, label: rel.relationship_type, verification_status: rel.verification_status, confidence: 1 })),
+    };
+  }
   const query = temporalDate ? `?date=${encodeURIComponent(temporalDate)}` : "";
   const res = await apiRequest<ApiEnvelope<ApiGraphData>>(
     sessionOrToken,
@@ -1086,6 +1493,14 @@ export async function fetchPerson360(
   sessionOrToken: Session | string | null,
   personId: string,
 ): Promise<ApiPerson360Data> {
+  if (isLocalDemoSession(sessionOrToken)) {
+    const response = await localDemoApiRequest<ApiEnvelope<ApiPerson360Data>>(
+      sessionOrToken as Session,
+      `/api/v1/persons/${encodeURIComponent(personId)}/360`,
+      { method: "GET" },
+    );
+    return response.data;
+  }
   const res = await apiRequest<ApiEnvelope<ApiPerson360Data>>(
     sessionOrToken,
     `/api/v1/persons/${encodeURIComponent(personId)}/360`,
@@ -1096,6 +1511,7 @@ export async function fetchPerson360(
 export async function fetchMyAuditActivity(
   sessionOrToken: Session | string | null,
 ): Promise<ApiMyAuditEvent[]> {
+  if (isLocalDemoSession(sessionOrToken)) return [];
   const res = await apiRequest<ApiEnvelope<ApiMyAuditEvent[]>>(
     sessionOrToken,
     "/api/v1/audit/my-activity",

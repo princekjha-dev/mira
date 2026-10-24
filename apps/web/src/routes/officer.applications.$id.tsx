@@ -112,7 +112,7 @@ function Review() {
   const [activeDoc, setActiveDoc] = useState<ApiDocument | null>(null);
 
   const loadDocuments = () => {
-    if (!state.session?.apiToken) return;
+    if (!state.session?.apiToken && !state.session?.isDemo) return;
     const targetId = (a as any)?.rawId || a?.id;
     if (!targetId) return;
     apiRequest<{ data: ApiDocument[] }>(state.session, `/api/v1/applications/${targetId}/documents`)
@@ -136,7 +136,7 @@ function Review() {
     if (a) {
       loadDocuments();
     }
-  }, [a?.id, (a as any)?.rawId, state.session?.apiToken]);
+  }, [a?.id, (a as any)?.rawId, state.session?.apiToken, state.session?.isDemo]);
   if (!a)
     return (
       <Empty

@@ -1,6 +1,6 @@
-use std::collections::HashSet;
 use chrono::Datelike;
 use sqlx::{PgPool, Row};
+use std::collections::HashSet;
 use uuid::Uuid;
 
 use crate::{
@@ -23,7 +23,10 @@ impl BlockingEngine {
         _config: &MatchingModelConfig,
     ) -> Result<Vec<Uuid>, AppError> {
         let mut candidate_ids = HashSet::new();
-        let norm_name = normalize_name(&format!("{} {}", source_person.first_name, source_person.last_name));
+        let norm_name = normalize_name(&format!(
+            "{} {}",
+            source_person.first_name, source_person.last_name
+        ));
         let name_prefix = if norm_name.len() >= 3 {
             &norm_name[..3]
         } else {
@@ -134,7 +137,10 @@ impl BlockingEngine {
         // Strategy 5: Transliteration / Phonetic Name Match fallback
         // If candidate set is small, look for matching first name transliteration
         if candidate_ids.len() < 5 {
-            let latin_cand = crate::domain::entity_resolution::normalization::transliterate_indic_to_latin(&source_person.first_name);
+            let latin_cand =
+                crate::domain::entity_resolution::normalization::transliterate_indic_to_latin(
+                    &source_person.first_name,
+                );
             let search_term = if !latin_cand.is_empty() {
                 latin_cand
             } else {

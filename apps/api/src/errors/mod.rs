@@ -81,7 +81,9 @@ impl AppError {
             AppError::BadRequest(msg) => msg.clone(),
             AppError::Conflict(msg) => msg.clone(),
             AppError::Validation(msg) => msg.clone(),
-            AppError::Internal(_) => "An internal server error occurred. Please contact the administrator.".to_string(),
+            AppError::Internal(_) => {
+                "An internal server error occurred. Please contact the administrator.".to_string()
+            }
             AppError::Database(err) => {
                 tracing::error!("Database error: {:?}", err);
                 "A database operation failed safely.".to_string()

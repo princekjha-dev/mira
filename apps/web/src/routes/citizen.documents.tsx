@@ -119,7 +119,7 @@ function Docs() {
   const [viewer, setViewer] = useState<ApiDocument | null>(null);
 
   const refresh = useCallback(async () => {
-    if (!session?.apiToken) {
+    if (!session?.apiToken && !session?.isDemo) {
       setDocuments([]);
       setLoading(false);
       return;
@@ -133,11 +133,10 @@ function Docs() {
       );
       setDocuments(result.data.filter((doc) => doc.status !== "REVOKED"));
     } catch (error) {
-      setLoadError(
-        error instanceof Error
-          ? error.message
-          : "Unable to load your documents.",
-      );
+      console.error("Citizen document list request failed.", {
+        name: error instanceof Error ? error.name : "UnknownError",
+      });
+      setLoadError("We couldn't load your documents. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -200,6 +199,10 @@ function Docs() {
 
   const download = async (doc: ApiDocument) => {
     try {
+      if (session?.authSource === "local-demo") {
+        toast.info("Secure file content is not stored in the local demo.");
+        return;
+      }
       const response = await fetch(
         apiUrl(
           `/api/v1/documents/${doc.id}/download?purpose=CITIZEN_SELF_SERVICE`,
@@ -230,7 +233,7 @@ function Docs() {
           </Button>
         }
       />
-      {!session?.apiToken ? (
+      {!session?.apiToken && !session?.isDemo ? (
         <div className="rounded-xl border bg-white p-8 text-center">
           <FolderOpen className="mx-auto h-8 w-8 text-slate-400" />
           <h2 className="mt-3 font-semibold">

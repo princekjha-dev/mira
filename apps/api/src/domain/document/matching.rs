@@ -1,9 +1,9 @@
-use serde::{Deserialize, Serialize};
-use sqlx::PgPool;
-use uuid::Uuid;
 use crate::domain::entity_resolution::normalization::normalize_name;
 use crate::domain::entity_resolution::similarity::compare_names;
 use crate::errors::AppError;
+use serde::{Deserialize, Serialize};
+use sqlx::PgPool;
+use uuid::Uuid;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct MatchedPersonCandidate {
@@ -75,11 +75,7 @@ impl DocumentMatcher {
             .map_err(|e| AppError::Internal(format!("Failed to query person candidates: {}", e)))?;
 
             for row in rows {
-                let db_full_name = format!(
-                    "{} {}",
-                    row.first_name,
-                    row.last_name
-                );
+                let db_full_name = format!("{} {}", row.first_name, row.last_name);
                 let normalized_db_name = normalize_name(&db_full_name);
 
                 let name_res = compare_names(&normalized_input_name, &normalized_db_name);
@@ -87,15 +83,23 @@ impl DocumentMatcher {
                 let details = name_res.explanation;
 
                 if sim >= 0.65 {
-                    let mut assessment = if sim >= 0.85 { "STRONG_MATCH" } else { "POSSIBLE_MATCH" };
-                    let mut explanation = format!("Name similarity: {:.0}% ({})", sim * 100.0, details);
+                    let mut assessment = if sim >= 0.85 {
+                        "STRONG_MATCH"
+                    } else {
+                        "POSSIBLE_MATCH"
+                    };
+                    let mut explanation =
+                        format!("Name similarity: {:.0}% ({})", sim * 100.0, details);
 
                     // Check DOB contradiction if extracted DOB exists
                     let db_dob_str = row.date_of_birth.map(|d| d.format("%Y-%m-%d").to_string());
                     if let (Some(ext_dob), Some(ref db_dob)) = (extracted_dob, &db_dob_str) {
                         if ext_dob != db_dob {
                             assessment = "POSSIBLE_MATCH";
-                            explanation.push_str(&format!(" [DOB Discrepancy: Doc={}, Record={}]", ext_dob, db_dob));
+                            explanation.push_str(&format!(
+                                " [DOB Discrepancy: Doc={}, Record={}]",
+                                ext_dob, db_dob
+                            ));
                         } else {
                             explanation.push_str(" [DOB matches exactly]");
                         }
@@ -113,7 +117,11 @@ impl DocumentMatcher {
                 }
             }
 
-            person_matches.sort_by(|a, b| b.similarity_score.partial_cmp(&a.similarity_score).unwrap_or(std::cmp::Ordering::Equal));
+            person_matches.sort_by(|a, b| {
+                b.similarity_score
+                    .partial_cmp(&a.similarity_score)
+                    .unwrap_or(std::cmp::Ordering::Equal)
+            });
             person_matches.truncate(5);
         }
 
@@ -140,7 +148,10 @@ impl DocumentMatcher {
                     household_name: hh.name,
                     match_level: "LIKELY_HOUSEHOLD_MATCH".to_string(),
                     matched_members: vec![top_person.full_name.clone()],
-                    explanation: format!("Matched person '{}' is an active registered member of this household.", top_person.full_name),
+                    explanation: format!(
+                        "Matched person '{}' is an active registered member of this household.",
+                        top_person.full_name
+                    ),
                 });
             }
         }
@@ -220,8 +231,13 @@ impl DocumentMatcher {
             .unwrap_or_default();
 
             for prop in prop_rows {
-                if addr.to_lowercase().contains(&prop.address_line.to_lowercase())
-                    || prop.address_line.to_lowercase().contains(&addr.to_lowercase())
+                if addr
+                    .to_lowercase()
+                    .contains(&prop.address_line.to_lowercase())
+                    || prop
+                        .address_line
+                        .to_lowercase()
+                        .contains(&addr.to_lowercase())
                 {
                     property_matches.push(MatchedPropertyCandidate {
                         property_id: prop.id,
@@ -231,7 +247,8 @@ impl DocumentMatcher {
                         has_previous_benefits: false,
                         previous_benefit_details: None,
                         match_level: "POSSIBLE_PROPERTY_MATCH".to_string(),
-                        explanation: "Address text closely correlates with property database record.".into(),
+                        explanation:
+                            "Address text closely correlates with property database record.".into(),
                     });
                     break;
                 }

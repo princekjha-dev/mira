@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ExternalLink,
   Lock,
+  HelpCircle,
   type LucideIcon,
 } from "lucide-react";
 import { toast } from "sonner";
@@ -73,78 +74,110 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
     return 0;
   };
 
-  const renderNavLinks = (onItemClick?: () => void, isMini = false) => (
-    <nav className="flex flex-col gap-1.5 p-2" aria-label={workspaceTitle}>
-      {navItems.map((item) => {
-        const badgeCount = getBadgeCount(item.badge);
-        const isActive =
-          location.pathname === item.to ||
-          (item.to !== "/" && !item.exact && location.pathname.startsWith(item.to));
+  const renderNavLinks = (onItemClick?: () => void, isMini = false) => {
+    // Group navigation items by section
+    const grouped = navItems.reduce<Record<string, RoleNavItem[]>>((acc, item) => {
+      const section = item.section || "WORKSPACE";
+      if (!acc[section]) acc[section] = [];
+      acc[section].push(item);
+      return acc;
+    }, {});
 
-        const linkEl = (
-          <Link
-            key={item.id + item.to}
-            to={item.to as "/"}
-            onClick={onItemClick}
-            className={cn(
-              "group relative flex items-center gap-3 rounded-xl transition-all duration-150 text-xs font-medium",
-              isMini ? "h-11 w-11 justify-center px-0" : "h-10 px-3",
-              isActive
-                ? "bg-slate-900 text-white shadow-xs dark:bg-slate-100 dark:text-slate-950"
-                : "text-muted-foreground hover:bg-muted/70 hover:text-foreground"
-            )}
-            activeOptions={{ exact: item.exact }}
-          >
-            {/* Active Indicator Pip */}
-            {isActive && !isMini && (
-              <span className="absolute left-1 h-4 w-1 rounded-full bg-primary" />
-            )}
+    const sectionKeys = Object.keys(grouped);
 
-            <item.icon
-              className={cn(
-                "h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-105",
-                isActive ? "text-white dark:text-slate-950" : "text-muted-foreground group-hover:text-foreground"
-              )}
-            />
-
-            {!isMini && <span className="truncate flex-1">{item.label}</span>}
-
-            {/* Badge Indicator */}
-            {badgeCount > 0 && (
-              <span
-                className={cn(
-                  "flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold",
-                  isActive
-                    ? "bg-white/20 text-white dark:bg-slate-900 dark:text-white"
-                    : "bg-primary/10 text-primary"
-                )}
-              >
-                {badgeCount}
+    return (
+      <nav className="flex flex-col gap-1 p-2" aria-label={workspaceTitle}>
+        {sectionKeys.map((section, sectionIdx) => (
+          <div key={section} className="flex flex-col gap-1">
+            {/* Section Header */}
+            {!isMini ? (
+              <span className={cn(
+                "block px-3 text-[10px] font-mono uppercase tracking-wider font-semibold text-slate-400 dark:text-slate-500",
+                sectionIdx > 0 ? "pt-3 pb-1 border-t border-border/50 mt-1" : "pb-1"
+              )}>
+                {section}
               </span>
+            ) : (
+              sectionIdx > 0 && <div className="my-1.5 mx-2 h-px bg-border/60" />
             )}
-          </Link>
-        );
 
-        if (isMini) {
-          return (
-            <Tooltip key={item.id} delayDuration={100}>
-              <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
-              <TooltipContent side="right" className="text-xs font-medium flex items-center gap-2">
-                <span>{item.label}</span>
-                {badgeCount > 0 && (
-                  <span className="rounded-full bg-primary/20 px-1.5 py-0.2 text-[10px] text-primary">
-                    {badgeCount}
-                  </span>
-                )}
-              </TooltipContent>
-            </Tooltip>
-          );
-        }
+            {/* Nav Items in Section */}
+            {grouped[section].map((item) => {
+              const badgeCount = getBadgeCount(item.badge);
+              const isActive =
+                location.pathname === item.to ||
+                (item.to !== "/" && !item.exact && location.pathname.startsWith(item.to));
 
-        return linkEl;
-      })}
-    </nav>
-  );
+              const linkEl = (
+                <Link
+                  key={item.id + item.to}
+                  to={item.to as "/"}
+                  onClick={onItemClick}
+                  className={cn(
+                    "group relative flex items-center gap-2.5 rounded-lg transition-all duration-150 text-xs font-medium",
+                    isMini ? "h-10 w-10 justify-center px-0" : "h-9 px-3",
+                    isActive
+                      ? "bg-slate-900 text-white shadow-2xs dark:bg-slate-100 dark:text-slate-950 font-semibold"
+                      : "text-slate-600 hover:bg-slate-100/80 hover:text-slate-950 dark:text-slate-400 dark:hover:bg-slate-800/60 dark:hover:text-slate-100"
+                  )}
+                  activeOptions={{ exact: item.exact }}
+                >
+                  {/* Active Indicator Pip */}
+                  {isActive && !isMini && (
+                    <span className="absolute left-1 h-3.5 w-1 rounded-full bg-primary" />
+                  )}
+
+                  <item.icon
+                    className={cn(
+                      "h-4 w-4 shrink-0 transition-transform duration-150 group-hover:scale-105",
+                      isActive ? "text-white dark:text-slate-950" : "text-slate-500 group-hover:text-slate-900 dark:text-slate-400 dark:group-hover:text-slate-100"
+                    )}
+                  />
+
+                  {!isMini && <span className="truncate flex-1">{item.label}</span>}
+
+                  {/* Badge Indicator */}
+                  {badgeCount > 0 && (
+                    <span
+                      className={cn(
+                        "flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold tabular-nums font-mono",
+                        isActive
+                          ? "bg-white/20 text-white dark:bg-slate-900 dark:text-white"
+                          : "bg-primary/10 text-primary"
+                      )}
+                    >
+                      {badgeCount}
+                    </span>
+                  )}
+                </Link>
+              );
+
+              if (isMini) {
+                return (
+                  <Tooltip key={item.id} delayDuration={100}>
+                    <TooltipTrigger asChild>{linkEl}</TooltipTrigger>
+                    <TooltipContent side="right" className="text-xs font-medium flex items-center gap-2">
+                      <span className="text-[10px] uppercase font-mono text-muted-foreground mr-1">
+                        {section}:
+                      </span>
+                      <span>{item.label}</span>
+                      {badgeCount > 0 && (
+                        <span className="rounded-full bg-primary/20 px-1.5 py-0.2 text-[10px] text-primary">
+                          {badgeCount}
+                        </span>
+                      )}
+                    </TooltipContent>
+                  </Tooltip>
+                );
+              }
+
+              return linkEl;
+            })}
+          </div>
+        ))}
+      </nav>
+    );
+  };
 
   return (
     <TooltipProvider>
@@ -300,6 +333,18 @@ export function MiraShell({ children, title, items, isReadOnly }: MiraShellProps
                   </Button>
                 </TooltipTrigger>
                 <TooltipContent className="text-xs">Notifications</TooltipContent>
+              </Tooltip>
+
+              {/* Help & Support */}
+              <Tooltip delayDuration={150}>
+                <TooltipTrigger asChild>
+                  <Button variant="ghost" size="icon" asChild className="h-9 w-9 rounded-xl text-muted-foreground hover:text-foreground">
+                    <Link to="/help" aria-label="Help and documentation">
+                      <HelpCircle className="h-4 w-4" />
+                    </Link>
+                  </Button>
+                </TooltipTrigger>
+                <TooltipContent className="text-xs">Help & Support</TooltipContent>
               </Tooltip>
 
               {/* Interactive User Account Menu */}

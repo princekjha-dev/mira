@@ -345,44 +345,38 @@
 
 /* Login-only editorial photo montage; no split layout or glass blur. */
 .login-page {
-  --login-surface: color-mix(in oklab, var(--card) 94%, transparent);
-  --login-role-surface: color-mix(in oklab, var(--card) 90%, transparent);
-  --login-overlay: linear-gradient(90deg, color-mix(in oklab, var(--card) 34%, transparent), color-mix(in oklab, var(--card) 48%, transparent) 50%, color-mix(in oklab, var(--card) 28%, transparent));
-  --login-shadow: 0 4px 24px color-mix(in oklab, var(--navy) 6%, transparent);
+  --login-surface: color-mix(in oklab, var(--card) 98%, transparent);
+  --login-role-surface: color-mix(in oklab, var(--card) 96%, transparent);
+  --login-overlay: linear-gradient(180deg, rgba(248, 250, 252, 0.92) 0%, rgba(241, 245, 249, 0.95) 100%);
+  --login-shadow: 0 4px 20px -2px rgba(15, 23, 42, 0.08), 0 2px 6px -1px rgba(15, 23, 42, 0.04);
   position: relative; isolation: isolate; min-height: calc(100svh - 72px); overflow: clip;
 }
 .login-background { position: absolute; z-index: -1; inset: 0; overflow: hidden; background: var(--background); }
-.login-photo-layer { position: absolute; mask-image: radial-gradient(ellipse at center, var(--card) 30%, transparent 73%); }
+.login-photo-layer { position: absolute; mask-image: radial-gradient(ellipse at center, var(--card) 30%, transparent 75%); filter: grayscale(35%) contrast(95%); }
 .login-background-photo { width: 100%; height: 100%; object-fit: cover; }
-.login-photo-family { --photo-opacity: .5; left: -7%; bottom: -8%; width: 48%; height: 95%; opacity: var(--photo-opacity); animation: login-family-enter 1200ms 150ms cubic-bezier(.22,1,.36,1) both; }
-.login-photo-family img { object-position: center; animation: login-family-drift 18s 1350ms ease-in-out infinite; }
-.login-photo-service { --photo-opacity: .38; right: -10%; bottom: -7%; width: 49%; height: 80%; opacity: var(--photo-opacity); animation: login-service-enter 1200ms 1500ms cubic-bezier(.22,1,.36,1) both; }
-.login-photo-service img { object-position: 55% center; animation: login-service-drift 16s 2700ms ease-in-out infinite; }
-.login-photo-civic { --photo-opacity: .28; left: 21%; top: -18%; width: 67%; height: 77%; opacity: var(--photo-opacity); animation: login-civic-enter 1400ms 2850ms cubic-bezier(.22,1,.36,1) both; }
+.login-photo-family { --photo-opacity: .08; left: -7%; bottom: -8%; width: 48%; height: 95%; opacity: var(--photo-opacity); }
+.login-photo-family img { object-position: center; }
+.login-photo-service { --photo-opacity: .06; right: -10%; bottom: -7%; width: 49%; height: 80%; opacity: var(--photo-opacity); }
+.login-photo-service img { object-position: 55% center; }
+.login-photo-civic { --photo-opacity: .05; left: 21%; top: -18%; width: 67%; height: 77%; opacity: var(--photo-opacity); }
 .login-photo-overlay { position: absolute; inset: 0; background: var(--login-overlay); }
 .login-layout { min-height: inherit; display: flex; align-items: center; justify-content: center; padding: 24px 32px; position: relative; }
-.login-access { width: 620px; max-width: 100%; }
-.login-panel { padding: 26px 30px; background: var(--login-surface); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--login-shadow); animation: login-enter 350ms 180ms ease-out both; }
-.login-panel > p:first-child { animation: login-enter 300ms 250ms ease-out both; }.login-panel > h1 { animation: login-enter 300ms 330ms ease-out both; }.login-panel > h1 + p { animation: login-enter 300ms 410ms ease-out both; }
-.login-progress { font-size: 11px; animation: login-enter 300ms 490ms ease-out both; }
-.login-role { gap: 12px; padding: 12px 14px; background: var(--login-role-surface); transition: background-color 180ms, border-color 180ms; animation: login-enter 300ms 560ms ease-out both; }
-.login-role:nth-child(2) { animation-delay: 640ms; }.login-role:nth-child(3) { animation-delay: 720ms; }
+.login-access { width: 640px; max-width: 100%; }
+.login-panel { padding: 28px 32px; background: var(--card); border: 1px solid var(--border); border-radius: 12px; box-shadow: var(--login-shadow); }
+.login-progress { font-size: 11px; }
+.login-role { gap: 12px; padding: 12px 14px; background: var(--login-role-surface); transition: background-color 150ms, border-color 150ms; }
 .login-role:hover, .login-role:focus-visible { border-color: var(--gov); background: var(--secondary); }
-.login-role-arrow { transition: transform 180ms; }.login-role:hover .login-role-arrow { transform: translateX(3px); }
-.login-form-enter { animation: login-enter 250ms ease-out both; }
+.login-role-arrow { transition: transform 150ms; }
+.login-role:hover .login-role-arrow { transform: translateX(2px); }
+.login-form-enter { animation: login-enter 200ms ease-out both; }
 .hc .login-panel, .hc .login-role { background: var(--card); border-color: var(--border); }
-@keyframes login-enter { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
-@keyframes login-family-enter { from { opacity: 0; clip-path: inset(0 100% 0 0); transform: translateX(-15px) scale(1.02); } to { opacity: var(--photo-opacity); clip-path: inset(0); transform: none; } }
-@keyframes login-service-enter { from { opacity: 0; clip-path: inset(0 0 0 100%); transform: translateX(15px); } to { opacity: var(--photo-opacity); clip-path: inset(0); transform: none; } }
-@keyframes login-civic-enter { from { opacity: 0; clip-path: inset(0 0 100% 0); transform: translateY(12px) scale(1.015); } to { opacity: var(--photo-opacity); clip-path: inset(0); transform: none; } }
-@keyframes login-family-drift { 0%,100% { transform: translateX(0); } 50% { transform: translateX(4px); } }
-@keyframes login-service-drift { 0%,100% { transform: translateY(0); } 50% { transform: translateY(-3px); } }
+@keyframes login-enter { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
 @media (min-width: 768px) and (max-width: 1023px) {
-  .login-layout { padding: 24px; }.login-access { width: 570px; }.login-panel { padding: 24px; }.login-progress { gap: 12px; flex-wrap: wrap; }.login-photo-family { left: -18%; width: 65%; }.login-photo-service { right: -26%; width: 63%; }
+  .login-layout { padding: 24px; }.login-access { width: 600px; }.login-panel { padding: 24px; }
 }
 @media (max-width: 767px) {
-  .login-layout { align-items: flex-start; padding: 20px 16px; }.login-access { width: 100%; }.login-panel { padding: 22px 16px; }.login-panel h1 { font-size: 1.375rem; }.login-progress { gap: 12px; flex-wrap: wrap; }.login-role { gap: 10px; padding: 12px; }.login-role-arrow { display: none; }
-  .login-photo-family { left: -32%; width: 140%; height: 100%; bottom: -3%; --photo-opacity: .35; }.login-photo-service { right: -35%; bottom: -4%; width: 95%; height: 45%; --photo-opacity: .12; }.login-photo-civic { left: -10%; top: -8%; width: 130%; height: 55%; --photo-opacity: .16; }
+  .login-layout { align-items: flex-start; padding: 16px 12px; }.login-access { width: 100%; }.login-panel { padding: 20px 16px; border-radius: 10px; }
+  .login-photo-family { --photo-opacity: .06; }.login-photo-service { --photo-opacity: .04; }.login-photo-civic { --photo-opacity: .03; }
 }
 .reduce-motion .login-page *, .reduce-motion .login-page *::before { animation: none !important; transition: none !important; }
 @media (prefers-reduced-motion: reduce) { .login-page *, .login-page *::before { animation: none !important; transition: none !important; }.login-role:hover .login-role-arrow { transform: none; } }

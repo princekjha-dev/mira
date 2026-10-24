@@ -1,14 +1,10 @@
 use chrono::NaiveDate;
-use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use sha2::{Digest, Sha256};
+use sqlx::{postgres::PgPoolOptions, PgPool, Row};
 use std::path::Path;
 use uuid::Uuid;
 
-use crate::{
-    auth::PasswordService,
-    domain::RoleType,
-    errors::AppError,
-};
+use crate::{auth::PasswordService, domain::RoleType, errors::AppError};
 
 pub const DEMO_PASSWORD: &str = "MiraDemo@2026!";
 
@@ -29,7 +25,9 @@ pub async fn run_migrations(pool: &PgPool) -> Result<(), AppError> {
 
     let res = run_migrations_inner(pool).await;
 
-    let _ = sqlx::query("SELECT pg_advisory_unlock(88127391)").execute(pool).await;
+    let _ = sqlx::query("SELECT pg_advisory_unlock(88127391)")
+        .execute(pool)
+        .await;
 
     res
 }
@@ -53,13 +51,15 @@ async fn run_migrations_inner(pool: &PgPool) -> Result<(), AppError> {
         .await
         .map_err(|e| AppError::Internal(format!("V3 database migration failed: {}", e)))?;
 
-    let schema_v4 = include_str!("../../../../migrations/0004_v4_entity_resolution_and_duplicates.sql");
+    let schema_v4 =
+        include_str!("../../../../migrations/0004_v4_entity_resolution_and_duplicates.sql");
     sqlx::raw_sql(schema_v4)
         .execute(pool)
         .await
         .map_err(|e| AppError::Internal(format!("V4 database migration failed: {}", e)))?;
 
-    let schema_v5 = include_str!("../../../../migrations/0005_v5_evidence_and_document_intelligence.sql");
+    let schema_v5 =
+        include_str!("../../../../migrations/0005_v5_evidence_and_document_intelligence.sql");
     sqlx::raw_sql(schema_v5)
         .execute(pool)
         .await
@@ -146,14 +146,38 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     // 1. Roles
     // ========================================================================
     let roles = [
-        (RoleType::Citizen.as_str(), "Resident citizen seeking public documentation & entitlements"),
-        (RoleType::FieldOfficial.as_str(), "Civic field operative validating local resident credentials"),
-        (RoleType::VerificationOfficer.as_str(), "Verification and adjudication officer reviewing claims"),
-        (RoleType::SchemeOfficer.as_str(), "Scheme officer reviewing policy, eligibility & sanctions"),
-        (RoleType::Supervisor.as_str(), "Supervisor reviewing escalated cases and second approvals"),
-        (RoleType::DepartmentAdmin.as_str(), "Administrative authority managing department operations"),
-        (RoleType::Auditor.as_str(), "Independent oversight auditor inspecting access and logs"),
-        (RoleType::SuperAdmin.as_str(), "System infrastructure administrator"),
+        (
+            RoleType::Citizen.as_str(),
+            "Resident citizen seeking public documentation & entitlements",
+        ),
+        (
+            RoleType::FieldOfficial.as_str(),
+            "Civic field operative validating local resident credentials",
+        ),
+        (
+            RoleType::VerificationOfficer.as_str(),
+            "Verification and adjudication officer reviewing claims",
+        ),
+        (
+            RoleType::SchemeOfficer.as_str(),
+            "Scheme officer reviewing policy, eligibility & sanctions",
+        ),
+        (
+            RoleType::Supervisor.as_str(),
+            "Supervisor reviewing escalated cases and second approvals",
+        ),
+        (
+            RoleType::DepartmentAdmin.as_str(),
+            "Administrative authority managing department operations",
+        ),
+        (
+            RoleType::Auditor.as_str(),
+            "Independent oversight auditor inspecting access and logs",
+        ),
+        (
+            RoleType::SuperAdmin.as_str(),
+            "System infrastructure administrator",
+        ),
     ];
 
     for (role_name, desc) in roles {
@@ -202,18 +226,73 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
 
     let demo_users = [
         // Standard prompt demo accounts
-        ("demo.citizen@mira.demo", "Rajesh Sharma (Citizen)", "en", RoleType::Citizen.as_str()),
-        ("demo.verifier@mira.demo", "Vikram Malhotra (Verification Officer)", "en", RoleType::VerificationOfficer.as_str()),
-        ("demo.scheme@mira.demo", "Sunita Verma (Scheme Officer)", "en", RoleType::SchemeOfficer.as_str()),
-        ("demo.supervisor@mira.demo", "Arun Deshmukh (Supervisor)", "en", RoleType::Supervisor.as_str()),
-        ("demo.auditor@mira.demo", "Kavita Rao (Auditor)", "en", RoleType::Auditor.as_str()),
-        ("demo.admin@mira.demo", "System Administrator", "en", RoleType::DepartmentAdmin.as_str()),
+        (
+            "demo.citizen@mira.demo",
+            "Rajesh Sharma",
+            "en",
+            RoleType::Citizen.as_str(),
+        ),
+        (
+            "demo.verifier@mira.demo",
+            "Vikram Malhotra",
+            "en",
+            RoleType::VerificationOfficer.as_str(),
+        ),
+        (
+            "demo.scheme@mira.demo",
+            "Sunita Verma",
+            "en",
+            RoleType::SchemeOfficer.as_str(),
+        ),
+        (
+            "demo.supervisor@mira.demo",
+            "Dr. Alok Nath",
+            "en",
+            RoleType::Supervisor.as_str(),
+        ),
+        (
+            "demo.auditor@mira.demo",
+            "Priya Nair",
+            "en",
+            RoleType::Auditor.as_str(),
+        ),
+        (
+            "demo.admin@mira.demo",
+            "Arjun Mehta",
+            "en",
+            RoleType::DepartmentAdmin.as_str(),
+        ),
         // Legacy aliases for backwards compatibility
-        ("citizen@mira.local", "Rajesh Sharma (Citizen)", "en", RoleType::Citizen.as_str()),
-        ("officer@mira.local", "Priya Sharma (Field Official)", "en", RoleType::FieldOfficial.as_str()),
-        ("verifier@mira.local", "Vikram Malhotra (Verification Officer)", "hi", RoleType::VerificationOfficer.as_str()),
-        ("admin@mira.local", "System Administrator", "en", RoleType::DepartmentAdmin.as_str()),
-        ("auditor@mira.local", "Kavita Rao (Auditor)", "en", RoleType::Auditor.as_str()),
+        (
+            "citizen@mira.local",
+            "Rajesh Sharma (Citizen)",
+            "en",
+            RoleType::Citizen.as_str(),
+        ),
+        (
+            "officer@mira.local",
+            "Priya Sharma (Field Official)",
+            "en",
+            RoleType::FieldOfficial.as_str(),
+        ),
+        (
+            "verifier@mira.local",
+            "Vikram Malhotra (Verification Officer)",
+            "hi",
+            RoleType::VerificationOfficer.as_str(),
+        ),
+        (
+            "admin@mira.local",
+            "System Administrator",
+            "en",
+            RoleType::DepartmentAdmin.as_str(),
+        ),
+        (
+            "auditor@mira.local",
+            "Kavita Rao (Auditor)",
+            "en",
+            RoleType::Auditor.as_str(),
+        ),
     ];
 
     let mut admin_user_id = Uuid::nil();
@@ -256,6 +335,17 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
 
         let role_id: Uuid = role_row.get("id");
 
+        // A demo identity represents one selected role. Remove stale role
+        // assignments left by earlier demo seeds before applying that role.
+        sqlx::query("DELETE FROM user_roles WHERE user_id = $1 AND role_id <> $2")
+            .bind(user_id)
+            .bind(role_id)
+            .execute(pool)
+            .await
+            .map_err(|e| {
+                AppError::Internal(format!("Failed to normalize demo role for {}: {}", email, e))
+            })?;
+
         sqlx::query(
             r#"
             INSERT INTO user_roles (user_id, role_id)
@@ -280,17 +370,42 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
         .bind(org_id)
         .execute(pool)
         .await
-        .map_err(|e| AppError::Internal(format!("Failed to associate user {} with org: {}", email, e)))?;
+        .map_err(|e| {
+            AppError::Internal(format!(
+                "Failed to associate user {} with org: {}",
+                email, e
+            ))
+        })?;
     }
 
     // ========================================================================
     // 4. Provenance Sources
     // ========================================================================
     let sources = [
-        ("HOUSEHOLD_REGISTER", "HR-2024-DEL-01", "State Household Census Register 2024", "HIGH"),
-        ("FIELD_VERIFICATION", "FV-2025-089", "Field Inspector Verification Unit", "VERY_HIGH"),
-        ("BIRTH_REGISTER", "BR-MIRA-DEMO", "Civil Registration System", "VERY_HIGH"),
-        ("REVENUE_REGISTER", "REV-UP-2025-01", "State Land & Revenue Records Bureau", "VERY_HIGH"),
+        (
+            "HOUSEHOLD_REGISTER",
+            "HR-2024-DEL-01",
+            "State Household Census Register 2024",
+            "HIGH",
+        ),
+        (
+            "FIELD_VERIFICATION",
+            "FV-2025-089",
+            "Field Inspector Verification Unit",
+            "VERY_HIGH",
+        ),
+        (
+            "BIRTH_REGISTER",
+            "BR-MIRA-DEMO",
+            "Civil Registration System",
+            "VERY_HIGH",
+        ),
+        (
+            "REVENUE_REGISTER",
+            "REV-UP-2025-01",
+            "State Land & Revenue Records Bureau",
+            "VERY_HIGH",
+        ),
     ];
 
     let mut source_hr_id = Uuid::nil();
@@ -323,13 +438,76 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     // ========================================================================
     // 5. Baseline Test Persons (Ramesh, Sita, Amit, Rahul, Priya, Arjun)
     // ========================================================================
-    let persons: [(&str, &str, Option<&str>, &str, Option<NaiveDate>, &str, &str, &str); 6] = [
-        ("P-1001", "Ramesh", None, "Kumar", NaiveDate::from_ymd_opt(1968, 4, 12), "Male", "ramesh@synthetic.local", "ACTIVE"),
-        ("P-1002", "Sita", None, "Devi", NaiveDate::from_ymd_opt(1972, 8, 25), "Female", "sita@synthetic.local", "ACTIVE"),
-        ("P-1003", "Amit", None, "Kumar", NaiveDate::from_ymd_opt(1996, 11, 4), "Male", "amit@synthetic.local", "ACTIVE"),
-        ("P-1004", "Rahul", None, "Kumar", NaiveDate::from_ymd_opt(1999, 6, 18), "Male", "rahul@synthetic.local", "ACTIVE"),
-        ("P-1005", "Priya", None, "Sharma", NaiveDate::from_ymd_opt(1992, 3, 15), "Female", "priya@synthetic.local", "ACTIVE"),
-        ("P-1006", "Arjun", None, "Sharma", NaiveDate::from_ymd_opt(1989, 12, 20), "Male", "arjun@synthetic.local", "ACTIVE"),
+    let persons: [(
+        &str,
+        &str,
+        Option<&str>,
+        &str,
+        Option<NaiveDate>,
+        &str,
+        &str,
+        &str,
+    ); 6] = [
+        (
+            "P-1001",
+            "Ramesh",
+            None,
+            "Kumar",
+            NaiveDate::from_ymd_opt(1968, 4, 12),
+            "Male",
+            "ramesh@synthetic.local",
+            "ACTIVE",
+        ),
+        (
+            "P-1002",
+            "Sita",
+            None,
+            "Devi",
+            NaiveDate::from_ymd_opt(1972, 8, 25),
+            "Female",
+            "sita@synthetic.local",
+            "ACTIVE",
+        ),
+        (
+            "P-1003",
+            "Amit",
+            None,
+            "Kumar",
+            NaiveDate::from_ymd_opt(1996, 11, 4),
+            "Male",
+            "amit@synthetic.local",
+            "ACTIVE",
+        ),
+        (
+            "P-1004",
+            "Rahul",
+            None,
+            "Kumar",
+            NaiveDate::from_ymd_opt(1999, 6, 18),
+            "Male",
+            "rahul@synthetic.local",
+            "ACTIVE",
+        ),
+        (
+            "P-1005",
+            "Priya",
+            None,
+            "Sharma",
+            NaiveDate::from_ymd_opt(1992, 3, 15),
+            "Female",
+            "priya@synthetic.local",
+            "ACTIVE",
+        ),
+        (
+            "P-1006",
+            "Arjun",
+            None,
+            "Sharma",
+            NaiveDate::from_ymd_opt(1989, 12, 20),
+            "Male",
+            "arjun@synthetic.local",
+            "ACTIVE",
+        ),
     ];
 
     let mut person_map = std::collections::HashMap::new();
@@ -386,13 +564,55 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
 
     // Relationships for baseline persons
     let relationships: [(Uuid, Uuid, &str, NaiveDate, Option<NaiveDate>); 7] = [
-        (ramesh_id, sita_id, "SPOUSE", NaiveDate::from_ymd_opt(1993, 2, 14).unwrap(), None),
-        (ramesh_id, amit_id, "PARENT", NaiveDate::from_ymd_opt(1996, 11, 4).unwrap(), None),
-        (sita_id, amit_id, "PARENT", NaiveDate::from_ymd_opt(1996, 11, 4).unwrap(), None),
-        (ramesh_id, rahul_id, "PARENT", NaiveDate::from_ymd_opt(1999, 6, 18).unwrap(), None),
-        (sita_id, rahul_id, "PARENT", NaiveDate::from_ymd_opt(1999, 6, 18).unwrap(), None),
-        (amit_id, rahul_id, "SIBLING", NaiveDate::from_ymd_opt(1999, 6, 18).unwrap(), None),
-        (priya_id, arjun_id, "SPOUSE", NaiveDate::from_ymd_opt(2017, 5, 10).unwrap(), None),
+        (
+            ramesh_id,
+            sita_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(1993, 2, 14).unwrap(),
+            None,
+        ),
+        (
+            ramesh_id,
+            amit_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1996, 11, 4).unwrap(),
+            None,
+        ),
+        (
+            sita_id,
+            amit_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1996, 11, 4).unwrap(),
+            None,
+        ),
+        (
+            ramesh_id,
+            rahul_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1999, 6, 18).unwrap(),
+            None,
+        ),
+        (
+            sita_id,
+            rahul_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1999, 6, 18).unwrap(),
+            None,
+        ),
+        (
+            amit_id,
+            rahul_id,
+            "SIBLING",
+            NaiveDate::from_ymd_opt(1999, 6, 18).unwrap(),
+            None,
+        ),
+        (
+            priya_id,
+            arjun_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2017, 5, 10).unwrap(),
+            None,
+        ),
     ];
 
     for (p_a, p_b, rtype, vfrom, vto) in relationships {
@@ -451,13 +671,49 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
 
     let sep_date = NaiveDate::from_ymd_opt(2025, 7, 1).unwrap();
     let memberships = [
-        (h001_id, ramesh_id, "HEAD", NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(), None),
-        (h001_id, sita_id, "SPOUSE", NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(), None),
-        (h001_id, amit_id, "CHILD", NaiveDate::from_ymd_opt(2018, 3, 10).unwrap(), None),
-        (h001_id, rahul_id, "CHILD", NaiveDate::from_ymd_opt(2018, 1, 1).unwrap(), Some(sep_date)),
+        (
+            h001_id,
+            ramesh_id,
+            "HEAD",
+            NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(),
+            None,
+        ),
+        (
+            h001_id,
+            sita_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(),
+            None,
+        ),
+        (
+            h001_id,
+            amit_id,
+            "CHILD",
+            NaiveDate::from_ymd_opt(2018, 3, 10).unwrap(),
+            None,
+        ),
+        (
+            h001_id,
+            rahul_id,
+            "CHILD",
+            NaiveDate::from_ymd_opt(2018, 1, 1).unwrap(),
+            Some(sep_date),
+        ),
         (h002_id, rahul_id, "HEAD", sep_date, None),
-        (h003_id, priya_id, "HEAD", NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(), None),
-        (h003_id, arjun_id, "SPOUSE", NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(), None),
+        (
+            h003_id,
+            priya_id,
+            "HEAD",
+            NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
+            None,
+        ),
+        (
+            h003_id,
+            arjun_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2021, 1, 1).unwrap(),
+            None,
+        ),
     ];
 
     for (hid, pid, role, vfrom, vto) in memberships {
@@ -481,9 +737,39 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
 
     // Baseline Properties
     let properties = [
-        ("PROP-001", "HOUSE", "Plot 42, Civil Lines", "Civil Lines", "Central Delhi", "Delhi", "110054", 28.6812, 77.2228),
-        ("PROP-002", "APARTMENT", "Flat 304, Shanti Enclave", "Mayur Vihar", "East Delhi", "Delhi", "110091", 28.6080, 77.2950),
-        ("PROP-003", "LAND", "Survey No. 81/2, Agricultural Zone", "Alipur", "North Delhi", "Delhi", "110036", 28.7981, 77.1352),
+        (
+            "PROP-001",
+            "HOUSE",
+            "Plot 42, Civil Lines",
+            "Civil Lines",
+            "Central Delhi",
+            "Delhi",
+            "110054",
+            28.6812,
+            77.2228,
+        ),
+        (
+            "PROP-002",
+            "APARTMENT",
+            "Flat 304, Shanti Enclave",
+            "Mayur Vihar",
+            "East Delhi",
+            "Delhi",
+            "110091",
+            28.6080,
+            77.2950,
+        ),
+        (
+            "PROP-003",
+            "LAND",
+            "Survey No. 81/2, Agricultural Zone",
+            "Alipur",
+            "North Delhi",
+            "Delhi",
+            "110036",
+            28.7981,
+            77.1352,
+        ),
     ];
 
     let mut prop_map = std::collections::HashMap::new();
@@ -519,10 +805,38 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     let prop2_id = prop_map["PROP-002"];
     let prop3_id = prop_map["PROP-003"];
 
-    let prop_assocs: [(Uuid, Option<Uuid>, Option<Uuid>, &str, NaiveDate, Option<NaiveDate>); 3] = [
-        (prop1_id, Some(h001_id), None, "HOUSEHOLD_OCCUPIES", NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(), None),
-        (prop2_id, Some(h002_id), None, "HOUSEHOLD_OCCUPIES", sep_date, None),
-        (prop3_id, None, Some(ramesh_id), "PERSON_OWNS", NaiveDate::from_ymd_opt(2010, 5, 20).unwrap(), None),
+    let prop_assocs: [(
+        Uuid,
+        Option<Uuid>,
+        Option<Uuid>,
+        &str,
+        NaiveDate,
+        Option<NaiveDate>,
+    ); 3] = [
+        (
+            prop1_id,
+            Some(h001_id),
+            None,
+            "HOUSEHOLD_OCCUPIES",
+            NaiveDate::from_ymd_opt(2015, 1, 1).unwrap(),
+            None,
+        ),
+        (
+            prop2_id,
+            Some(h002_id),
+            None,
+            "HOUSEHOLD_OCCUPIES",
+            sep_date,
+            None,
+        ),
+        (
+            prop3_id,
+            None,
+            Some(ramesh_id),
+            "PERSON_OWNS",
+            NaiveDate::from_ymd_opt(2010, 5, 20).unwrap(),
+            None,
+        ),
     ];
 
     for (p_id, h_id, per_id, a_type, vfrom, vto) in prop_assocs {
@@ -727,7 +1041,14 @@ pub async fn seed_database(pool: &PgPool) -> Result<(), AppError> {
     .await?;
 
     // Seed Sharma Family (35 members, ₹1,72,000 income, 6 applications)
-    seed_sharma_family(pool, citizen_user_id, admin_user_id, source_hr_id, source_fv_id).await?;
+    seed_sharma_family(
+        pool,
+        citizen_user_id,
+        admin_user_id,
+        source_hr_id,
+        source_fv_id,
+    )
+    .await?;
 
     // Seed 10 realistic synthetic documents and application document links
     seed_demo_documents(pool).await?;
@@ -752,9 +1073,20 @@ fn synthetic_demo_pdf(label: &str) -> Vec<u8> {
         pdf.extend_from_slice(format!("{} 0 obj\n{}\nendobj\n", index + 1, object).as_bytes());
     }
     let xref_offset = pdf.len();
-    pdf.extend_from_slice(format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).as_bytes());
-    for offset in offsets { pdf.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes()); }
-    pdf.extend_from_slice(format!("trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{}\n%%EOF", objects.len() + 1, xref_offset).as_bytes());
+    pdf.extend_from_slice(
+        format!("xref\n0 {}\n0000000000 65535 f \n", objects.len() + 1).as_bytes(),
+    );
+    for offset in offsets {
+        pdf.extend_from_slice(format!("{offset:010} 00000 n \n").as_bytes());
+    }
+    pdf.extend_from_slice(
+        format!(
+            "trailer\n<< /Size {} /Root 1 0 R >>\nstartxref\n{}\n%%EOF",
+            objects.len() + 1,
+            xref_offset
+        )
+        .as_bytes(),
+    );
     pdf
 }
 
@@ -787,45 +1119,360 @@ async fn seed_sharma_family(
     // Generation 4 (Infants / Dependents)
     let sharma_persons = [
         // G2 Head & Applicant
-        ("P-10482-01", "Rajesh", "Sharma", NaiveDate::from_ymd_opt(1985, 3, 12), "Male", "demo.citizen@mira.demo", "XXXX-XXXX-4821", "HEAD"),
-        ("P-10482-02", "Sunita", "Sharma", NaiveDate::from_ymd_opt(1988, 7, 24), "Female", "sunita.sharma@mira.demo", "XXXX-XXXX-7722", "SPOUSE"),
+        (
+            "P-10482-01",
+            "Rajesh",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1985, 3, 12),
+            "Male",
+            "demo.citizen@mira.demo",
+            "XXXX-XXXX-4821",
+            "HEAD",
+        ),
+        (
+            "P-10482-02",
+            "Sunita",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1988, 7, 24),
+            "Female",
+            "sunita.sharma@mira.demo",
+            "XXXX-XXXX-7722",
+            "SPOUSE",
+        ),
         // G1 Elders
-        ("P-10482-03", "Devraj", "Sharma", NaiveDate::from_ymd_opt(1938, 4, 10), "Male", "devraj.sharma@mira.demo", "XXXX-XXXX-3801", "DEPENDENT"),
-        ("P-10482-04", "Kamala", "Sharma", NaiveDate::from_ymd_opt(1941, 8, 15), "Female", "kamala.sharma@mira.demo", "XXXX-XXXX-4102", "DEPENDENT"),
-        ("P-10482-05", "Meena", "Sharma", NaiveDate::from_ymd_opt(1960, 11, 4), "Female", "meena.sharma@mira.demo", "XXXX-XXXX-1102", "DEPENDENT"),
-        ("P-10482-06", "Ramakant", "Sharma", NaiveDate::from_ymd_opt(1958, 2, 19), "Male", "ramakant.sharma@mira.demo", "XXXX-XXXX-5803", "DEPENDENT"),
-        ("P-10482-07", "Harish", "Sharma", NaiveDate::from_ymd_opt(1962, 9, 5), "Male", "harish.sharma@mira.demo", "XXXX-XXXX-6204", "DEPENDENT"),
-        ("P-10482-08", "Shashi", "Sharma", NaiveDate::from_ymd_opt(1965, 6, 12), "Female", "shashi.sharma@mira.demo", "XXXX-XXXX-6505", "DEPENDENT"),
+        (
+            "P-10482-03",
+            "Devraj",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1938, 4, 10),
+            "Male",
+            "devraj.sharma@mira.demo",
+            "XXXX-XXXX-3801",
+            "DEPENDENT",
+        ),
+        (
+            "P-10482-04",
+            "Kamala",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1941, 8, 15),
+            "Female",
+            "kamala.sharma@mira.demo",
+            "XXXX-XXXX-4102",
+            "DEPENDENT",
+        ),
+        (
+            "P-10482-05",
+            "Meena",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1960, 11, 4),
+            "Female",
+            "meena.sharma@mira.demo",
+            "XXXX-XXXX-1102",
+            "DEPENDENT",
+        ),
+        (
+            "P-10482-06",
+            "Ramakant",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1958, 2, 19),
+            "Male",
+            "ramakant.sharma@mira.demo",
+            "XXXX-XXXX-5803",
+            "DEPENDENT",
+        ),
+        (
+            "P-10482-07",
+            "Harish",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1962, 9, 5),
+            "Male",
+            "harish.sharma@mira.demo",
+            "XXXX-XXXX-6204",
+            "DEPENDENT",
+        ),
+        (
+            "P-10482-08",
+            "Shashi",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1965, 6, 12),
+            "Female",
+            "shashi.sharma@mira.demo",
+            "XXXX-XXXX-6505",
+            "DEPENDENT",
+        ),
         // G2 Siblings & In-Laws (using SIBLING and OTHER to satisfy chk_membership_role)
-        ("P-10482-09", "Manoj", "Sharma", NaiveDate::from_ymd_opt(1987, 5, 14), "Male", "manoj.sharma@mira.demo", "XXXX-XXXX-8706", "SIBLING"),
-        ("P-10482-10", "Pooja", "Sharma", NaiveDate::from_ymd_opt(1990, 1, 20), "Female", "pooja.sharma@mira.demo", "XXXX-XXXX-9007", "SIBLING"),
-        ("P-10482-11", "Suresh", "Sharma", NaiveDate::from_ymd_opt(1989, 10, 8), "Male", "suresh.sharma@mira.demo", "XXXX-XXXX-8908", "SIBLING"),
-        ("P-10482-12", "Kavita", "Sharma", NaiveDate::from_ymd_opt(1992, 4, 16), "Female", "kavita.sharma@mira.demo", "XXXX-XXXX-9209", "SIBLING"),
-        ("P-10482-13", "Anita", "Sharma", NaiveDate::from_ymd_opt(1991, 12, 3), "Female", "anita.sharma@mira.demo", "XXXX-XXXX-9110", "SIBLING"),
-        ("P-10482-14", "Deepak", "Verma", NaiveDate::from_ymd_opt(1988, 3, 29), "Male", "deepak.verma@mira.demo", "XXXX-XXXX-8811", "OTHER"),
-        ("P-10482-15", "Vikram", "Sharma", NaiveDate::from_ymd_opt(1984, 7, 11), "Male", "vikram.sharma@mira.demo", "XXXX-XXXX-8412", "SIBLING"),
-        ("P-10482-16", "Neha", "Sharma", NaiveDate::from_ymd_opt(1987, 11, 25), "Female", "neha.sharma@mira.demo", "XXXX-XXXX-8713", "OTHER"),
-        ("P-10482-17", "Sanjay", "Sharma", NaiveDate::from_ymd_opt(1986, 8, 17), "Male", "sanjay.sharma@mira.demo", "XXXX-XXXX-8614", "SIBLING"),
-        ("P-10482-18", "Ritu", "Sharma", NaiveDate::from_ymd_opt(1989, 2, 9), "Female", "ritu.sharma@mira.demo", "XXXX-XXXX-8915", "OTHER"),
+        (
+            "P-10482-09",
+            "Manoj",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1987, 5, 14),
+            "Male",
+            "manoj.sharma@mira.demo",
+            "XXXX-XXXX-8706",
+            "SIBLING",
+        ),
+        (
+            "P-10482-10",
+            "Pooja",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1990, 1, 20),
+            "Female",
+            "pooja.sharma@mira.demo",
+            "XXXX-XXXX-9007",
+            "SIBLING",
+        ),
+        (
+            "P-10482-11",
+            "Suresh",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1989, 10, 8),
+            "Male",
+            "suresh.sharma@mira.demo",
+            "XXXX-XXXX-8908",
+            "SIBLING",
+        ),
+        (
+            "P-10482-12",
+            "Kavita",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1992, 4, 16),
+            "Female",
+            "kavita.sharma@mira.demo",
+            "XXXX-XXXX-9209",
+            "SIBLING",
+        ),
+        (
+            "P-10482-13",
+            "Anita",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1991, 12, 3),
+            "Female",
+            "anita.sharma@mira.demo",
+            "XXXX-XXXX-9110",
+            "SIBLING",
+        ),
+        (
+            "P-10482-14",
+            "Deepak",
+            "Verma",
+            NaiveDate::from_ymd_opt(1988, 3, 29),
+            "Male",
+            "deepak.verma@mira.demo",
+            "XXXX-XXXX-8811",
+            "OTHER",
+        ),
+        (
+            "P-10482-15",
+            "Vikram",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1984, 7, 11),
+            "Male",
+            "vikram.sharma@mira.demo",
+            "XXXX-XXXX-8412",
+            "SIBLING",
+        ),
+        (
+            "P-10482-16",
+            "Neha",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1987, 11, 25),
+            "Female",
+            "neha.sharma@mira.demo",
+            "XXXX-XXXX-8713",
+            "OTHER",
+        ),
+        (
+            "P-10482-17",
+            "Sanjay",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1986, 8, 17),
+            "Male",
+            "sanjay.sharma@mira.demo",
+            "XXXX-XXXX-8614",
+            "SIBLING",
+        ),
+        (
+            "P-10482-18",
+            "Ritu",
+            "Sharma",
+            NaiveDate::from_ymd_opt(1989, 2, 9),
+            "Female",
+            "ritu.sharma@mira.demo",
+            "XXXX-XXXX-8915",
+            "OTHER",
+        ),
         // G3 Children
-        ("P-10482-19", "Ananya", "Sharma", NaiveDate::from_ymd_opt(2012, 5, 18), "Female", "ananya.sharma@mira.demo", "XXXX-XXXX-9410", "CHILD"),
-        ("P-10482-20", "Aarav", "Sharma", NaiveDate::from_ymd_opt(2016, 9, 10), "Male", "aarav.sharma@mira.demo", "XXXX-XXXX-4412", "CHILD"),
-        ("P-10482-21", "Diya", "Sharma", NaiveDate::from_ymd_opt(2014, 3, 22), "Female", "diya.sharma@mira.demo", "XXXX-XXXX-1421", "CHILD"),
-        ("P-10482-22", "Rohan", "Sharma", NaiveDate::from_ymd_opt(2018, 7, 15), "Male", "rohan.sharma@mira.demo", "XXXX-XXXX-1822", "CHILD"),
-        ("P-10482-23", "Ishaan", "Sharma", NaiveDate::from_ymd_opt(2015, 11, 30), "Male", "ishaan.sharma@mira.demo", "XXXX-XXXX-1523", "CHILD"),
-        ("P-10482-24", "Tanya", "Sharma", NaiveDate::from_ymd_opt(2019, 4, 5), "Female", "tanya.sharma@mira.demo", "XXXX-XXXX-1924", "CHILD"),
-        ("P-10482-25", "Aryan", "Verma", NaiveDate::from_ymd_opt(2017, 6, 18), "Male", "aryan.verma@mira.demo", "XXXX-XXXX-1725", "CHILD"),
-        ("P-10482-26", "Simran", "Verma", NaiveDate::from_ymd_opt(2020, 9, 12), "Female", "simran.verma@mira.demo", "XXXX-XXXX-2026", "CHILD"),
-        ("P-10482-27", "Aditya", "Sharma", NaiveDate::from_ymd_opt(2013, 1, 25), "Male", "aditya.sharma@mira.demo", "XXXX-XXXX-1327", "CHILD"),
-        ("P-10482-28", "Riya", "Sharma", NaiveDate::from_ymd_opt(2016, 5, 8), "Female", "riya.sharma@mira.demo", "XXXX-XXXX-1628", "CHILD"),
-        ("P-10482-29", "Varun", "Sharma", NaiveDate::from_ymd_opt(2015, 8, 19), "Male", "varun.sharma@mira.demo", "XXXX-XXXX-1529", "CHILD"),
-        ("P-10482-30", "Khushi", "Sharma", NaiveDate::from_ymd_opt(2018, 12, 4), "Female", "khushi.sharma@mira.demo", "XXXX-XXXX-1830", "CHILD"),
-        ("P-10482-31", "Pranav", "Sharma", NaiveDate::from_ymd_opt(2021, 2, 14), "Male", "pranav.sharma@mira.demo", "XXXX-XXXX-2131", "CHILD"),
-        ("P-10482-32", "Sneha", "Sharma", NaiveDate::from_ymd_opt(2022, 8, 20), "Female", "sneha.sharma@mira.demo", "XXXX-XXXX-2232", "CHILD"),
-        ("P-10482-33", "Vihaan", "Sharma", NaiveDate::from_ymd_opt(2023, 4, 11), "Male", "vihaan.sharma@mira.demo", "XXXX-XXXX-2333", "CHILD"),
+        (
+            "P-10482-19",
+            "Ananya",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2012, 5, 18),
+            "Female",
+            "ananya.sharma@mira.demo",
+            "XXXX-XXXX-9410",
+            "CHILD",
+        ),
+        (
+            "P-10482-20",
+            "Aarav",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2016, 9, 10),
+            "Male",
+            "aarav.sharma@mira.demo",
+            "XXXX-XXXX-4412",
+            "CHILD",
+        ),
+        (
+            "P-10482-21",
+            "Diya",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2014, 3, 22),
+            "Female",
+            "diya.sharma@mira.demo",
+            "XXXX-XXXX-1421",
+            "CHILD",
+        ),
+        (
+            "P-10482-22",
+            "Rohan",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2018, 7, 15),
+            "Male",
+            "rohan.sharma@mira.demo",
+            "XXXX-XXXX-1822",
+            "CHILD",
+        ),
+        (
+            "P-10482-23",
+            "Ishaan",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2015, 11, 30),
+            "Male",
+            "ishaan.sharma@mira.demo",
+            "XXXX-XXXX-1523",
+            "CHILD",
+        ),
+        (
+            "P-10482-24",
+            "Tanya",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2019, 4, 5),
+            "Female",
+            "tanya.sharma@mira.demo",
+            "XXXX-XXXX-1924",
+            "CHILD",
+        ),
+        (
+            "P-10482-25",
+            "Aryan",
+            "Verma",
+            NaiveDate::from_ymd_opt(2017, 6, 18),
+            "Male",
+            "aryan.verma@mira.demo",
+            "XXXX-XXXX-1725",
+            "CHILD",
+        ),
+        (
+            "P-10482-26",
+            "Simran",
+            "Verma",
+            NaiveDate::from_ymd_opt(2020, 9, 12),
+            "Female",
+            "simran.verma@mira.demo",
+            "XXXX-XXXX-2026",
+            "CHILD",
+        ),
+        (
+            "P-10482-27",
+            "Aditya",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2013, 1, 25),
+            "Male",
+            "aditya.sharma@mira.demo",
+            "XXXX-XXXX-1327",
+            "CHILD",
+        ),
+        (
+            "P-10482-28",
+            "Riya",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2016, 5, 8),
+            "Female",
+            "riya.sharma@mira.demo",
+            "XXXX-XXXX-1628",
+            "CHILD",
+        ),
+        (
+            "P-10482-29",
+            "Varun",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2015, 8, 19),
+            "Male",
+            "varun.sharma@mira.demo",
+            "XXXX-XXXX-1529",
+            "CHILD",
+        ),
+        (
+            "P-10482-30",
+            "Khushi",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2018, 12, 4),
+            "Female",
+            "khushi.sharma@mira.demo",
+            "XXXX-XXXX-1830",
+            "CHILD",
+        ),
+        (
+            "P-10482-31",
+            "Pranav",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2021, 2, 14),
+            "Male",
+            "pranav.sharma@mira.demo",
+            "XXXX-XXXX-2131",
+            "CHILD",
+        ),
+        (
+            "P-10482-32",
+            "Sneha",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2022, 8, 20),
+            "Female",
+            "sneha.sharma@mira.demo",
+            "XXXX-XXXX-2232",
+            "CHILD",
+        ),
+        (
+            "P-10482-33",
+            "Vihaan",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2023, 4, 11),
+            "Male",
+            "vihaan.sharma@mira.demo",
+            "XXXX-XXXX-2333",
+            "CHILD",
+        ),
         // G4 Great-Grandchildren / Dependents
-        ("P-10482-34", "Krrish", "Sharma", NaiveDate::from_ymd_opt(2024, 6, 1), "Male", "krrish.sharma@mira.demo", "XXXX-XXXX-2434", "DEPENDENT"),
-        ("P-10482-35", "Anvi", "Sharma", NaiveDate::from_ymd_opt(2025, 1, 15), "Female", "anvi.sharma@mira.demo", "XXXX-XXXX-2535", "DEPENDENT"),
+        (
+            "P-10482-34",
+            "Krrish",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2024, 6, 1),
+            "Male",
+            "krrish.sharma@mira.demo",
+            "XXXX-XXXX-2434",
+            "DEPENDENT",
+        ),
+        (
+            "P-10482-35",
+            "Anvi",
+            "Sharma",
+            NaiveDate::from_ymd_opt(2025, 1, 15),
+            "Female",
+            "anvi.sharma@mira.demo",
+            "XXXX-XXXX-2535",
+            "DEPENDENT",
+        ),
     ];
 
     let mut person_map = std::collections::HashMap::new();
@@ -919,63 +1566,338 @@ async fn seed_sharma_family(
     // 3. Relationships for Sharma Family Tree:
     let rels = [
         // G1 Marriages & Lineage
-        (devraj_id, kamala_id, "SPOUSE", NaiveDate::from_ymd_opt(1957, 5, 20).unwrap()),
-        (devraj_id, ramakant_id, "PARENT", NaiveDate::from_ymd_opt(1958, 2, 19).unwrap()),
-        (kamala_id, ramakant_id, "PARENT", NaiveDate::from_ymd_opt(1958, 2, 19).unwrap()),
-        (devraj_id, harish_id, "PARENT", NaiveDate::from_ymd_opt(1962, 9, 5).unwrap()),
-        (kamala_id, harish_id, "PARENT", NaiveDate::from_ymd_opt(1962, 9, 5).unwrap()),
-        (ramakant_id, meena_id, "SPOUSE", NaiveDate::from_ymd_opt(1983, 11, 28).unwrap()),
-        (harish_id, shashi_id, "SPOUSE", NaiveDate::from_ymd_opt(1983, 2, 14).unwrap()),
+        (
+            devraj_id,
+            kamala_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(1957, 5, 20).unwrap(),
+        ),
+        (
+            devraj_id,
+            ramakant_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1958, 2, 19).unwrap(),
+        ),
+        (
+            kamala_id,
+            ramakant_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1958, 2, 19).unwrap(),
+        ),
+        (
+            devraj_id,
+            harish_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1962, 9, 5).unwrap(),
+        ),
+        (
+            kamala_id,
+            harish_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1962, 9, 5).unwrap(),
+        ),
+        (
+            ramakant_id,
+            meena_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(1983, 11, 28).unwrap(),
+        ),
+        (
+            harish_id,
+            shashi_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(1983, 2, 14).unwrap(),
+        ),
         // G2 Marriages & Lineage
-        (ramakant_id, rajesh_id, "PARENT", NaiveDate::from_ymd_opt(1985, 3, 12).unwrap()),
-        (meena_id, rajesh_id, "PARENT", NaiveDate::from_ymd_opt(1985, 3, 12).unwrap()),
-        (ramakant_id, manoj_id, "PARENT", NaiveDate::from_ymd_opt(1987, 5, 14).unwrap()),
-        (meena_id, manoj_id, "PARENT", NaiveDate::from_ymd_opt(1987, 5, 14).unwrap()),
-        (ramakant_id, suresh_id, "PARENT", NaiveDate::from_ymd_opt(1989, 10, 8).unwrap()),
-        (meena_id, suresh_id, "PARENT", NaiveDate::from_ymd_opt(1989, 10, 8).unwrap()),
-        (ramakant_id, anita_id, "PARENT", NaiveDate::from_ymd_opt(1991, 12, 3).unwrap()),
-        (meena_id, anita_id, "PARENT", NaiveDate::from_ymd_opt(1991, 12, 3).unwrap()),
-        (harish_id, vikram_id, "PARENT", NaiveDate::from_ymd_opt(1984, 7, 11).unwrap()),
-        (shashi_id, vikram_id, "PARENT", NaiveDate::from_ymd_opt(1984, 7, 11).unwrap()),
-        (harish_id, sanjay_id, "PARENT", NaiveDate::from_ymd_opt(1986, 8, 17).unwrap()),
-        (shashi_id, sanjay_id, "PARENT", NaiveDate::from_ymd_opt(1986, 8, 17).unwrap()),
-        (rajesh_id, sunita_id, "SPOUSE", NaiveDate::from_ymd_opt(2010, 2, 14).unwrap()),
-        (manoj_id, pooja_id, "SPOUSE", NaiveDate::from_ymd_opt(2012, 11, 20).unwrap()),
-        (suresh_id, kavita_id, "SPOUSE", NaiveDate::from_ymd_opt(2014, 5, 12).unwrap()),
-        (deepak_id, anita_id, "SPOUSE", NaiveDate::from_ymd_opt(2015, 12, 8).unwrap()),
-        (vikram_id, neha_id, "SPOUSE", NaiveDate::from_ymd_opt(2011, 4, 18).unwrap()),
-        (sanjay_id, ritu_id, "SPOUSE", NaiveDate::from_ymd_opt(2013, 9, 22).unwrap()),
+        (
+            ramakant_id,
+            rajesh_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1985, 3, 12).unwrap(),
+        ),
+        (
+            meena_id,
+            rajesh_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1985, 3, 12).unwrap(),
+        ),
+        (
+            ramakant_id,
+            manoj_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1987, 5, 14).unwrap(),
+        ),
+        (
+            meena_id,
+            manoj_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1987, 5, 14).unwrap(),
+        ),
+        (
+            ramakant_id,
+            suresh_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1989, 10, 8).unwrap(),
+        ),
+        (
+            meena_id,
+            suresh_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1989, 10, 8).unwrap(),
+        ),
+        (
+            ramakant_id,
+            anita_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1991, 12, 3).unwrap(),
+        ),
+        (
+            meena_id,
+            anita_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1991, 12, 3).unwrap(),
+        ),
+        (
+            harish_id,
+            vikram_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1984, 7, 11).unwrap(),
+        ),
+        (
+            shashi_id,
+            vikram_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1984, 7, 11).unwrap(),
+        ),
+        (
+            harish_id,
+            sanjay_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1986, 8, 17).unwrap(),
+        ),
+        (
+            shashi_id,
+            sanjay_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(1986, 8, 17).unwrap(),
+        ),
+        (
+            rajesh_id,
+            sunita_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2010, 2, 14).unwrap(),
+        ),
+        (
+            manoj_id,
+            pooja_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2012, 11, 20).unwrap(),
+        ),
+        (
+            suresh_id,
+            kavita_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2014, 5, 12).unwrap(),
+        ),
+        (
+            deepak_id,
+            anita_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2015, 12, 8).unwrap(),
+        ),
+        (
+            vikram_id,
+            neha_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2011, 4, 18).unwrap(),
+        ),
+        (
+            sanjay_id,
+            ritu_id,
+            "SPOUSE",
+            NaiveDate::from_ymd_opt(2013, 9, 22).unwrap(),
+        ),
         // G3 Lineage
-        (rajesh_id, ananya_id, "PARENT", NaiveDate::from_ymd_opt(2012, 5, 18).unwrap()),
-        (sunita_id, ananya_id, "PARENT", NaiveDate::from_ymd_opt(2012, 5, 18).unwrap()),
-        (rajesh_id, aarav_id, "PARENT", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
-        (sunita_id, aarav_id, "PARENT", NaiveDate::from_ymd_opt(2016, 9, 10).unwrap()),
-        (manoj_id, diya_id, "PARENT", NaiveDate::from_ymd_opt(2014, 3, 22).unwrap()),
-        (pooja_id, diya_id, "PARENT", NaiveDate::from_ymd_opt(2014, 3, 22).unwrap()),
-        (manoj_id, rohan_id, "PARENT", NaiveDate::from_ymd_opt(2018, 7, 15).unwrap()),
-        (pooja_id, rohan_id, "PARENT", NaiveDate::from_ymd_opt(2018, 7, 15).unwrap()),
-        (manoj_id, pranav_id, "PARENT", NaiveDate::from_ymd_opt(2021, 2, 14).unwrap()),
-        (pooja_id, pranav_id, "PARENT", NaiveDate::from_ymd_opt(2021, 2, 14).unwrap()),
-        (suresh_id, ishaan_id, "PARENT", NaiveDate::from_ymd_opt(2015, 11, 30).unwrap()),
-        (kavita_id, ishaan_id, "PARENT", NaiveDate::from_ymd_opt(2015, 11, 30).unwrap()),
-        (suresh_id, tanya_id, "PARENT", NaiveDate::from_ymd_opt(2019, 4, 5).unwrap()),
-        (kavita_id, tanya_id, "PARENT", NaiveDate::from_ymd_opt(2019, 4, 5).unwrap()),
-        (suresh_id, sneha_id, "PARENT", NaiveDate::from_ymd_opt(2022, 8, 20).unwrap()),
-        (kavita_id, sneha_id, "PARENT", NaiveDate::from_ymd_opt(2022, 8, 20).unwrap()),
-        (deepak_id, aryan_id, "PARENT", NaiveDate::from_ymd_opt(2017, 6, 18).unwrap()),
-        (anita_id, aryan_id, "PARENT", NaiveDate::from_ymd_opt(2017, 6, 18).unwrap()),
-        (deepak_id, simran_id, "PARENT", NaiveDate::from_ymd_opt(2020, 9, 12).unwrap()),
-        (anita_id, simran_id, "PARENT", NaiveDate::from_ymd_opt(2020, 9, 12).unwrap()),
-        (vikram_id, aditya_id, "PARENT", NaiveDate::from_ymd_opt(2013, 1, 25).unwrap()),
-        (neha_id, aditya_id, "PARENT", NaiveDate::from_ymd_opt(2013, 1, 25).unwrap()),
-        (vikram_id, riya_id, "PARENT", NaiveDate::from_ymd_opt(2016, 5, 8).unwrap()),
-        (neha_id, riya_id, "PARENT", NaiveDate::from_ymd_opt(2016, 5, 8).unwrap()),
-        (vikram_id, vihaan_id, "PARENT", NaiveDate::from_ymd_opt(2023, 4, 11).unwrap()),
-        (neha_id, vihaan_id, "PARENT", NaiveDate::from_ymd_opt(2023, 4, 11).unwrap()),
-        (sanjay_id, varun_id, "PARENT", NaiveDate::from_ymd_opt(2015, 8, 19).unwrap()),
-        (ritu_id, varun_id, "PARENT", NaiveDate::from_ymd_opt(2015, 8, 19).unwrap()),
-        (sanjay_id, khushi_id, "PARENT", NaiveDate::from_ymd_opt(2018, 12, 4).unwrap()),
-        (ritu_id, khushi_id, "PARENT", NaiveDate::from_ymd_opt(2018, 12, 4).unwrap()),
+        (
+            rajesh_id,
+            ananya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2012, 5, 18).unwrap(),
+        ),
+        (
+            sunita_id,
+            ananya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2012, 5, 18).unwrap(),
+        ),
+        (
+            rajesh_id,
+            aarav_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2016, 9, 10).unwrap(),
+        ),
+        (
+            sunita_id,
+            aarav_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2016, 9, 10).unwrap(),
+        ),
+        (
+            manoj_id,
+            diya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2014, 3, 22).unwrap(),
+        ),
+        (
+            pooja_id,
+            diya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2014, 3, 22).unwrap(),
+        ),
+        (
+            manoj_id,
+            rohan_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2018, 7, 15).unwrap(),
+        ),
+        (
+            pooja_id,
+            rohan_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2018, 7, 15).unwrap(),
+        ),
+        (
+            manoj_id,
+            pranav_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2021, 2, 14).unwrap(),
+        ),
+        (
+            pooja_id,
+            pranav_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2021, 2, 14).unwrap(),
+        ),
+        (
+            suresh_id,
+            ishaan_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2015, 11, 30).unwrap(),
+        ),
+        (
+            kavita_id,
+            ishaan_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2015, 11, 30).unwrap(),
+        ),
+        (
+            suresh_id,
+            tanya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2019, 4, 5).unwrap(),
+        ),
+        (
+            kavita_id,
+            tanya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2019, 4, 5).unwrap(),
+        ),
+        (
+            suresh_id,
+            sneha_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2022, 8, 20).unwrap(),
+        ),
+        (
+            kavita_id,
+            sneha_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2022, 8, 20).unwrap(),
+        ),
+        (
+            deepak_id,
+            aryan_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2017, 6, 18).unwrap(),
+        ),
+        (
+            anita_id,
+            aryan_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2017, 6, 18).unwrap(),
+        ),
+        (
+            deepak_id,
+            simran_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2020, 9, 12).unwrap(),
+        ),
+        (
+            anita_id,
+            simran_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2020, 9, 12).unwrap(),
+        ),
+        (
+            vikram_id,
+            aditya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2013, 1, 25).unwrap(),
+        ),
+        (
+            neha_id,
+            aditya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2013, 1, 25).unwrap(),
+        ),
+        (
+            vikram_id,
+            riya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2016, 5, 8).unwrap(),
+        ),
+        (
+            neha_id,
+            riya_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2016, 5, 8).unwrap(),
+        ),
+        (
+            vikram_id,
+            vihaan_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2023, 4, 11).unwrap(),
+        ),
+        (
+            neha_id,
+            vihaan_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2023, 4, 11).unwrap(),
+        ),
+        (
+            sanjay_id,
+            varun_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2015, 8, 19).unwrap(),
+        ),
+        (
+            ritu_id,
+            varun_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2015, 8, 19).unwrap(),
+        ),
+        (
+            sanjay_id,
+            khushi_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2018, 12, 4).unwrap(),
+        ),
+        (
+            ritu_id,
+            khushi_id,
+            "PARENT",
+            NaiveDate::from_ymd_opt(2018, 12, 4).unwrap(),
+        ),
     ];
 
     for (p_a, p_b, rtype, vfrom) in rels {
@@ -1022,12 +1944,48 @@ async fn seed_sharma_family(
 
     // 5. Timeline Events for Sharma Family (Economic profile: ₹1,72,000 annual income)
     let timeline_events = [
-        ("MARRIAGE", Some(rajesh_id), NaiveDate::from_ymd_opt(2010, 2, 14).unwrap(), "Marriage registered with Sunita Sharma", "Civil Registration Office"),
-        ("BIRTH", Some(ananya_id), NaiveDate::from_ymd_opt(2012, 5, 18).unwrap(), "Ananya Sharma born (BR-2012-0941)", "Civil Registration System"),
-        ("BIRTH", Some(aarav_id), NaiveDate::from_ymd_opt(2016, 9, 10).unwrap(), "Aarav Sharma born (BR-2016-4412)", "Civil Registration System"),
-        ("ADDRESS_UPDATE", Some(rajesh_id), NaiveDate::from_ymd_opt(2018, 6, 15).unwrap(), "Household address verified: House No. 42, Ward 7, Demo District", "Field Verification Unit"),
-        ("INCOME_CERTIFICATE", Some(rajesh_id), NaiveDate::from_ymd_opt(2025, 4, 10).unwrap(), "Income certificate verified: ₹1,72,000 / year (Under ₹2,00,000 poverty line)", "Revenue Department"),
-        ("SCHEME_APPLICATION", Some(rajesh_id), NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(), "Student Scholarship application submitted for Ananya Sharma", "Mira Welfare Portal"),
+        (
+            "MARRIAGE",
+            Some(rajesh_id),
+            NaiveDate::from_ymd_opt(2010, 2, 14).unwrap(),
+            "Marriage registered with Sunita Sharma",
+            "Civil Registration Office",
+        ),
+        (
+            "BIRTH",
+            Some(ananya_id),
+            NaiveDate::from_ymd_opt(2012, 5, 18).unwrap(),
+            "Ananya Sharma born (BR-2012-0941)",
+            "Civil Registration System",
+        ),
+        (
+            "BIRTH",
+            Some(aarav_id),
+            NaiveDate::from_ymd_opt(2016, 9, 10).unwrap(),
+            "Aarav Sharma born (BR-2016-4412)",
+            "Civil Registration System",
+        ),
+        (
+            "ADDRESS_UPDATE",
+            Some(rajesh_id),
+            NaiveDate::from_ymd_opt(2018, 6, 15).unwrap(),
+            "Household address verified: House No. 42, Ward 7, Demo District",
+            "Field Verification Unit",
+        ),
+        (
+            "INCOME_CERTIFICATE",
+            Some(rajesh_id),
+            NaiveDate::from_ymd_opt(2025, 4, 10).unwrap(),
+            "Income certificate verified: ₹1,72,000 / year (Under ₹2,00,000 poverty line)",
+            "Revenue Department",
+        ),
+        (
+            "SCHEME_APPLICATION",
+            Some(rajesh_id),
+            NaiveDate::from_ymd_opt(2026, 1, 12).unwrap(),
+            "Student Scholarship application submitted for Ananya Sharma",
+            "Mira Welfare Portal",
+        ),
     ];
 
     for (etype, pid, edate, desc, sname) in timeline_events {
@@ -1053,12 +2011,30 @@ async fn seed_sharma_family(
     }
 
     // 6. Schemes references
-    let sch_scholarship_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_STUDENT_SCHOLARSHIP'").fetch_one(pool).await?;
-    let sch_sanitation_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_HH_SANITATION'").fetch_one(pool).await?;
-    let sch_housing_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_RURAL_HOUSING'").fetch_one(pool).await?;
-    let sch_water_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_WATER_CONNECTION'").fetch_one(pool).await?;
-    let sch_health_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_AYUSHMAN_HEALTH'").fetch_one(pool).await?;
-    let sch_pension_id: Uuid = sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_SENIOR_PENSION'").fetch_one(pool).await?;
+    let sch_scholarship_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_STUDENT_SCHOLARSHIP'")
+            .fetch_one(pool)
+            .await?;
+    let sch_sanitation_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_HH_SANITATION'")
+            .fetch_one(pool)
+            .await?;
+    let sch_housing_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_RURAL_HOUSING'")
+            .fetch_one(pool)
+            .await?;
+    let sch_water_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_WATER_CONNECTION'")
+            .fetch_one(pool)
+            .await?;
+    let sch_health_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_AYUSHMAN_HEALTH'")
+            .fetch_one(pool)
+            .await?;
+    let sch_pension_id: Uuid =
+        sqlx::query_scalar("SELECT id FROM schemes WHERE code = 'SCH_SENIOR_PENSION'")
+            .fetch_one(pool)
+            .await?;
 
     // ------------------------------------------------------------------------
     // APPLICATION 1: Student Scholarship (EVIDENCE_REQUIRED - Clarification Loop)
@@ -1071,7 +2047,7 @@ async fn seed_sharma_family(
         )
         VALUES (
             gen_random_uuid(), 'APP-2026-10482', 'APP-SCHOLAR-2026-10482', $1, $2, $3,
-            '2026-01-12T09:30:00Z', 'EVIDENCE_REQUIRED', 'EVIDENCE_REQUIRED', '2026-01-12', $4, $5
+            '2026-01-12T09:30:00Z', 'UNDER_VERIFICATION', 'EVIDENCE_REQUIRED', '2026-01-12', $4, $5
         )
         RETURNING id
         "#,
@@ -1220,8 +2196,8 @@ async fn seed_sharma_family(
             submitted_at, status, current_stage, application_date, metadata, created_by
         )
         VALUES (
-            gen_random_uuid(), 'APP-2026-10484', 'APP-HOUSE-2026-10484', $1, $2, $3, $4,
-            '2026-01-16T11:00:00Z', 'SUBMITTED', 'DOCUMENT_REVIEW', '2026-01-16', $5, $6
+            gen_random_uuid(), 'APP-2026-000318', 'APP-2026-000318', $1, $2, $3, $4,
+            '2026-10-23T11:00:00Z', 'UNDER_VERIFICATION', 'DOCUMENT_REVIEW', '2026-10-23', $5, $6
         )
         RETURNING id
         "#,
@@ -1370,30 +2346,102 @@ async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
     .unwrap_or_else(Uuid::new_v4);
 
     let storage = Path::new("data/storage/safe_store");
-    tokio::fs::create_dir_all(storage).await.map_err(|e| AppError::Internal(format!("Unable to prepare document storage: {e}")))?;
+    tokio::fs::create_dir_all(storage)
+        .await
+        .map_err(|e| AppError::Internal(format!("Unable to prepare document storage: {e}")))?;
 
     // 10 realistic synthetic documents for Rajesh Sharma:
     let docs = [
         // 1. Aadhaar Card
-        ("DOC-DEMO-AADHAAR-01", "Aadhaar Card - Rajesh Sharma.pdf", "IDENTITY_SUPPORTING_DOCUMENT", "VERIFIED", None, 10),
+        (
+            "DOC-DEMO-AADHAAR-01",
+            "Aadhaar Card - Rajesh Sharma.pdf",
+            "IDENTITY_SUPPORTING_DOCUMENT",
+            "VERIFIED",
+            None,
+            10,
+        ),
         // 2. Synthetic altered document: Income Certificate (declared ₹1,72,000 vs OCR ₹2,31,000)
-        ("DOC-DEMO-INCOME-01", "Income Certificate 2025-26.pdf", "INCOME_CERTIFICATE", "ACTION_REQUIRED", None, 5),
+        (
+            "DOC-DEMO-INCOME-01",
+            "Income Certificate 2025-26.pdf",
+            "INCOME_CERTIFICATE",
+            "ACTION_REQUIRED",
+            None,
+            5,
+        ),
         // 3. Residence Certificate with address discrepancy
-        ("DOC-DEMO-RESIDENCE-01", "Residence Certificate - Ward 7.pdf", "RESIDENCE_CERTIFICATE", "ACTION_REQUIRED", None, 4),
+        (
+            "DOC-DEMO-RESIDENCE-01",
+            "Residence Certificate - Ward 7.pdf",
+            "RESIDENCE_CERTIFICATE",
+            "ACTION_REQUIRED",
+            None,
+            4,
+        ),
         // 4. BPL Priority Ration Card (expired)
-        ("DOC-DEMO-RATION-01", "BPL Priority Ration Card.pdf", "OTHER", "EXPIRED", Some("2025-03-31T00:00:00Z"), 220),
+        (
+            "DOC-DEMO-RATION-01",
+            "BPL Priority Ration Card.pdf",
+            "OTHER",
+            "EXPIRED",
+            Some("2025-03-31T00:00:00Z"),
+            220,
+        ),
         // 5. Land Revenue Record (Pending Review)
-        ("DOC-DEMO-LAND-01", "Land Revenue Record - Khatauni.pdf", "PROPERTY_DOCUMENT", "PENDING_REVIEW", None, 2),
+        (
+            "DOC-DEMO-LAND-01",
+            "Land Revenue Record - Khatauni.pdf",
+            "PROPERTY_DOCUMENT",
+            "PENDING_REVIEW",
+            None,
+            2,
+        ),
         // 6. Utility Bill (Verified residence proof)
-        ("DOC-DEMO-UTIL-01", "Electricity Utility Bill - Latest.pdf", "RESIDENCE_PROOF", "VERIFIED", None, 3),
+        (
+            "DOC-DEMO-UTIL-01",
+            "Electricity Utility Bill - Latest.pdf",
+            "RESIDENCE_PROOF",
+            "VERIFIED",
+            None,
+            3,
+        ),
         // 7. Caste Certificate (Verified)
-        ("DOC-DEMO-CASTE-01", "Caste & Category Certificate.pdf", "COMMUNITY_CERTIFICATE", "VERIFIED", None, 40),
+        (
+            "DOC-DEMO-CASTE-01",
+            "Caste & Category Certificate.pdf",
+            "COMMUNITY_CERTIFICATE",
+            "VERIFIED",
+            None,
+            40,
+        ),
         // 8. Education Certificate
-        ("DOC-DEMO-EDU-01", "School Enrollment Certificate - Ananya.pdf", "EDUCATION_CERTIFICATE", "VERIFIED", None, 12),
+        (
+            "DOC-DEMO-EDU-01",
+            "School Enrollment Certificate - Ananya.pdf",
+            "EDUCATION_CERTIFICATE",
+            "VERIFIED",
+            None,
+            12,
+        ),
         // 9. Bank Passbook
-        ("DOC-DEMO-BANK-01", "Bank Passbook Front Page.pdf", "FINANCIAL_DOCUMENT", "VERIFIED", None, 15),
+        (
+            "DOC-DEMO-BANK-01",
+            "Bank Passbook Front Page.pdf",
+            "FINANCIAL_DOCUMENT",
+            "VERIFIED",
+            None,
+            15,
+        ),
         // 10. Medical Card
-        ("DOC-DEMO-HEALTH-01", "Health Assessment Card.pdf", "MEDICAL_CERTIFICATE", "VERIFIED", None, 20),
+        (
+            "DOC-DEMO-HEALTH-01",
+            "Health Assessment Card.pdf",
+            "MEDICAL_CERTIFICATE",
+            "VERIFIED",
+            None,
+            20,
+        ),
     ];
 
     let mut doc_map = std::collections::HashMap::new();
@@ -1403,7 +2451,9 @@ async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
         let bytes = synthetic_demo_pdf(label);
         let hash = format!("{:x}", Sha256::digest(&bytes));
         let key = format!("{}.pdf", Uuid::new_v4());
-        tokio::fs::write(storage.join(&key), &bytes).await.map_err(|e| AppError::Internal(format!("Unable to seed demo document object: {e}")))?;
+        tokio::fs::write(storage.join(&key), &bytes)
+            .await
+            .map_err(|e| AppError::Internal(format!("Unable to seed demo document object: {e}")))?;
 
         let row = sqlx::query(
             r#"INSERT INTO documents (
@@ -1551,15 +2601,27 @@ async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
         ("APP-2026-10482", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
         ("APP-2026-10482", "DOC-DEMO-INCOME-01", "INCOME_CERTIFICATE"),
         ("APP-2026-10482", "DOC-DEMO-EDU-01", "EDUCATION_CERTIFICATE"),
-        ("APP-2026-10482", "DOC-DEMO-RESIDENCE-01", "RESIDENCE_CERTIFICATE"),
+        (
+            "APP-2026-10482",
+            "DOC-DEMO-RESIDENCE-01",
+            "RESIDENCE_CERTIFICATE",
+        ),
         // App 2: Sanitation
         ("APP-2026-10483", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
-        ("APP-2026-10483", "DOC-DEMO-RESIDENCE-01", "RESIDENCE_CERTIFICATE"),
+        (
+            "APP-2026-10483",
+            "DOC-DEMO-RESIDENCE-01",
+            "RESIDENCE_CERTIFICATE",
+        ),
         ("APP-2026-10483", "DOC-DEMO-UTIL-01", "RESIDENCE_PROOF"),
         // App 3: Rural Housing
-        ("APP-2026-10484", "DOC-DEMO-INCOME-01", "INCOME_CERTIFICATE"),
-        ("APP-2026-10484", "DOC-DEMO-LAND-01", "PROPERTY_DOCUMENT"),
-        ("APP-2026-10484", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
+        (
+            "APP-2026-000318",
+            "DOC-DEMO-INCOME-01",
+            "INCOME_CERTIFICATE",
+        ),
+        ("APP-2026-000318", "DOC-DEMO-LAND-01", "PROPERTY_DOCUMENT"),
+        ("APP-2026-000318", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
         // App 4: Water Connection
         ("APP-2026-10485", "DOC-DEMO-LAND-01", "PROPERTY_DOCUMENT"),
         ("APP-2026-10485", "DOC-DEMO-UTIL-01", "RESIDENCE_PROOF"),
@@ -1570,11 +2632,19 @@ async fn seed_demo_documents(pool: &PgPool) -> Result<(), AppError> {
         // App 6: Pension
         ("APP-2026-10487", "DOC-DEMO-AADHAAR-01", "IDENTITY_PROOF"),
         ("APP-2026-10487", "DOC-DEMO-BANK-01", "BANK_PASSBOOK"),
-        ("APP-2026-10487", "DOC-DEMO-HEALTH-01", "MEDICAL_CERTIFICATE"),
+        (
+            "APP-2026-10487",
+            "DOC-DEMO-HEALTH-01",
+            "MEDICAL_CERTIFICATE",
+        ),
     ];
 
     for (app_pub, doc_pub, req_type) in app_docs {
-        let app_id: Option<Uuid> = sqlx::query_scalar("SELECT id FROM applications WHERE public_id = $1").bind(app_pub).fetch_optional(pool).await?;
+        let app_id: Option<Uuid> =
+            sqlx::query_scalar("SELECT id FROM applications WHERE public_id = $1")
+                .bind(app_pub)
+                .fetch_optional(pool)
+                .await?;
         let doc_id = doc_map.get(doc_pub).copied();
 
         if let (Some(aid), Some(did)) = (app_id, doc_id) {

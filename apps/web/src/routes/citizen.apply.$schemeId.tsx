@@ -49,11 +49,11 @@ function Apply() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => { try { const d = localStorage.getItem(key); if (d) { const p = JSON.parse(d); setF(p.f); setStep(p.step); setDocs(p.docs ?? {}); toast.info("Restored your saved draft"); } } catch { /* ignore */ } }, [key]);
-  useEffect(() => { if (!state.session?.apiToken) return; let active = true; apiRequest<{ data: ApiDocument[] }>(state.session, "/api/v1/documents?owner_type=CITIZEN").then((result) => active && setLibraryDocs(result.data.filter((doc) => doc.status === "READY"))).catch(() => active && setLibraryDocs([])); return () => { active = false; }; }, [state.session?.apiToken, state.session?.apiUserId]);
+  useEffect(() => { if (!state.session?.apiToken && !state.session?.isDemo) return; let active = true; apiRequest<{ data: ApiDocument[] }>(state.session, "/api/v1/documents?owner_type=CITIZEN").then((result) => active && setLibraryDocs(result.data.filter((doc) => doc.status === "READY"))).catch(() => active && setLibraryDocs([])); return () => { active = false; }; }, [state.session?.apiToken, state.session?.apiUserId, state.session?.isDemo]);
   useEffect(() => { if (done) return; const tm = setTimeout(() => { localStorage.setItem(key, JSON.stringify({ f, step, docs })); setSaved(new Date().toLocaleTimeString("en-IN", { hour: "2-digit", minute: "2-digit" })); }, 600); return () => clearTimeout(tm); }, [f, step, docs, key, done]);
 
   const refreshLibrary = async () => {
-    if (!state.session?.apiToken) return [];
+    if (!state.session?.apiToken && !state.session?.isDemo) return [];
     try { const result = await apiRequest<{ data: ApiDocument[] }>(state.session, "/api/v1/documents?owner_type=CITIZEN"); const next = result.data.filter((doc) => doc.status === "READY"); setLibraryDocs(next); return next; }
     catch { return libraryDocs; }
   };
@@ -90,10 +90,11 @@ function Apply() {
         address: f.address,
         answers: f.answers,
         step: 6,
+        frontend_scheme_id: s.id,
       };
 
       let finalApp: Application;
-      if (state.session?.apiToken) {
+      if (state.session) {
         const draft = await createApp(schemeUuid, metadata);
         finalApp = await submitApp(draft.id);
       } else {

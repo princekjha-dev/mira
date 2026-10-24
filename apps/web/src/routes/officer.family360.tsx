@@ -49,7 +49,7 @@ export function OfficerFamily360Page() {
           title="Family360 Scheme Operations"
           desc="Household composition analysis, multi-generational dependent verification, and statutory benefit eligibility."
           crumbs={[
-            { label: "Scheme Operations", href: "/officer/schemes" },
+            { label: "Scheme Operations", to: "/schemes" },
             { label: "Family360" },
           ]}
         />
@@ -83,7 +83,7 @@ export function OfficerFamily360Page() {
       {/* Operational Shortcuts */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-2">
         <Link
-          to="/officer/schemes"
+          to="/schemes"
           className="rounded-xl border border-slate-200 bg-white p-4 shadow-2xs hover:border-gov/50 transition-colors dark:border-slate-800 dark:bg-slate-900"
         >
           <div className="flex items-center justify-between">

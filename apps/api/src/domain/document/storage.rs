@@ -1,7 +1,7 @@
-use std::path::{Path, PathBuf};
-use sha2::{Digest, Sha256};
-use tokio::fs;
 use crate::errors::AppError;
+use sha2::{Digest, Sha256};
+use std::path::{Path, PathBuf};
+use tokio::fs;
 
 pub fn compute_sha256(bytes: &[u8]) -> String {
     let mut hasher = Sha256::new();
@@ -28,12 +28,12 @@ impl LocalStorageAdapter {
         let storage_root = base_path.as_ref().join("safe_store");
         let quarantine_root = base_path.as_ref().join("quarantine");
 
-        fs::create_dir_all(&storage_root)
-            .await
-            .map_err(|e| AppError::Internal(format!("Failed to create storage directory: {}", e)))?;
-        fs::create_dir_all(&quarantine_root)
-            .await
-            .map_err(|e| AppError::Internal(format!("Failed to create quarantine directory: {}", e)))?;
+        fs::create_dir_all(&storage_root).await.map_err(|e| {
+            AppError::Internal(format!("Failed to create storage directory: {}", e))
+        })?;
+        fs::create_dir_all(&quarantine_root).await.map_err(|e| {
+            AppError::Internal(format!("Failed to create quarantine directory: {}", e))
+        })?;
 
         Ok(Self {
             storage_root,
@@ -64,7 +64,10 @@ impl ObjectStorage for LocalStorageAdapter {
     async fn get(&self, key: &str) -> Result<Vec<u8>, AppError> {
         let target = self.storage_root.join(key);
         if !target.exists() {
-            return Err(AppError::NotFound(format!("Storage object '{}' not found", key)));
+            return Err(AppError::NotFound(format!(
+                "Storage object '{}' not found",
+                key
+            )));
         }
         fs::read(target)
             .await
@@ -74,9 +77,9 @@ impl ObjectStorage for LocalStorageAdapter {
     async fn delete(&self, key: &str) -> Result<(), AppError> {
         let target = self.storage_root.join(key);
         if target.exists() {
-            fs::remove_file(target)
-                .await
-                .map_err(|e| AppError::Internal(format!("Failed to delete object {}: {}", key, e)))?;
+            fs::remove_file(target).await.map_err(|e| {
+                AppError::Internal(format!("Failed to delete object {}: {}", key, e))
+            })?;
         }
         Ok(())
     }

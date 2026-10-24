@@ -401,6 +401,11 @@ export function DocumentUploader({
     <div className="flex min-h-0 flex-1 flex-col">
       <div className="min-h-0 flex-1 space-y-5 overflow-y-auto px-5 py-5 sm:px-7">
         {beforeUpload}
+        {session.authSource === "local-demo" && (
+          <p className="rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900">
+            Local demo mode records document details only. File content is not uploaded or stored.
+          </p>
+        )}
         <div
           role="group"
           tabIndex={0}

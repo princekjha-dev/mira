@@ -56,7 +56,7 @@ export function ProfilePage({ roleSpecificSection }: ProfilePageProps) {
 
   const name = state.session?.name || roleConfig.defaultIdentity.name;
   const email =
-    state.session?.email ||
+    state.session?.apiEmail ||
     (role === "citizen" ? CITIZEN.email : roleConfig.demoEmail);
   const phone =
     role === "citizen"

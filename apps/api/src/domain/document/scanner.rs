@@ -1,5 +1,5 @@
-use serde::{Deserialize, Serialize};
 use crate::errors::AppError;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct ScanReport {
@@ -54,7 +54,8 @@ impl MalwareScanner for SecurityScanner {
             let sample_len = data.len().min(128 * 1024);
             let sample = &data[..sample_len];
             if let Ok(text) = std::str::from_utf8(sample) {
-                if text.contains("/JavaScript") || text.contains("/JS") || text.contains("/Launch") {
+                if text.contains("/JavaScript") || text.contains("/JS") || text.contains("/Launch")
+                {
                     return Ok(ScanReport {
                         is_clean: false,
                         scanner_name: self.engine_name.clone(),

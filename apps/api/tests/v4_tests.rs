@@ -1,11 +1,14 @@
+use serde_json::Value;
 use std::fs;
 use std::path::Path;
-use serde_json::Value;
 
 use mira_api::domain::entity_resolution::{
     evaluation::PersonEvaluator,
     models::{EvidenceDirection, MatchingModelConfig, OverallAssessment},
-    normalization::{compare_dates_with_conflict, normalize_name, normalize_phone, tokenize_address, transliterate_indic_to_latin},
+    normalization::{
+        compare_dates_with_conflict, normalize_name, normalize_phone, tokenize_address,
+        transliterate_indic_to_latin,
+    },
     similarity::{compare_names, jaro_winkler, levenshtein_similarity, token_similarity},
 };
 
@@ -17,20 +20,33 @@ fn test_entity_resolution_normalization_and_transliteration() {
     assert_eq!(normalize_name("Shri Ramesh Kumar"), "ramesh kumar");
     assert_eq!(normalize_name("Dr. Smt Sunita Devi"), "sunita devi");
 
-
     // 2. Transliteration (Devanagari to Latin)
     let sunita_lat = transliterate_indic_to_latin("सुनीता देवी");
-    assert!(sunita_lat.to_lowercase().contains("suneeta") || sunita_lat.to_lowercase().contains("sunita") || sunita_lat.to_lowercase().contains("devi"));
+    assert!(
+        sunita_lat.to_lowercase().contains("suneeta")
+            || sunita_lat.to_lowercase().contains("sunita")
+            || sunita_lat.to_lowercase().contains("devi")
+    );
 
     let rahul_lat = transliterate_indic_to_latin("राहुल कुमार");
-    assert!(rahul_lat.to_lowercase().contains("rahul") || rahul_lat.to_lowercase().contains("kumar"));
+    assert!(
+        rahul_lat.to_lowercase().contains("rahul") || rahul_lat.to_lowercase().contains("kumar")
+    );
 
     // 3. Multilingual Name Comparison
     let res = compare_names("सुनीता देवी", "Sunita Devi");
-    assert!(res.similarity >= 0.75, "Expected high transliteration similarity, got {}", res.similarity);
+    assert!(
+        res.similarity >= 0.75,
+        "Expected high transliteration similarity, got {}",
+        res.similarity
+    );
 
     let res_rahul = compare_names("राहुल कुमार", "Rahul Kumar");
-    assert!(res_rahul.similarity >= 0.80, "Expected high transliteration similarity, got {}", res_rahul.similarity);
+    assert!(
+        res_rahul.similarity >= 0.80,
+        "Expected high transliteration similarity, got {}",
+        res_rahul.similarity
+    );
 
     // 4. Phone normalization
     assert_eq!(normalize_phone("+91 98765-43210"), "9876543210");
@@ -71,8 +87,7 @@ fn test_entity_resolution_metrics() {
         "apps/api/tests/data/entity_resolution"
     };
 
-    let files = fs::read_dir(base_path)
-        .expect("Failed to read entity resolution test data dir");
+    let files = fs::read_dir(base_path).expect("Failed to read entity resolution test data dir");
 
     let mut true_positives = 0;
     let mut false_positives = Vec::new();
@@ -97,12 +112,16 @@ fn test_entity_resolution_metrics() {
 
         let s_first = val["source"]["first_name"].as_str().unwrap_or("");
         let s_last = val["source"]["last_name"].as_str().unwrap_or("");
-        let s_dob = val["source"]["date_of_birth"].as_str().and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok());
+        let s_dob = val["source"]["date_of_birth"]
+            .as_str()
+            .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok());
         let s_phone = val["source"]["phone"].as_str().unwrap_or("");
 
         let c_first = val["candidate"]["first_name"].as_str().unwrap_or("");
         let c_last = val["candidate"]["last_name"].as_str().unwrap_or("");
-        let c_dob = val["candidate"]["date_of_birth"].as_str().and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok());
+        let c_dob = val["candidate"]["date_of_birth"]
+            .as_str()
+            .and_then(|s| chrono::NaiveDate::parse_from_str(s, "%Y-%m-%d").ok());
         let c_phone = val["candidate"]["phone"].as_str().unwrap_or("");
 
         // Compute simulated assessment matching PersonEvaluator formula
@@ -166,7 +185,6 @@ fn test_entity_resolution_metrics() {
         let confidence = (normalized_score - penalty).clamp(0.0, 1.0);
         let predicted_match = confidence >= 0.58 && penalty < 0.20;
 
-
         total_records += 1;
 
         if predicted_match && expected_match {
@@ -206,7 +224,11 @@ fn test_entity_resolution_metrics() {
     println!("Precision: {:.4} ({:.1}%)", precision, precision * 100.0);
     println!("Recall:    {:.4} ({:.1}%)", recall, recall * 100.0);
     println!("F1:        {:.4} ({:.1}%)", f1, f1 * 100.0);
-    println!("Candidate Recall: {:.4} ({:.1}%)", candidate_recall, candidate_recall * 100.0);
+    println!(
+        "Candidate Recall: {:.4} ({:.1}%)",
+        candidate_recall,
+        candidate_recall * 100.0
+    );
     println!("\nFalse Positives ({}):", false_positives.len());
     for fp in &false_positives {
         println!(" - {}", fp);
@@ -232,35 +254,60 @@ fn test_duplicate_benefit_false_positive_protection() {
 
     // 1. Critical False Positive Test: individual_non_duplicate.json
     let ind_path = format!("{}/individual_non_duplicate.json", base_path);
-    let ind_content = fs::read_to_string(&ind_path).expect("Failed to read individual_non_duplicate.json");
+    let ind_content =
+        fs::read_to_string(&ind_path).expect("Failed to read individual_non_duplicate.json");
     let ind_val: Value = serde_json::from_str(&ind_content).unwrap();
 
     let target_person_app = ind_val["application"]["target_person_id"].as_str().unwrap();
     let target_person_ben = ind_val["existing_benefit"]["person_id"].as_str().unwrap();
 
     // In individual scope, target person must match
-    assert_ne!(target_person_app, target_person_ben, "Target persons must be distinct brothers");
-    assert_eq!(ind_val["expected_assessment"].as_str().unwrap(), "NOT_DUPLICATE");
+    assert_ne!(
+        target_person_app, target_person_ben,
+        "Target persons must be distinct brothers"
+    );
+    assert_eq!(
+        ind_val["expected_assessment"].as_str().unwrap(),
+        "NOT_DUPLICATE"
+    );
     assert_eq!(ind_val["expected_duplicate"].as_bool().unwrap(), false);
 
     // 2. Household Split Test: household_split.json
     let split_path = format!("{}/household_split.json", base_path);
-    let split_content = fs::read_to_string(&split_path).expect("Failed to read household_split.json");
+    let split_content =
+        fs::read_to_string(&split_path).expect("Failed to read household_split.json");
     let split_val: Value = serde_json::from_str(&split_content).unwrap();
 
-    let app_hh = split_val["application"]["target_household_id"].as_str().unwrap();
-    let ben_hh = split_val["existing_benefit"]["household_id"].as_str().unwrap();
-    assert_ne!(app_hh, ben_hh, "New household H002 must be distinct from original H001");
-    assert_eq!(split_val["expected_assessment"].as_str().unwrap(), "NOT_DUPLICATE");
+    let app_hh = split_val["application"]["target_household_id"]
+        .as_str()
+        .unwrap();
+    let ben_hh = split_val["existing_benefit"]["household_id"]
+        .as_str()
+        .unwrap();
+    assert_ne!(
+        app_hh, ben_hh,
+        "New household H002 must be distinct from original H001"
+    );
+    assert_eq!(
+        split_val["expected_assessment"].as_str().unwrap(),
+        "NOT_DUPLICATE"
+    );
 
     // 3. True Household Overlap: household_duplicate.json
     let hh_path = format!("{}/household_duplicate.json", base_path);
     let hh_content = fs::read_to_string(&hh_path).expect("Failed to read household_duplicate.json");
-    let hh_val: Value = serde_json::from_str(&hh_path).or_else(|_| serde_json::from_str(&hh_content)).unwrap();
+    let hh_val: Value = serde_json::from_str(&hh_path)
+        .or_else(|_| serde_json::from_str(&hh_content))
+        .unwrap();
 
-    let hh_app = hh_val["application"]["target_household_id"].as_str().unwrap();
+    let hh_app = hh_val["application"]["target_household_id"]
+        .as_str()
+        .unwrap();
     let hh_ben = hh_val["existing_benefit"]["household_id"].as_str().unwrap();
-    assert_eq!(hh_app, hh_ben, "Identical household claims for sanitation asset");
+    assert_eq!(
+        hh_app, hh_ben,
+        "Identical household claims for sanitation asset"
+    );
     assert!(hh_val["expected_duplicate"].as_bool().unwrap());
 }
 
@@ -292,14 +339,14 @@ async fn setup_v4_test_app() -> (axum::Router, sqlx::PgPool, Arc<AppConfig>) {
         Ok(v) if !v.is_empty() => v,
         _ => "postgres://postgres@127.0.0.1:5433/mira_test".to_string(),
     };
-    let pool = create_pool(&db_url).await.expect("Failed to connect to test database");
-
+    let pool = create_pool(&db_url)
+        .await
+        .expect("Failed to connect to test database");
 
     run_migrations(&pool).await.expect("Migrations failed");
     if let Err(e) = seed_database(&pool).await {
         eprintln!("SEED ERROR IN TEST APP: {:?}", e);
     }
-
 
     let config = Arc::new(AppConfig::from_env());
     let app_state = mira_api::api::AppState {
@@ -319,14 +366,8 @@ fn generate_auth_header(
     org_id: Option<Uuid>,
 ) -> String {
     let org_tuple = org_id.as_ref().map(|id| (id, "Test Civic Department"));
-    let token = TokenService::create_token(
-        user_id,
-        email,
-        &[role.to_string()],
-        org_tuple,
-        config,
-    )
-    .expect("Token generation failed");
+    let token = TokenService::create_token(user_id, email, &[role.to_string()], org_tuple, config)
+        .expect("Token generation failed");
 
     format!("Bearer {}", token)
 }
@@ -355,10 +396,13 @@ async fn test_v4_entity_resolution_api_lifecycle() {
         .uri("/api/v1/entity-resolution/cases")
         .header(header::CONTENT_TYPE, "application/json")
         .header(header::AUTHORIZATION, &auth)
-        .body(Body::from(serde_json::to_vec(&json!({
-            "entity_type": "PERSON",
-            "source_entity_id": sunita_id
-        })).unwrap()))
+        .body(Body::from(
+            serde_json::to_vec(&json!({
+                "entity_type": "PERSON",
+                "source_entity_id": sunita_id
+            }))
+            .unwrap(),
+        ))
         .unwrap();
 
     let res = app.clone().oneshot(create_req).await.unwrap();
@@ -373,16 +417,23 @@ async fn test_v4_entity_resolution_api_lifecycle() {
     let case = &val["data"];
     let case_id = case["id"].as_str().unwrap();
 
-
     assert_eq!(case["entity_type"].as_str().unwrap(), "PERSON");
     assert_eq!(case["status"].as_str().unwrap(), "OPEN");
 
     // 2. Inspect Candidates & Evidence (Devanagari Sunita match)
-    let candidates = case["candidates"].as_array().expect("Candidates array expected");
-    assert!(!candidates.is_empty(), "Should surface Devanagari Sunita match");
+    let candidates = case["candidates"]
+        .as_array()
+        .expect("Candidates array expected");
+    assert!(
+        !candidates.is_empty(),
+        "Should surface Devanagari Sunita match"
+    );
 
     let first_cand = &candidates[0];
-    assert!(first_cand["overall_assessment"].as_str().unwrap().contains("MATCH"));
+    assert!(first_cand["overall_assessment"]
+        .as_str()
+        .unwrap()
+        .contains("MATCH"));
     assert!(first_cand["why_flagged"].as_str().unwrap().contains("name"));
 
     // 3. Resolve Case (Human-in-the-loop decision)
@@ -402,8 +453,14 @@ async fn test_v4_entity_resolution_api_lifecycle() {
     assert_eq!(res.status(), StatusCode::OK);
     let body = res.into_body().collect().await.unwrap().to_bytes();
     let resolved_val: Value = serde_json::from_slice(&body).unwrap();
-    assert_eq!(resolved_val["data"]["status"].as_str().unwrap(), "RESOLVED_MATCH");
-    assert_eq!(resolved_val["data"]["resolution"].as_str().unwrap(), "MATCH");
+    assert_eq!(
+        resolved_val["data"]["status"].as_str().unwrap(),
+        "RESOLVED_MATCH"
+    );
+    assert_eq!(
+        resolved_val["data"]["resolution"].as_str().unwrap(),
+        "MATCH"
+    );
 }
 
 #[tokio::test]
@@ -432,10 +489,11 @@ async fn test_v4_benefit_duplicate_flow_and_false_positive_demo() {
     .unwrap();
     let amit_id: Uuid = amit_person.get("id");
 
-    let scheme_scholarship = sqlx::query("SELECT id FROM schemes WHERE code = 'SCH_STUDENT_SCHOLARSHIP'")
-        .fetch_one(&pool)
-        .await
-        .unwrap();
+    let scheme_scholarship =
+        sqlx::query("SELECT id FROM schemes WHERE code = 'SCH_STUDENT_SCHOLARSHIP'")
+            .fetch_one(&pool)
+            .await
+            .unwrap();
     let sch_id: Uuid = scheme_scholarship.get("id");
 
     let h001 = sqlx::query("SELECT id FROM households WHERE public_id = 'H001'")
@@ -476,9 +534,12 @@ async fn test_v4_benefit_duplicate_flow_and_false_positive_demo() {
         .uri("/api/v1/benefit-duplicate-checks")
         .header(header::CONTENT_TYPE, "application/json")
         .header(header::AUTHORIZATION, &auth)
-        .body(Body::from(serde_json::to_vec(&json!({
-            "application_id": app_id
-        })).unwrap()))
+        .body(Body::from(
+            serde_json::to_vec(&json!({
+                "application_id": app_id
+            }))
+            .unwrap(),
+        ))
         .unwrap();
 
     let res = app.clone().oneshot(check_req).await.unwrap();
@@ -486,15 +547,21 @@ async fn test_v4_benefit_duplicate_flow_and_false_positive_demo() {
     let body = res.into_body().collect().await.unwrap().to_bytes();
     let body_str = String::from_utf8_lossy(&body);
     if status != StatusCode::CREATED {
-        eprintln!("CHECK BENEFIT DUPLICATE ERROR: status={}, body={}", status, body_str);
+        eprintln!(
+            "CHECK BENEFIT DUPLICATE ERROR: status={}, body={}",
+            status, body_str
+        );
     }
     assert_eq!(status, StatusCode::CREATED);
     let val: Value = serde_json::from_slice(&body).unwrap();
     let check_data = &val["data"];
 
-
     // SCENARIO A VERIFICATION: Individual scholarship for brother must be NOT_DUPLICATE
-    assert_eq!(check_data["assessment"].as_str().unwrap(), "NOT_DUPLICATE", "Individual scholarship for separate brother must NOT be duplicate");
+    assert_eq!(
+        check_data["assessment"].as_str().unwrap(),
+        "NOT_DUPLICATE",
+        "Individual scholarship for separate brother must NOT be duplicate"
+    );
     assert_eq!(check_data["priority"].as_str().unwrap(), "LOW");
 }
 
@@ -523,5 +590,3 @@ async fn test_v4_matching_config_endpoint() {
     assert_eq!(val["data"]["version"].as_str().unwrap(), "v4.0.0");
     assert!(val["data"]["field_weights"]["name"].as_f64().unwrap() > 0.0);
 }
-
-

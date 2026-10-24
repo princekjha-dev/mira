@@ -1,5 +1,5 @@
-use uuid::Uuid;
 use crate::errors::AppError;
+use uuid::Uuid;
 
 pub const MAX_FILE_SIZE_BYTES: i64 = 25 * 1024 * 1024; // 25 MB
 pub const PDF_COMPRESSION_THRESHOLD_BYTES: usize = 8 * 1024 * 1024;
@@ -48,7 +48,10 @@ impl SupportedFormat {
     }
 
     pub fn supports_preview(&self) -> bool {
-        matches!(self, Self::Pdf | Self::Png | Self::Jpeg | Self::Webp | Self::Txt | Self::Csv)
+        matches!(
+            self,
+            Self::Pdf | Self::Png | Self::Jpeg | Self::Webp | Self::Txt | Self::Csv
+        )
     }
 
     pub fn supports_optimization(&self) -> bool {
@@ -78,7 +81,9 @@ impl FileTypeRegistry {
 
         // 1. Size Validation
         if size_bytes == 0 {
-            return Err(AppError::Validation("Empty file uploaded. Content is 0 bytes.".into()));
+            return Err(AppError::Validation(
+                "Empty file uploaded. Content is 0 bytes.".into(),
+            ));
         }
         if size_bytes > MAX_FILE_SIZE_BYTES {
             return Err(AppError::Validation(format!(
@@ -91,7 +96,10 @@ impl FileTypeRegistry {
         Self::scan_for_malicious_signatures(bytes)?;
 
         let declared_ext = Self::extract_extension(raw_filename);
-        if !matches!(declared_ext.as_deref(), Some("pdf" | "png" | "jpg" | "jpeg" | "webp" | "txt" | "csv" | "docx" | "xlsx")) {
+        if !matches!(
+            declared_ext.as_deref(),
+            Some("pdf" | "png" | "jpg" | "jpeg" | "webp" | "txt" | "csv" | "docx" | "xlsx")
+        ) {
             return Err(AppError::Validation("Unsupported file extension. Accepted formats: PDF, PNG, JPG, WEBP, TXT, CSV, DOCX and XLSX.".into()));
         }
 
@@ -100,7 +108,13 @@ impl FileTypeRegistry {
 
         // 4. Client Extension Cross-Check
         if let Some(ext) = declared_ext {
-            if ext == "exe" || ext == "sh" || ext == "bat" || ext == "cmd" || ext == "js" || ext == "php" {
+            if ext == "exe"
+                || ext == "sh"
+                || ext == "bat"
+                || ext == "cmd"
+                || ext == "js"
+                || ext == "php"
+            {
                 return Err(AppError::Validation(format!(
                     "Executable file extension '.{}' is strictly prohibited.",
                     ext
@@ -110,11 +124,7 @@ impl FileTypeRegistry {
 
         // 5. Filename Sanitization & Safe Storage Key Generation
         let sanitized_filename = Self::sanitize_filename(raw_filename);
-        let storage_key = format!(
-            "{}.{}",
-            Uuid::new_v4(),
-            detected_format.extension()
-        );
+        let storage_key = format!("{}.{}", Uuid::new_v4(), detected_format.extension());
 
         let detected_mime = detected_format.standard_mime().to_string();
 
@@ -173,9 +183,14 @@ impl FileTypeRegistry {
 
     fn is_valid_utf8_text(bytes: &[u8]) -> bool {
         // Inspect up to first 4KB for non-printable control characters
-        let sample = if bytes.len() > 4096 { &bytes[..4096] } else { bytes };
+        let sample = if bytes.len() > 4096 {
+            &bytes[..4096]
+        } else {
+            bytes
+        };
         if let Ok(s) = std::str::from_utf8(sample) {
-            !s.chars().any(|c| c.is_control() && c != '\n' && c != '\r' && c != '\t')
+            !s.chars()
+                .any(|c| c.is_control() && c != '\n' && c != '\r' && c != '\t')
         } else {
             false
         }
@@ -204,9 +219,14 @@ impl FileTypeRegistry {
         }
 
         // Embedded malicious script tags in text formats
-        if let Ok(text) = std::str::from_utf8(if bytes.len() > 2048 { &bytes[..2048] } else { bytes }) {
+        if let Ok(text) = std::str::from_utf8(if bytes.len() > 2048 {
+            &bytes[..2048]
+        } else {
+            bytes
+        }) {
             let lower = text.to_lowercase();
-            if lower.contains("<script") || lower.contains("<?php") || lower.contains("javascript:") {
+            if lower.contains("<script") || lower.contains("<?php") || lower.contains("javascript:")
+            {
                 return Err(AppError::Validation(
                     "Security Alert: Embedded script tags detected in uploaded document.".into(),
                 ));
@@ -228,7 +248,13 @@ impl FileTypeRegistry {
 
         let safe: String = clean
             .chars()
-            .map(|c| if c.is_alphanumeric() || c == '.' || c == '-' || c == '_' || c == ' ' { c } else { '_' })
+            .map(|c| {
+                if c.is_alphanumeric() || c == '.' || c == '-' || c == '_' || c == ' ' {
+                    c
+                } else {
+                    '_'
+                }
+            })
             .collect();
 
         if safe.is_empty() || safe == "." || safe == ".." {

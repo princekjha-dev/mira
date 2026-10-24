@@ -40,6 +40,7 @@ interface MailToolbarProps {
   onArchive?: () => void;
   availableApplications?: string[];
   searchRef?: React.RefObject<HTMLInputElement | null>;
+  isReadOnly?: boolean;
 }
 
 export function MailToolbar({
@@ -57,6 +58,7 @@ export function MailToolbar({
   onArchive,
   availableApplications,
   searchRef,
+  isReadOnly = false,
 }: MailToolbarProps) {
   const [isRefreshing, setIsRefreshing] = useState(false);
 
@@ -84,13 +86,15 @@ export function MailToolbar({
     <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5 border-b border-slate-200/80 bg-white/95 dark:border-slate-800 dark:bg-slate-900/90 px-4 py-2.5 backdrop-blur-md">
       {/* Left section: Refined Compose & Contextual Quick Actions */}
       <div className="flex items-center gap-2">
-        <Button
-          onClick={onComposeClick}
-          className="h-8 px-3 text-xs font-semibold gap-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 shadow-2xs transition-all active:scale-95"
-        >
-          <PenSquare className="h-3.5 w-3.5" />
-          <span>Compose</span>
-        </Button>
+        {!isReadOnly && (
+          <Button
+            onClick={onComposeClick}
+            className="h-8 px-3 text-xs font-semibold gap-1.5 rounded-lg bg-slate-900 text-white hover:bg-slate-800 dark:bg-slate-100 dark:text-slate-900 shadow-2xs transition-all active:scale-95"
+          >
+            <PenSquare className="h-3.5 w-3.5" />
+            <span>Compose</span>
+          </Button>
+        )}
 
         {selectedThreadId && (
           <div className="hidden sm:flex items-center gap-1 border-l border-slate-200 dark:border-slate-800 pl-2 ml-1">

@@ -1,5 +1,5 @@
-use std::{net::SocketAddr, sync::Arc};
 use axum::middleware;
+use std::{net::SocketAddr, sync::Arc};
 use tokio::net::TcpListener;
 
 mod ai;
@@ -28,6 +28,12 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
         port = config.port,
         app_env = %config.app_env,
         "Initializing Mira V1 Platform Backend"
+    );
+    tracing::info!(
+        groq_api_key_configured = config.groq_api_key.is_some(),
+        groq_api_key_length = config.groq_api_key.as_ref().map(String::len).unwrap_or(0),
+        model = %config.groq_model,
+        "Mira Groq configuration loaded"
     );
 
     let pool = create_pool(&config.database_url).await?;

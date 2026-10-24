@@ -1,0 +1,1 @@
+import{l as e}from"./button-KmRTh43o.js";import{t}from"./MailShell-nunGGCWM.js";var n=e();function r(){return(0,n.jsx)(t,{title:`Communications`,subtitle:`Official messages, citizen clarifications, assignments and departmental correspondence.`})}export{r as component};
